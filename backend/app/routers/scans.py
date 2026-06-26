@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app import schemas, models
 from app.database import get_db
-
 from app.scanner.orchestrator import run_scan
+from app.routers.policies import load_policies
 
 router = APIRouter()
 
@@ -45,3 +45,59 @@ def read_scan(scan_id: int, db: Session = Depends(get_db)):
 def read_scan_findings(scan_id: int, db: Session = Depends(get_db)):
     findings = db.query(models.Finding).filter(models.Finding.scan_id == scan_id).all()
     return findings
+
+@router.get("/{scan_id}/crawl-map", response_model=list[schemas.CrawlNode])
+def read_scan_crawl_map(scan_id: int, db: Session = Depends(get_db)):
+    nodes = db.query(models.CrawlNode).filter(models.CrawlNode.scan_id == scan_id).all()
+    return nodes
+
+@router.get("/{scan_id}/diff", response_model=schemas.PostureDiff)
+def read_scan_diff(scan_id: int, db: Session = Depends(get_db)):
+    diff = db.query(models.PostureDiff).filter(models.PostureDiff.current_scan_id == scan_id).first()
+    if not diff:
+        raise HTTPException(status_code=404, detail="Diff not found for this scan (may be the first scan)")
+    return diff
+
+@router.get("/{scan_id}/evidence", response_model=list[schemas.EvidenceArtifact])
+def read_scan_evidence(scan_id: int, db: Session = Depends(get_db)):
+    evidence = db.query(models.EvidenceArtifact).filter(models.EvidenceArtifact.scan_id == scan_id).all()
+    return evidence
+
+@router.get("/{scan_id}/policy-results")
+def get_scan_policy_results(scan_id: int, db: Session = Depends(get_db)):
+    scan = db.query(models.Scan).filter(models.Scan.id == scan_id).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+        
+    findings = db.query(models.Finding).filter(models.Finding.scan_id == scan_id).all()
+    
+    policies = load_policies()
+    results = []
+    
+    for policy in policies:
+        policy_result = {
+            "policy_id": policy["policy_id"],
+            "title": policy["title"],
+            "checks": []
+        }
+        
+        for check in policy.get("checks", []):
+            related_titles = [t.lower() for t in check.get("related_finding_titles", [])]
+            
+            violating_findings = [
+                f for f in findings
+                if any(t in f.title.lower() for t in related_titles)
+            ]
+            
+            status = "failed" if violating_findings else "passed"
+                
+            policy_result["checks"].append({
+                "check_id": check["id"],
+                "title": check["title"],
+                "status": status,
+                "violating_findings": [f.title for f in violating_findings]
+            })
+            
+        results.append(policy_result)
+        
+    return results

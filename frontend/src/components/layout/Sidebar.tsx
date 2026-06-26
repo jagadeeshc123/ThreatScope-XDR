@@ -10,6 +10,7 @@ export function Sidebar() {
     { name: 'Targets', path: '/targets', icon: Target },
     { name: 'Scans', path: '/scans', icon: Activity },
     { name: 'Reports', path: '/reports', icon: FileText },
+    { name: 'Policies', path: '/policies', icon: Shield },
   ];
 
   return (

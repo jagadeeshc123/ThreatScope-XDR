@@ -43,6 +43,61 @@ class Finding(FindingBase):
     class Config:
         from_attributes = True
 
+class CrawlNodeBase(BaseModel):
+    url: str
+    path: str
+    status_code: Optional[int] = None
+    content_type: Optional[str] = None
+    page_title: Optional[str] = None
+    depth: int
+    parent_url: Optional[str] = None
+    has_forms: bool = False
+    has_password_field: bool = False
+    finding_count: int = 0
+
+class CrawlNode(CrawlNodeBase):
+    id: int
+    scan_id: int
+    target_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PostureDiffBase(BaseModel):
+    new_findings_count: int
+    resolved_findings_count: int
+    unchanged_findings_count: int
+    risk_score_delta: float
+    posture_score_delta: int
+    summary: Optional[str] = None
+
+class PostureDiff(PostureDiffBase):
+    id: int
+    current_scan_id: int
+    previous_scan_id: int
+    target_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class EvidenceArtifactBase(BaseModel):
+    artifact_type: str
+    title: str
+    file_path: Optional[str] = None
+    redacted_text: Optional[str] = None
+    related_url: Optional[str] = None
+
+class EvidenceArtifact(EvidenceArtifactBase):
+    id: int
+    scan_id: int
+    target_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class ScanBase(BaseModel):
     profile: str
 
@@ -57,6 +112,14 @@ class Scan(ScanBase):
     completed_at: Optional[datetime]
     total_findings: int
     risk_score: float
+    
+    overall_posture_score: int = 100
+    posture_transport_security: int = 100
+    posture_browser_defense: int = 100
+    posture_session_safety: int = 100
+    posture_exposure_hygiene: int = 100
+    posture_authentication_surface: int = 100
+    
     error_message: Optional[str]
 
     class Config:
@@ -88,6 +151,7 @@ class DashboardSummary(BaseModel):
     total_scans: int
     total_findings: int
     overall_risk_score: float
+    overall_posture_score: int
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]

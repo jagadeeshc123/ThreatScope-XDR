@@ -1,0 +1,21 @@
+{
+  "policy_id": "POL-WEB-003",
+  "title": "Public Exposure Review",
+  "description": "Ensures that sensitive files, directories, and data are not publicly exposed.",
+  "checks": [
+    {
+      "id": "CHK-EXPOSED",
+      "title": "No Sensitive Files Exposed",
+      "related_finding_titles": ["Sensitive Public Path Exposure:"],
+      "expected_state": "Configuration files, backups, and Git directories are not accessible.",
+      "severity_impact": "high"
+    },
+    {
+      "id": "CHK-METADATA",
+      "title": "Public Metadata Discovered",
+      "related_finding_titles": ["Public Metadata Exposed:"],
+      "expected_state": "Public metadata files like robots.txt and sitemap.xml were discovered.",
+      "severity_impact": "info"
+    }
+  ]
+}

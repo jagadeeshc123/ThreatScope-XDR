@@ -31,6 +31,14 @@ class Scan(Base):
     completed_at = Column(DateTime, nullable=True)
     total_findings = Column(Integer, default=0)
     risk_score = Column(Float, default=0.0)
+    
+    overall_posture_score = Column(Integer, default=100)
+    posture_transport_security = Column(Integer, default=100)
+    posture_browser_defense = Column(Integer, default=100)
+    posture_session_safety = Column(Integer, default=100)
+    posture_exposure_hygiene = Column(Integer, default=100)
+    posture_authentication_surface = Column(Integer, default=100)
+    
     error_message = Column(Text, nullable=True)
 
     target = relationship("Target", back_populates="scans")
@@ -58,6 +66,59 @@ class Finding(Base):
     scan = relationship("Scan", back_populates="findings")
     target = relationship("Target", back_populates="findings")
 
+
+class CrawlNode(Base):
+    __tablename__ = "crawl_nodes"
+    id = Column(Integer, primary_key=True, index=True)
+    scan_id = Column(Integer, ForeignKey("scans.id"))
+    target_id = Column(Integer, ForeignKey("targets.id"))
+    url = Column(String, index=True)
+    path = Column(String)
+    status_code = Column(Integer, nullable=True)
+    content_type = Column(String, nullable=True)
+    page_title = Column(String, nullable=True)
+    depth = Column(Integer)
+    parent_url = Column(String, nullable=True)
+    has_forms = Column(Boolean, default=False)
+    has_password_field = Column(Boolean, default=False)
+    finding_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=utcnow)
+    
+    scan = relationship("Scan", backref="crawl_nodes")
+    target = relationship("Target")
+
+class PostureDiff(Base):
+    __tablename__ = "posture_diffs"
+    id = Column(Integer, primary_key=True, index=True)
+    current_scan_id = Column(Integer, ForeignKey("scans.id"))
+    previous_scan_id = Column(Integer, ForeignKey("scans.id"))
+    target_id = Column(Integer, ForeignKey("targets.id"))
+    new_findings_count = Column(Integer, default=0)
+    resolved_findings_count = Column(Integer, default=0)
+    unchanged_findings_count = Column(Integer, default=0)
+    risk_score_delta = Column(Float, default=0.0)
+    posture_score_delta = Column(Integer, default=0)
+    summary = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    
+    current_scan = relationship("Scan", foreign_keys=[current_scan_id])
+    previous_scan = relationship("Scan", foreign_keys=[previous_scan_id])
+    target = relationship("Target")
+
+class EvidenceArtifact(Base):
+    __tablename__ = "evidence_artifacts"
+    id = Column(Integer, primary_key=True, index=True)
+    scan_id = Column(Integer, ForeignKey("scans.id"))
+    target_id = Column(Integer, ForeignKey("targets.id"))
+    artifact_type = Column(String) # screenshot, html_snippet, header_snapshot
+    title = Column(String)
+    file_path = Column(String, nullable=True)
+    redacted_text = Column(Text, nullable=True)
+    related_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    
+    scan = relationship("Scan", backref="evidence")
+    target = relationship("Target")
 
 class Report(Base):
     __tablename__ = "reports"

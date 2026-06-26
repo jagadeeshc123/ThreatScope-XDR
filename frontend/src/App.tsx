@@ -9,6 +9,7 @@ import { NewScan } from './pages/NewScan';
 import { Reports } from './pages/Reports';
 import { LandingPage } from './pages/LandingPage';
 import { SearchResultsPage } from './pages/SearchResults';
+import { Policies } from './pages/Policies';
 import { Profile } from './pages/Profile';
 import { Notifications } from './pages/Notifications';
 import { Settings } from './pages/Settings';
@@ -39,6 +40,7 @@ function App() {
           <Route path="/scans" element={<Scans />} />
           <Route path="/scans/new" element={<NewScan />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/notifications" element={<Notifications />} />

@@ -1,39 +1,43 @@
-# VulnScope - Automated Web Application Security Assessment Platform
+# VulnScope
+**Web Application Exposure & Security Posture Assessment Platform**
 
-VulnScope is a modern, independent cybersecurity assessment platform designed for safe, authorized web application security scanning and report generation. It performs reconnaissance, passive vulnerability checks, risk analysis, and structured reporting to identify security weaknesses before attackers do.
+VulnScope is not an API security scanner. It focuses on browser-facing web applications, client-side exposure, security header posture, cookie safety, public resource exposure, crawl mapping, visual evidence, posture scoring, and scan-to-scan drift detection.
 
-## Features
+## Core Differentiators
+- **No API Focus**: Specifically ignores OpenAPI/Swagger parsing and API-centric workflows, focusing on browser interactions.
+- **Posture-Centric**: Scores targets across Transport Security, Browser Defenses, Session Safety, Exposure Hygiene, and Auth Surface out of 100.
+- **Drift Detection**: Tracks security posture changes and new/resolved findings scan-to-scan.
+- **Visual Evidence**: Captures response headers and HTML snippets of sensitive pages (e.g., login forms) as proof of exposure.
+- **Crawl Maps**: Visualizes the site hierarchy, forms, and login input presence across depth levels.
+- **Policy Compliance**: Ships with JSON-based compliance packs (e.g., Web Baseline, Browser Hardening, Public Exposure) to map findings to desired states.
 
-- **Safe Reconnaissance**: Uses passive and non-destructive checks (no brute-force, no exploit payloads).
-- **Comprehensive Checks**: Identifies exposed services, missing security headers, insecure cookies, CORS misconfigurations, mixed content, and more.
-- **Risk Scoring**: Automatically calculates CVSS-inspired risk scores based on finding severity.
-- **Remediation Engine**: Provides actionable remediation advice for identified vulnerabilities.
-- **Professional Reporting**: Generates detailed HTML/PDF reports with executive summaries and evidence.
-- **Modern UI**: A sleek, dark-themed dashboard built with React, Tailwind CSS, and Recharts.
+## Technology Stack
+- **Frontend**: React (Vite), TypeScript, Tailwind CSS, Recharts, Lucide React.
+- **Backend**: FastAPI (Python), SQLite (SQLAlchemy), BeautifulSoup4, Pydantic, httpx, Jinja2.
+- **Deployment**: Docker, Docker Compose.
 
-## Architecture & Tech Stack
+## Key Features
+1. **Web Crawl Map**: Visual representation of the application structure, tracking where forms and password fields are located.
+2. **Posture Score Breakdown**: Detailed 0-100 scoring across 5 key client-side security domains.
+3. **Posture Drift**: Identifies exactly what degraded or improved between the latest and previous scan.
+4. **Evidence Collection**: Lightweight artifacts that prove the presence of misconfigurations.
+5. **Compliance Policies**: Automatic evaluation of findings against JSON policy definitions.
+6. **Executive Reports**: HTML-based report generation for executive summaries.
 
-- **Frontend**: React + Vite, TypeScript, Tailwind CSS, Recharts, React Router
-- **Backend**: Python FastAPI, SQLite, SQLAlchemy ORM, Pydantic, httpx, BeautifulSoup4, Jinja2
-- **Deployment**: Docker, Docker Compose
+## Running VulnScope
+Use Docker Compose to run the full stack:
+```bash
+docker-compose up --build
+```
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API Docs: `http://localhost:8000/docs`
 
-## Quick Start (Docker)
+> Note: For testing the scanner inside Docker, add the local target as `http://demo-target:8081`. If running locally without Docker, use `http://localhost:8081`.
 
-1. Clone the repository and navigate to the root directory.
-2. Ensure you have Docker and Docker Compose installed.
-3. Run the following command:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-4. Open `http://localhost:5173` in your browser to access the VulnScope dashboard.
-5. The backend API is available at `http://localhost:8000/docs` (Swagger UI).
-
-## Safe Scanning Disclaimer
-
-VulnScope is built exclusively for **authorized** web application security scanning. It requires explicit confirmation of authorization before a target can be added. Do not use this tool against systems you do not own or have explicit permission to test.
-
-## Resume Bullet Point
-
-*“Developed an automated web security assessment platform that performs reconnaissance, vulnerability scanning, and security analysis to identify exposed services, insecure configurations, authentication weaknesses, and common web application vulnerabilities. Designed the platform to generate structured assessment reports and remediation recommendations, streamlining vulnerability assessment and penetration testing workflows.”*
+## Repository Structure
+- `/frontend`: React dashboard application.
+- `/backend`: FastAPI service and scanner engine.
+- `/backend/app/scanner/orchestrator.py`: Core scan logic, crawl processing, diff generation, and evidence capture.
+- `/backend/app/policies/`: JSON compliance packs.
+- `/docker-compose.yml`: Local environment setup.

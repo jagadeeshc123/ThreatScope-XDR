@@ -1,0 +1,21 @@
+{
+  "policy_id": "POL-WEB-002",
+  "title": "Browser Hardening",
+  "description": "Checks for security headers that instruct the browser to activate client-side defenses.",
+  "checks": [
+    {
+      "id": "CHK-CSP",
+      "title": "Content Security Policy",
+      "related_finding_titles": ["Missing Content-Security-Policy"],
+      "expected_state": "CSP header is present and adequately restricts origins.",
+      "severity_impact": "medium"
+    },
+    {
+      "id": "CHK-FRAME",
+      "title": "Clickjacking Defense",
+      "related_finding_titles": ["Missing X-Frame-Options"],
+      "expected_state": "X-Frame-Options or CSP frame-ancestors is implemented.",
+      "severity_impact": "medium"
+    }
+  ]
+}

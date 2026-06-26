@@ -1,0 +1,21 @@
+{
+  "policy_id": "POL-WEB-004",
+  "title": "Authentication Surface Review",
+  "description": "Reviews the security of login forms and credential handling in the browser.",
+  "checks": [
+    {
+      "id": "CHK-AUTH",
+      "title": "Secure Credential Transmission",
+      "related_finding_titles": ["Password Form over HTTP"],
+      "expected_state": "Login forms are served over HTTPS and submit to HTTPS endpoints.",
+      "severity_impact": "critical"
+    },
+    {
+      "id": "CHK-AUTOCOMP",
+      "title": "Password Autocomplete Disabled",
+      "related_finding_titles": ["Missing Autocomplete Attribute on Password Field"],
+      "expected_state": "Password fields should have autocomplete disabled where appropriate.",
+      "severity_impact": "low"
+    }
+  ]
+}

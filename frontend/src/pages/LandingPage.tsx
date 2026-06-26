@@ -20,10 +20,10 @@ export function LandingPage() {
             <Lock className="w-4 h-4 mr-2" /> Safe, Authorized Reconnaissance Only
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-tight bg-gradient-to-br from-white to-gray-500 bg-clip-text text-transparent">
-            Automated Web App <br /> Security Assessment.
+            Web Application Exposure & <br /> Security Posture Assessment.
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Identify exposed services, insecure configurations, and authentication weaknesses before attackers do. Designed for authorized security professionals.
+            Continuously evaluate browser-facing web applications for configuration weaknesses, exposed public resources, client-side security risks, and security posture drift.
           </p>
         </div>
 
@@ -32,34 +32,34 @@ export function LandingPage() {
             <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-6">
               <Activity className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Passive Checks</h3>
+            <h3 className="text-xl font-bold mb-3">Web Exposure Monitoring</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Analyze headers, cookies, TLS misconfigurations, and technology disclosures without intrusive or destructive payloads.
+              Analyze headers, cookies, TLS misconfigurations, and technology disclosures by mapping the client-side surface safely.
             </p>
           </div>
           <div className="p-6 bg-card border border-border rounded-xl">
             <div className="w-12 h-12 bg-secondary/30 rounded-lg flex items-center justify-center text-secondary-foreground mb-6">
               <ShieldAlert className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Risk Scoring</h3>
+            <h3 className="text-xl font-bold mb-3">Posture Drift & Scoring</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Automatically calculate CVSS-inspired risk scores based on finding severity and aggregate target exposure.
+              Automatically calculate security posture scores across multiple categories and track scan-to-scan configuration drift.
             </p>
           </div>
           <div className="p-6 bg-card border border-border rounded-xl">
             <div className="w-12 h-12 bg-accent/30 rounded-lg flex items-center justify-center text-accent-foreground mb-6">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Actionable Reports</h3>
+            <h3 className="text-xl font-bold mb-3">Evidence-Based Reporting</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Generate structured HTML/PDF reports with evidence, impact, and clear remediation instructions for stakeholders.
+              Generate structured posture reports containing visual evidence, crawl maps, and compliance checklists.
             </p>
           </div>
         </div>
       </main>
 
       <footer className="py-6 border-t border-border text-center text-sm text-muted-foreground">
-        VulnScope - Built for authorized web application security scanning.
+        VulnScope - Built for authorized web application exposure monitoring.
       </footer>
     </div>
   );

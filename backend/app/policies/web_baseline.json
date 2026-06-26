@@ -1,0 +1,21 @@
+{
+  "policy_id": "POL-WEB-001",
+  "title": "Web Baseline",
+  "description": "Baseline web configuration ensuring secure transport and minimum hygiene.",
+  "checks": [
+    {
+      "id": "CHK-TLS",
+      "title": "HTTPS Enforced",
+      "related_finding_titles": ["Cleartext HTTP Usage"],
+      "expected_state": "All traffic over secure HTTPS without mixed content.",
+      "severity_impact": "high"
+    },
+    {
+      "id": "CHK-TECH",
+      "title": "No Technology Disclosure",
+      "related_finding_titles": ["Server Header Disclosure", "X-Powered-By Disclosure"],
+      "expected_state": "Server and framework versions are hidden.",
+      "severity_impact": "low"
+    }
+  ]
+}

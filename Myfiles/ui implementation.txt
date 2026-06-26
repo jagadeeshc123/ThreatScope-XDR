@@ -1,0 +1,32 @@
+To run the VulnScope UI (and the entire platform), the easiest and recommended method is to use Docker Compose, as it automatically spins up the frontend, backend, PostgreSQL database, and demo target all at once.
+
+Option 1: Run with Docker Compose (Recommended)
+From the root directory (C:\Users\jagad\OneDrive\Desktop\vulnscope), open your terminal and run:
+
+bash
+# Stop any old containers and clean up volumes
+docker compose down -v --remove-orphans
+# Build and start all services
+docker compose up --build
+Once the containers are running, you can access the UI at:
+
+Frontend UI: http://localhost:5173
+Backend API / Swagger: http://localhost:8000/docs
+Built-in Demo Target: http://demo-target:8081 (Use this URL inside the VulnScope UI when adding a target to scan).
+
+
+This error indicates that Docker Desktop is currently not running on your Windows machine, or the Docker engine hasn't fully started yet.
+
+Here is how to fix it:
+
+Option 1: Start Docker Desktop (Easiest)
+Open your Windows Start menu, search for Docker Desktop, and open it.
+Wait a few moments for the icon in your system tray (bottom right) to turn green, or for the Docker Dashboard to say "Engine running".
+Once Docker is fully running, run the command again in your terminal:
+bash
+docker compose down -v --remove-orphans
+docker compose up --build
+
+Frontend UI: http://localhost:5173
+Backend API / Swagger: http://localhost:8000/docs
+Built-in Demo Target: http://demo-target:8081 (Use this URL inside the VulnScope UI when adding a target to scan).

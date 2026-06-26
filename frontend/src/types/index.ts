@@ -17,6 +17,12 @@ export interface Scan {
   completed_at: string | null;
   total_findings: number;
   risk_score: number;
+  overall_posture_score: number;
+  posture_transport_security: number;
+  posture_browser_defense: number;
+  posture_session_safety: number;
+  posture_exposure_hygiene: number;
+  posture_authentication_surface: number;
   error_message: string | null;
 }
 
@@ -37,6 +43,49 @@ export interface Finding {
   created_at: string;
 }
 
+export interface CrawlNode {
+  id: number;
+  scan_id: number;
+  target_id: number;
+  url: string;
+  path: string;
+  status_code: number | null;
+  content_type: string | null;
+  page_title: string | null;
+  depth: number;
+  parent_url: string | null;
+  has_forms: boolean;
+  has_password_field: boolean;
+  finding_count: number;
+  created_at: string;
+}
+
+export interface PostureDiff {
+  id: number;
+  current_scan_id: number;
+  previous_scan_id: number;
+  target_id: number;
+  new_findings_count: number;
+  resolved_findings_count: number;
+  unchanged_findings_count: number;
+  risk_score_delta: number;
+  posture_score_delta: number;
+  summary: string | null;
+  created_at: string;
+}
+
+export interface EvidenceArtifact {
+  id: number;
+  scan_id: number;
+  target_id: number;
+  artifact_type: string;
+  title: string;
+  file_path: string | null;
+  redacted_text: string | null;
+  related_url: string | null;
+  created_at: string;
+}
+
 export interface Report {
   id: number;
   scan_id: number;
@@ -54,6 +103,8 @@ export interface DashboardSummary {
   total_findings: number;
   critical_findings: number;
   high_findings: number;
+  overall_risk_score: number;
+  overall_posture_score: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];

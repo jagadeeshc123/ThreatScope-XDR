@@ -10,6 +10,7 @@ from app.scanner.checks import (
     technology_disclosure, forms_auth_surface
 )
 from app.scanner.risk_scoring import calculate_risk_score
+from app.scanner.posture_scoring import calculate_posture_scores
 from app.scanner.remediation import get_remediation_for_finding
 
 def utcnow():
@@ -54,6 +55,18 @@ async def async_run_scan(scan_id: int):
         html_content = response.text
         headers = dict(response.headers)
         
+        # Capture header evidence
+        header_evidence = models.EvidenceArtifact(
+            scan_id=scan.id,
+            target_id=target.id,
+            artifact_type="header_snapshot",
+            title="Base URL Response Headers",
+            redacted_text=str(headers),
+            related_url=base_url
+        )
+        db.add(header_evidence)
+        db.commit()
+        
         # Passive Checks
         findings_data.extend(security_headers.check_security_headers(base_url, headers))
         findings_data.extend(cookies.check_set_cookie_headers(base_url, list(response.headers.multi_items()), response.url.scheme))
@@ -74,11 +87,48 @@ async def async_run_scan(scan_id: int):
             
             # Crawl
             crawler = Crawler(base_url, max_pages=max_pages, max_depth=max_depth)
-            pages_content = await crawler.crawl(http_client)
+            pages_data = await crawler.crawl(http_client)
             
             # Form / Auth Check on all crawled pages
-            for url, content in pages_content.items():
-                findings_data.extend(forms_auth_surface.check_forms_and_auth(url, content))
+            for url, data in pages_data.items():
+                html = data.get('html')
+                if html:
+                    findings_data.extend(forms_auth_surface.check_forms_and_auth(url, html))
+                
+                
+                # Save crawl node
+                node_info = data.get('node_info', {})
+                crawl_node = models.CrawlNode(
+                    scan_id=scan.id,
+                    target_id=target.id,
+                    url=node_info.get('url'),
+                    path=node_info.get('path'),
+                    status_code=node_info.get('status_code'),
+                    content_type=node_info.get('content_type'),
+                    page_title=node_info.get('page_title'),
+                    depth=node_info.get('depth'),
+                    parent_url=node_info.get('parent_url'),
+                    has_forms=node_info.get('has_forms', False),
+                    has_password_field=node_info.get('has_password_field', False),
+                    finding_count=0 # updated below
+                )
+                db.add(crawl_node)
+                
+                # Capture HTML snippet evidence if it has a password field
+                if crawl_node.has_password_field and html:
+                    # Redact potentially sensitive content, keep a snippet
+                    snippet = html[:2000] # just store the first 2KB as a snippet
+                    html_evidence = models.EvidenceArtifact(
+                        scan_id=scan.id,
+                        target_id=target.id,
+                        artifact_type="html_snippet",
+                        title=f"Login Page Snippet ({crawl_node.path})",
+                        redacted_text=snippet,
+                        related_url=crawl_node.url
+                    )
+                    db.add(html_evidence)
+            
+            db.commit()
 
         await http_client.close()
 
@@ -101,10 +151,64 @@ async def async_run_scan(scan_id: int):
             )
             db.add(finding)
             
+            # Update crawl node finding count
+            if f.get("affected_url"):
+                node = db.query(models.CrawlNode).filter(models.CrawlNode.scan_id == scan.id, models.CrawlNode.url == f["affected_url"]).first()
+                if node:
+                    node.finding_count += 1
+            
         scan.total_findings = len(findings_data)
         scan.risk_score = calculate_risk_score(findings_data)
+        
+        posture_scores = calculate_posture_scores(findings_data)
+        scan.overall_posture_score = posture_scores["overall_posture_score"]
+        scan.posture_transport_security = posture_scores["transport_security"]
+        scan.posture_browser_defense = posture_scores["browser_defense"]
+        scan.posture_session_safety = posture_scores["session_safety"]
+        scan.posture_exposure_hygiene = posture_scores["exposure_hygiene"]
+        scan.posture_authentication_surface = posture_scores["authentication_surface"]
+
         scan.status = "completed"
         scan.completed_at = utcnow()
+        db.commit()
+
+        # Check for previous scan to generate PostureDiff
+        previous_scan = db.query(models.Scan).filter(
+            models.Scan.target_id == target.id,
+            models.Scan.id < scan.id,
+            models.Scan.status == "completed"
+        ).order_by(models.Scan.id.desc()).first()
+
+        if previous_scan:
+            prev_findings = db.query(models.Finding).filter(models.Finding.scan_id == previous_scan.id).all()
+            
+            curr_keys = set(f"{f['title']}-{f.get('affected_url', '')}" for f in findings_data)
+            prev_keys = set(f"{pf.title}-{pf.affected_url or ''}" for pf in prev_findings)
+            
+            new_count = len(curr_keys - prev_keys)
+            resolved_count = len(prev_keys - curr_keys)
+            unchanged_count = len(curr_keys & prev_keys)
+            
+            risk_delta = scan.risk_score - previous_scan.risk_score
+            posture_delta = scan.overall_posture_score - previous_scan.overall_posture_score
+            
+            summary = "Posture worsened" if risk_delta > 0 else ("Posture improved" if risk_delta < 0 else "Posture stable")
+            if new_count > 0:
+                summary += f" ({new_count} new issues)"
+                
+            posture_diff = models.PostureDiff(
+                current_scan_id=scan.id,
+                previous_scan_id=previous_scan.id,
+                target_id=target.id,
+                new_findings_count=new_count,
+                resolved_findings_count=resolved_count,
+                unchanged_findings_count=unchanged_count,
+                risk_score_delta=risk_delta,
+                posture_score_delta=posture_delta,
+                summary=summary
+            )
+            db.add(posture_diff)
+            db.commit()
         
         notif_complete = models.Notification(
             title="Scan Completed",

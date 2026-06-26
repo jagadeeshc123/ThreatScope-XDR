@@ -54,9 +54,10 @@ def health_check():
 def read_root():
     return {"message": "Welcome to VulnScope API"}
 
-from app.routers import targets, scans, dashboard, reports, notifications, profile, settings, search
+from app.routers import targets, scans, dashboard, reports, notifications, profile, settings, search, policies
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"])
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
+app.include_router(policies.router, prefix="/api/policies", tags=["Policies"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
