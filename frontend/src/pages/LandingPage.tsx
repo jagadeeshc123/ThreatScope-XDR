@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Shield, Lock, Activity, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Shield, Lock, Activity, ShieldAlert, CheckCircle, Radar, FileText, Database, Search, GitMerge, Gauge, ArrowRight } from 'lucide-react';
 
 export function LandingPage() {
   return (
@@ -25,6 +25,14 @@ export function LandingPage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Continuously evaluate browser-facing web applications for configuration weaknesses, exposed public resources, client-side security risks, and security posture drift.
           </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-4">
+            <Link to="/scans/new" className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+              Launch Demo Scan <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link to="/targets" className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-border font-medium hover:bg-muted transition-colors">
+              View Targets <Search className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left pt-12 border-t border-border/50">
@@ -54,6 +62,45 @@ export function LandingPage() {
             <p className="text-muted-foreground leading-relaxed">
               Generate structured posture reports containing visual evidence, crawl maps, and compliance checklists.
             </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full text-left">
+          <div className="p-6 bg-card border border-border rounded-xl">
+            <div className="w-12 h-12 bg-secondary/30 rounded-lg flex items-center justify-center text-secondary-foreground mb-6">
+              <Radar className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Reconnaissance Workflow</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Map pages, forms, login inputs, and exposed resources with safe crawling and controlled scan profiles.
+            </p>
+          </div>
+          <div className="p-6 bg-card border border-border rounded-xl">
+            <div className="w-12 h-12 bg-accent/30 rounded-lg flex items-center justify-center text-accent-foreground mb-6">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Evidence and Reporting</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Capture header snapshots, HTML evidence, policy checks, and summary reports for assessment handoff.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+          <div className="p-5 rounded-xl border border-border bg-background/60">
+            <Database className="w-5 h-5 text-primary mb-3" />
+            <h4 className="font-semibold mb-2">Risk classification</h4>
+            <p className="text-sm text-muted-foreground">Severity, confidence, and impact are grouped into a posture model that is easier to review.</p>
+          </div>
+          <div className="p-5 rounded-xl border border-border bg-background/60">
+            <GitMerge className="w-5 h-5 text-primary mb-3" />
+            <h4 className="font-semibold mb-2">Drift detection</h4>
+            <p className="text-sm text-muted-foreground">Compare scans over time to spot regressions, resolved findings, and new exposure.</p>
+          </div>
+          <div className="p-5 rounded-xl border border-border bg-background/60">
+            <Gauge className="w-5 h-5 text-primary mb-3" />
+            <h4 className="font-semibold mb-2">Executive-ready outputs</h4>
+            <p className="text-sm text-muted-foreground">Deliver clear summaries that support security reviews, remediation planning, and reporting.</p>
           </div>
         </div>
       </main>

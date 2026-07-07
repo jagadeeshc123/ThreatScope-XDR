@@ -1,84 +1,124 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Copy, Download, Eye, FileText } from 'lucide-react';
 import type { Report } from '../types';
-import { Download, FileText, Eye } from 'lucide-react';
+import { getReportHtml, getTargets, listFindings, listReports, listScans } from '../data/demoData';
+import { EmptyState, PageHeader, PageShell, RiskScoreBadge, SectionCard } from '../components/ui';
 
 export function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHtml, setSelectedHtml] = useState<string | null>(null);
-
-  const fetchReports = async () => {
-    try {
-      const res = await apiClient.get<Report[]>('/reports');
-      setReports(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   useEffect(() => {
-    fetchReports();
+    setReports(listReports());
+    setLoading(false);
   }, []);
 
-  const handleDownload = async (reportId: number) => {
-    window.open(`${apiClient.defaults.baseURL}/reports/${reportId}/download`, '_blank');
+  const scans = listScans();
+  const targets = getTargets();
+
+  const reportMetrics = (report: Report) => {
+    const scan = scans.find(item => item.id === report.scan_id);
+    const target = targets.find(item => item.id === report.target_id);
+    const findings = scan ? listFindings(scan.id) : [];
+    return {
+      scan,
+      target,
+      findings: findings.length,
+      priority: findings.filter(item => item.severity === 'critical' || item.severity === 'high').length,
+      risk: scan?.risk_score ?? 0,
+    };
   };
 
-  if (selectedHtml) {
+  const handleDownload = (report: Report) => {
+    const blob = new Blob([getReportHtml(report.id) || report.html_content], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+  };
+
+  const openPreview = (report: Report) => {
+    setSelectedReport(report);
+    setSelectedHtml(getReportHtml(report.id) || report.html_content);
+  };
+
+  if (selectedHtml && selectedReport) {
+    const metrics = reportMetrics(selectedReport);
     return (
-      <div className="p-8 space-y-6 h-full flex flex-col">
-        <button onClick={() => setSelectedHtml(null)} className="text-muted-foreground hover:text-foreground text-sm flex items-center">
-          ← Back to Reports
+      <PageShell className="max-w-none">
+        <button onClick={() => { setSelectedHtml(null); setSelectedReport(null); }} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Back to Reports
         </button>
-        <div className="flex-1 bg-white rounded-xl overflow-hidden shadow-lg border border-border">
-          <iframe srcDoc={selectedHtml} className="w-full h-full bg-white" title="Report Preview" />
+        <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+          <SectionCard title="Report Preview" subtitle="Demo data. Review summary and open the generated HTML output.">
+            <div className="space-y-5">
+              <div>
+                <h1 className="text-2xl font-semibold">{selectedReport.title}</h1>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{selectedReport.executive_summary}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Metric label="Target" value={metrics.target?.name || 'Unknown'} />
+                <Metric label="Profile" value={metrics.scan?.profile || 'Unknown'} />
+                <Metric label="Findings" value={metrics.findings.toString()} />
+                <Metric label="Critical / High" value={metrics.priority.toString()} />
+              </div>
+              <RiskScoreBadge score={metrics.risk} />
+              <div className="flex flex-col gap-2">
+                <button onClick={() => navigator.clipboard.writeText(selectedReport.executive_summary)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border text-sm font-semibold hover:bg-muted"><Copy className="h-4 w-4" /> Copy Summary</button>
+                <button onClick={() => handleDownload(selectedReport)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"><Download className="h-4 w-4" /> Export HTML</button>
+              </div>
+            </div>
+          </SectionCard>
+          <div className="min-h-[70vh] overflow-hidden rounded-lg border border-border bg-white shadow-lg shadow-black/20">
+            <iframe srcDoc={selectedHtml} className="h-full min-h-[70vh] w-full bg-white" title="Report Preview" />
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight">Assessment Reports</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reports.map(report => (
-          <div key={report.id} className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-secondary/20 text-secondary-foreground rounded-lg">
-                <FileText className="w-6 h-6" />
+    <PageShell>
+      <PageHeader title="Assessment Reports" subtitle="Demo data. Professional report cards with target, profile, date, findings, risk score, and export actions." />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {reports.map(report => {
+          const metrics = reportMetrics(report);
+          return (
+            <article key={report.id} className="flex min-h-[260px] flex-col rounded-lg border border-border bg-card/90 p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="rounded-md bg-primary/15 p-3 text-primary"><FileText className="h-5 w-5" /></div>
+                <span className="text-sm text-muted-foreground">{new Date(report.created_at).toLocaleDateString()}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{new Date(report.created_at).toLocaleDateString()}</span>
-            </div>
-            <h3 className="font-bold text-lg mb-2">{report.title}</h3>
-            <p className="text-sm text-muted-foreground flex-1 mb-6">{report.executive_summary}</p>
-            
-            <div className="flex space-x-3 mt-auto">
-              <button 
-                onClick={() => setSelectedHtml(report.html_content)}
-                className="flex-1 flex items-center justify-center bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/80 text-sm font-medium"
-              >
-                <Eye className="w-4 h-4 mr-2" /> View
-              </button>
-              <button 
-                onClick={() => handleDownload(report.id)}
-                className="flex-1 flex items-center justify-center border border-border px-4 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <Download className="w-4 h-4 mr-2" /> Download
-              </button>
-            </div>
-          </div>
-        ))}
-        
-        {!loading && reports.length === 0 && (
-          <div className="col-span-full py-16 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-            No reports generated yet. Go to a completed scan to generate a report.
-          </div>
-        )}
+              <h2 className="mt-4 text-lg font-semibold">{report.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{report.executive_summary}</p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <Metric label="Target" value={metrics.target?.name || 'Unknown target'} />
+                <Metric label="Scan Profile" value={metrics.scan?.profile || 'Unknown profile'} />
+                <Metric label="Findings" value={metrics.findings.toString()} />
+                <Metric label="Critical / High" value={metrics.priority.toString()} />
+              </div>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <RiskScoreBadge score={metrics.risk} />
+                <div className="flex gap-2">
+                  <button onClick={() => openPreview(report)} className="inline-flex h-10 items-center gap-2 rounded-md bg-secondary px-4 text-sm font-semibold text-secondary-foreground hover:bg-secondary/80"><Eye className="h-4 w-4" /> View</button>
+                  <button onClick={() => handleDownload(report)} className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted"><Download className="h-4 w-4" /> Export</button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
+      {!loading && reports.length === 0 && (
+        <EmptyState title="No reports yet" description="Completed demo scans can generate assessment reports." />
+      )}
+    </PageShell>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5">{value}</p>
     </div>
   );
 }

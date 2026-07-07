@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
 import type { Notification } from '../types';
 import { Bell, Check, CheckCircle2, Trash2, Info, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { deleteNotification as deleteDemoNotification, getNotifications, markAllNotificationsRead as markAllDemoNotificationsRead, markNotificationRead as markDemoNotificationRead } from '../data/demoData';
 
 export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -13,39 +13,33 @@ export function Notifications() {
   }, []);
 
   const fetchNotifications = async () => {
-    try {
-      const res = await apiClient.get('/notifications?limit=100');
-      setNotifications(res.data);
-    } catch (e) {
-      toast.error('Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
+    setNotifications(getNotifications(100));
+    setLoading(false);
   };
 
   const markAsRead = async (id: number) => {
     try {
-      await apiClient.patch(`/notifications/${id}/read`);
+      markDemoNotificationRead(id);
       setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
-    } catch (e) {}
+    } catch {}
   };
 
   const markAllRead = async () => {
     try {
-      await apiClient.patch('/notifications/mark-all-read');
+      markAllDemoNotificationsRead();
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
       toast.success('All notifications marked as read');
-    } catch (e) {
+    } catch {
       toast.error('Failed to mark all as read');
     }
   };
 
   const deleteNotification = async (id: number) => {
     try {
-      await apiClient.delete(`/notifications/${id}`);
+      deleteDemoNotification(id);
       setNotifications(notifications.filter(n => n.id !== id));
       toast.success('Notification deleted');
-    } catch (e) {
+    } catch {
       toast.error('Failed to delete notification');
     }
   };

@@ -1,157 +1,196 @@
-import { useState, useEffect } from 'react';
-import { ShieldAlert, Crosshair, Search, Shield, AlertTriangle } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  FileText,
+  Radar,
+  Search,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Target,
+} from 'lucide-react';
+import { Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import type { DashboardSummary } from '../types';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { getDashboardSummary, getPolicies, getTargets, listFindings, listReports, listScans } from '../data/demoData';
+import { EmptyState, FindingCard, PageHeader, PageShell, RiskScoreBadge, SectionCard, SeverityBadge, StatCard, StatusBadge } from '../components/ui';
 
-const COLORS = {
-  critical: '#e53e3e',
-  high: '#dd6b20',
-  medium: '#d69e2e',
-  low: '#3182ce',
-  info: '#718096',
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: '#f87171',
+  high: '#fb923c',
+  medium: '#fbbf24',
+  low: '#60a5fa',
+  info: '#94a3b8',
 };
 
 export function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const res = await apiClient.get<DashboardSummary>('/dashboard/summary');
-        setSummary(res.data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard summary", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSummary();
+    setSummary(getDashboardSummary());
   }, []);
 
-  if (loading || !summary) {
-    return <div className="p-8 flex items-center justify-center h-full">Loading dashboard...</div>;
+  const scans = useMemo(() => listScans(), []);
+  const reports = useMemo(() => listReports(), []);
+  const targets = useMemo(() => getTargets(), []);
+  const policies = useMemo(() => getPolicies(), []);
+
+  if (!summary) {
+    return <PageShell><div className="text-muted-foreground">Loading dashboard...</div></PageShell>;
   }
 
-  const chartData = Object.entries(summary.severity_distribution).map(([key, value]) => ({
-    name: key.charAt(0).toUpperCase() + key.slice(1),
-    value,
-    color: COLORS[key as keyof typeof COLORS] || '#000',
-  })).filter(d => d.value > 0);
+  const severityData = Object.entries(summary.severity_distribution)
+    .map(([name, value]) => ({ name, value, color: SEVERITY_COLORS[name] || SEVERITY_COLORS.info }))
+    .filter(item => item.value > 0);
+
+  const trendData = scans.slice(0, 7).reverse().map(scan => ({
+    label: `#${scan.id}`,
+    posture: scan.overall_posture_score,
+    risk: Number(scan.risk_score.toFixed(1)),
+  }));
+
+  const recentFindings = scans
+    .flatMap(scan => listFindings(scan.id))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, 4);
+
+  const highPriority = summary.critical_findings + summary.high_findings;
+  const policyCheckCount = policies.reduce((total, policy) => total + policy.checks.length, 0);
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-1">Monitor browser-facing web application exposure, security posture, and configuration drift.</p>
+    <PageShell>
+      <PageHeader
+        title="Dashboard Overview"
+        subtitle="Demo data. Monitor web application exposure, safe scan history, report coverage, and policy posture from one operational view."
+        actions={
+          <>
+            <Link to="/scans/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+              Start Scan <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link to="/reports" className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted">
+              View Reports <FileText className="h-4 w-4" />
+            </Link>
+          </>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <StatCard label="Targets" value={summary.total_targets} detail="Authorized assets" icon={<Target className="h-5 w-5" />} tone="info" />
+        <StatCard label="Scans" value={summary.total_scans} detail={`${summary.active_scans} active`} icon={<Search className="h-5 w-5" />} tone="good" />
+        <StatCard label="Findings" value={summary.total_findings} detail="Open demo issues" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="Critical / High" value={highPriority} detail="Priority queue" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
+        <StatCard label="Reports" value={reports.length} detail="Generated outputs" icon={<FileText className="h-5 w-5" />} tone="default" />
+        <StatCard label="Posture Score" value={<>{summary.overall_posture_score}<span className="text-base text-muted-foreground">/100</span></>} detail="Average posture" icon={<Shield className="h-5 w-5" />} tone="good" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-card border border-border p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-muted-foreground">Posture Score</h3>
-            <div className="p-2 bg-primary/20 text-primary rounded-lg">
-              <Shield className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold">{summary.overall_posture_score} <span className="text-sm text-muted-foreground font-normal">/ 100</span></p>
-          <p className="text-sm text-muted-foreground mt-2 text-primary">Avg network security posture</p>
-        </div>
-
-        <div className="bg-card border border-border p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-muted-foreground">Avg Risk Score</h3>
-            <div className="p-2 bg-destructive/20 text-destructive rounded-lg">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold">{summary.overall_risk_score} <span className="text-sm text-muted-foreground font-normal">/ 10</span></p>
-          <p className="text-sm text-muted-foreground mt-2">Target risk level</p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex items-center">
-          <div className="p-4 bg-secondary/20 rounded-full mr-4 text-secondary-foreground">
-            <Search className="w-8 h-8" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground font-medium">Total Scans</p>
-            <p className="text-3xl font-bold">{summary.total_scans}</p>
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex items-center">
-          <div className="p-4 bg-destructive/10 rounded-full mr-4 text-destructive">
-            <ShieldAlert className="w-8 h-8" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground font-medium">Total Findings</p>
-            <p className="text-3xl font-bold">{summary.total_findings}</p>
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex items-center">
-          <div className="p-4 bg-accent/20 rounded-full mr-4 text-accent-foreground">
-            <Crosshair className="w-8 h-8" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground font-medium">Active Scans</p>
-            <p className="text-3xl font-bold">{summary.active_scans}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Severity Distribution</h2>
-          <div className="h-64">
-            {chartData.length > 0 ? (
+      <div className="grid gap-6 xl:grid-cols-5">
+        <SectionCard className="xl:col-span-3" title="Scan Trend" subtitle="Risk and posture movement across recent scan records." icon={<Radar className="h-5 w-5" />}>
+          <div className="h-72">
+            {trendData.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                  <Legend />
-                </PieChart>
+                <LineChart data={trendData} margin={{ top: 8, right: 18, left: -12, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                  <Line type="monotone" dataKey="posture" name="Posture" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="risk" name="Risk" stroke="#fb7185" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">No findings yet</div>
+              <EmptyState title="No scan trend yet" description="Run at least two scans to build a trend line." />
             )}
           </div>
-        </div>
+        </SectionCard>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Recent Scans</h2>
-          <div className="space-y-4">
-            {summary.recent_scans.length > 0 ? (
-              summary.recent_scans.map(scan => (
-                <div key={scan.id} className="flex justify-between items-center p-4 border border-border rounded-lg bg-background/50 hover:bg-background/80 transition-colors">
-                  <div>
-                    <p className="font-semibold text-sm">Scan #{scan.id} - {scan.profile}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(scan.started_at).toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold uppercase ${scan.status === 'completed' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                      {scan.status}
-                    </span>
-                    <p className="text-xs text-muted-foreground mt-1">Findings: {scan.total_findings}</p>
-                  </div>
+        <SectionCard className="xl:col-span-2" title="Severity Distribution" subtitle="Open findings grouped by severity." icon={<ShieldAlert className="h-5 w-5" />}>
+          <div className="grid gap-4 lg:grid-cols-[1fr_150px]">
+            <div className="h-72">
+              {severityData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={severityData} cx="50%" cy="50%" innerRadius={58} outerRadius={86} paddingAngle={3} dataKey="value">
+                      {severityData.map(entry => <Cell key={entry.name} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                    <Legend formatter={(value) => <span className="text-sm text-muted-foreground capitalize">{value}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState title="No findings yet" description="Completed scans with findings will appear here." />
+              )}
+            </div>
+            <div className="space-y-2">
+              {severityData.map(item => (
+                <div key={item.name} className="flex items-center justify-between rounded-md border border-border bg-background/60 px-3 py-2">
+                  <SeverityBadge severity={item.name} />
+                  <span className="text-sm font-semibold">{item.value}</span>
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-muted-foreground py-8">No recent scans</div>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        </SectionCard>
       </div>
-    </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <SectionCard className="xl:col-span-2" title="Recent Scans" subtitle="Latest scan records with target, status, findings, and risk." icon={<Activity className="h-5 w-5" />}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="border-b border-border text-xs font-semibold text-muted-foreground">
+                <tr>
+                  <th className="py-3 pr-4">Scan</th>
+                  <th className="py-3 pr-4">Target</th>
+                  <th className="py-3 pr-4">Profile</th>
+                  <th className="py-3 pr-4">Status</th>
+                  <th className="py-3 pr-4">Findings</th>
+                  <th className="py-3">Risk</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {summary.recent_scans.map(scan => (
+                  <tr key={scan.id} className="hover:bg-muted/30">
+                    <td className="py-4 pr-4 font-semibold">#{scan.id}</td>
+                    <td className="py-4 pr-4">{targets.find(target => target.id === scan.target_id)?.name || `Target #${scan.target_id}`}</td>
+                    <td className="py-4 pr-4 text-muted-foreground">{scan.profile}</td>
+                    <td className="py-4 pr-4"><StatusBadge status={scan.status} /></td>
+                    <td className="py-4 pr-4 font-semibold">{scan.total_findings}</td>
+                    <td className="py-4"><RiskScoreBadge score={scan.risk_score} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Policy Coverage" subtitle={`${policies.length} packs, ${policyCheckCount} checks mapped.`} icon={<ShieldCheck className="h-5 w-5" />}>
+          <div className="space-y-3">
+            {policies.map(policy => (
+              <div key={policy.policy_id} className="rounded-md border border-border bg-background/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{policy.title}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{policy.policy_id}</p>
+                  </div>
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">{policy.checks.length} checks</span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{policy.description}</p>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+
+      <SectionCard title="Recent Findings" subtitle="Evidence-backed issues from the latest assessments." icon={<ShieldAlert className="h-5 w-5" />}>
+        {recentFindings.length > 0 ? (
+          <div className="grid gap-4 xl:grid-cols-2">
+            {recentFindings.map(finding => <FindingCard key={finding.id} finding={finding} compact />)}
+          </div>
+        ) : (
+          <EmptyState title="No findings yet" description="Completed scans with detected issues will appear here." />
+        )}
+      </SectionCard>
+    </PageShell>
   );
 }

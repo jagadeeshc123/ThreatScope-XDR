@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { getProfile, updateProfile as updateDemoProfile } from '../data/demoData';
 
 export function Profile() {
   const [loading, setLoading] = useState(true);
@@ -19,30 +19,25 @@ export function Profile() {
   }, []);
 
   const fetchProfile = async () => {
-    try {
-      const res = await apiClient.get('/profile');
-      setFormData({
-        full_name: res.data.full_name,
-        email: res.data.email,
-        organization: res.data.organization,
-        role: res.data.role,
-        avatar_initials: res.data.avatar_initials
-      });
-    } catch (e) {
-      toast.error('Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
+    const profile = getProfile();
+    setFormData({
+      full_name: profile.full_name,
+      email: profile.email,
+      organization: profile.organization,
+      role: profile.role,
+      avatar_initials: profile.avatar_initials,
+    });
+    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await apiClient.patch('/profile', formData);
+      updateDemoProfile(formData);
       toast.success('Profile updated successfully');
       // Update topbar instantly by dispatching event if needed, but fetchProfile runs on intervals
-    } catch (e) {
+    } catch {
       toast.error('Failed to update profile');
     } finally {
       setSaving(false);

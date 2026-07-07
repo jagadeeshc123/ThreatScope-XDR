@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import type { Scan, Target, Finding, CrawlNode, PostureDiff, EvidenceArtifact } from '../types';
-import { Play, Activity, ChevronRight, AlertTriangle, ShieldAlert, GitMerge, TrendingUp, TrendingDown, Minus, Camera, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Activity, ArrowLeft, Camera, CheckCircle2, ChevronRight, FileText, GitMerge, Play, ShieldCheck, XCircle } from 'lucide-react';
+import type { CrawlNode, EvidenceArtifact, Finding, PostureDiff, Scan, Target } from '../types';
+import { getPolicyResults, getPostureDiff, getTargets, listCrawlNodes, listEvidence, listFindings, listScans, startDemoScan } from '../data/demoData';
+import { EmptyState, FindingCard, PageHeader, PageShell, RiskScoreBadge, SectionCard, StatCard, StatusBadge } from '../components/ui';
+
+type Tab = 'findings' | 'crawlMap' | 'drift' | 'evidence' | 'policies';
 
 export function Scans() {
   const [searchParams] = useSearchParams();
   const initialTargetId = searchParams.get('targetId');
-  
+  const highlightScanId = searchParams.get('highlight');
   const [scans, setScans] = useState<Scan[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,502 +21,293 @@ export function Scans() {
   const [postureDiff, setPostureDiff] = useState<PostureDiff | null>(null);
   const [evidence, setEvidence] = useState<EvidenceArtifact[]>([]);
   const [policyResults, setPolicyResults] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'findings' | 'crawlMap' | 'drift' | 'evidence' | 'policies'>('findings');
-  
-  const [formData, setFormData] = useState({
-    target_id: initialTargetId || '',
-    profile: 'Standard Safe Scan'
-  });
+  const [activeTab, setActiveTab] = useState<Tab>('findings');
+  const [formData, setFormData] = useState({ target_id: initialTargetId || '', profile: 'Standard Safe Scan' });
 
-  const fetchData = async () => {
-    try {
-      const [scansRes, targetsRes] = await Promise.all([
-        apiClient.get<Scan[]>('/scans'),
-        apiClient.get<Target[]>('/targets')
-      ]);
-      setScans(scansRes.data);
-      setTargets(targetsRes.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    setScans(listScans());
+    setTargets(getTargets());
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleStartScan = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!highlightScanId || scans.length === 0) return;
+    const scan = scans.find(item => item.id.toString() === highlightScanId);
+    if (scan) loadScanDetails(scan);
+  }, [highlightScanId, scans]);
+
+  const handleStartScan = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await apiClient.post('/scans/start', formData);
-      setShowNewScan(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to start scan');
-    }
+    startDemoScan(Number(formData.target_id), formData.profile);
+    setShowNewScan(false);
+    fetchData();
   };
 
-  const loadScanDetails = async (scan: Scan) => {
+  const loadScanDetails = (scan: Scan) => {
     setSelectedScan(scan);
     setActiveTab('findings');
-    setPostureDiff(null);
-    try {
-      const [findingsRes, crawlRes, evidenceRes, policiesRes] = await Promise.all([
-        apiClient.get<Finding[]>(`/scans/${scan.id}/findings`),
-        apiClient.get<CrawlNode[]>(`/scans/${scan.id}/crawl-map`),
-        apiClient.get<EvidenceArtifact[]>(`/scans/${scan.id}/evidence`),
-        apiClient.get<any[]>(`/scans/${scan.id}/policy-results`)
-      ]);
-      setFindings(findingsRes.data);
-      setCrawlNodes(crawlRes.data);
-      setEvidence(evidenceRes.data);
-      setPolicyResults(policiesRes.data);
-      
-      try {
-        const diffRes = await apiClient.get<PostureDiff>(`/scans/${scan.id}/diff`);
-        setPostureDiff(diffRes.data);
-      } catch (e) {
-        // May not exist if it's the first scan
-        console.log("No posture diff found for this scan");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    setFindings(listFindings(scan.id));
+    setCrawlNodes(listCrawlNodes(scan.id));
+    setEvidence(listEvidence(scan.id));
+    setPolicyResults(getPolicyResults(scan.id));
+    setPostureDiff(getPostureDiff(scan.id));
   };
 
-  const getTargetName = (id: number) => targets.find(t => t.id === id)?.name || `Target #${id}`;
-
-  const getSeverityColor = (sev: string) => {
-    switch(sev) {
-      case 'critical': return 'bg-red-500/20 text-red-500 border-red-500/50';
-      case 'high': return 'bg-orange-500/20 text-orange-500 border-orange-500/50';
-      case 'medium': return 'bg-amber-500/20 text-amber-500 border-amber-500/50';
-      case 'low': return 'bg-blue-500/20 text-blue-500 border-blue-500/50';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
-    }
-  };
+  const getTargetName = (id: number) => targets.find(target => target.id === id)?.name || `Target #${id}`;
 
   if (selectedScan) {
     return (
-      <div className="p-8 space-y-6">
-        <button onClick={() => setSelectedScan(null)} className="text-muted-foreground hover:text-foreground text-sm flex items-center mb-4">
-          ← Back to Scans
+      <PageShell>
+        <button onClick={() => setSelectedScan(null)} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Back to Scans
         </button>
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Scan Details #{selectedScan.id}</h1>
-            <p className="text-muted-foreground">Target: {getTargetName(selectedScan.target_id)} | Profile: {selectedScan.profile}</p>
-          </div>
-          <div className="text-right">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold uppercase ${selectedScan.status === 'completed' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
-              {selectedScan.status === 'running' && <Activity className="w-4 h-4 mr-2 animate-pulse" />}
-              {selectedScan.status}
-            </span>
+
+        <PageHeader
+          title={`Scan Details #${selectedScan.id}`}
+          subtitle={`${getTargetName(selectedScan.target_id)} · ${selectedScan.profile} · Demo data`}
+          actions={<StatusBadge status={selectedScan.status} />}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Posture Score" value={<>{selectedScan.overall_posture_score}<span className="text-base text-muted-foreground">/100</span></>} tone="good" icon={<ShieldCheck className="h-5 w-5" />} />
+          <StatCard label="Risk Score" value={<>{selectedScan.risk_score.toFixed(1)}<span className="text-base text-muted-foreground">/10</span></>} tone={selectedScan.risk_score >= 6 ? 'danger' : 'warn'} icon={<Activity className="h-5 w-5" />} />
+          <StatCard label="Findings" value={selectedScan.total_findings} tone="warn" icon={<FileText className="h-5 w-5" />} />
+          <div className="rounded-lg border border-border bg-card/90 p-5">
+            <p className="text-sm font-medium text-muted-foreground">Report</p>
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">Demo report is available from the Reports page.</p>
+            <Link to="/reports" className="mt-4 inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted">View Reports <ChevronRight className="h-4 w-4" /></Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-card border border-border p-6 rounded-xl">
-            <p className="text-sm text-muted-foreground mb-1">Posture Score</p>
-            <p className="text-4xl font-bold text-primary">{selectedScan.overall_posture_score} <span className="text-sm text-muted-foreground font-normal">/ 100</span></p>
+        <SectionCard title="Security Posture Breakdown" subtitle="Category scores captured by the selected scan.">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <PostureMetric label="Transport" value={selectedScan.posture_transport_security} />
+            <PostureMetric label="Browser" value={selectedScan.posture_browser_defense} />
+            <PostureMetric label="Session" value={selectedScan.posture_session_safety} />
+            <PostureMetric label="Exposure" value={selectedScan.posture_exposure_hygiene} />
+            <PostureMetric label="Auth Surface" value={selectedScan.posture_authentication_surface} />
           </div>
-          <div className="bg-card border border-border p-6 rounded-xl">
-            <p className="text-sm text-muted-foreground mb-1">Risk Score</p>
-            <p className="text-4xl font-bold">{selectedScan.risk_score.toFixed(1)} <span className="text-sm text-muted-foreground font-normal">/ 10</span></p>
-          </div>
-          <div className="bg-card border border-border p-6 rounded-xl">
-            <p className="text-sm text-muted-foreground mb-1">Total Findings</p>
-            <p className="text-4xl font-bold">{selectedScan.total_findings}</p>
-          </div>
-          <div className="bg-card border border-border p-6 rounded-xl flex flex-col justify-center">
-            <button 
-              onClick={async () => {
-                try {
-                  await apiClient.post(`/reports/generate/${selectedScan.id}`);
-                  alert('Report generated! Check the Reports page.');
-                } catch(e) { console.error(e); }
-              }}
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 py-2 rounded-md font-medium"
-            >
-              Generate Report
-            </button>
-          </div>
-        </div>
+        </SectionCard>
 
-        <div className="bg-card border border-border p-6 rounded-xl">
-          <h2 className="text-lg font-bold mb-4">Security Posture Breakdown</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-            <div className="p-4 bg-background rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Transport</p>
-              <p className="text-2xl font-bold">{selectedScan.posture_transport_security}</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Browser</p>
-              <p className="text-2xl font-bold">{selectedScan.posture_browser_defense}</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Session</p>
-              <p className="text-2xl font-bold">{selectedScan.posture_session_safety}</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Exposure</p>
-              <p className="text-2xl font-bold">{selectedScan.posture_exposure_hygiene}</p>
-            </div>
-            <div className="p-4 bg-background rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Auth</p>
-              <p className="text-2xl font-bold">{selectedScan.posture_authentication_surface}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 border-b border-border">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('findings')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'findings' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              Vulnerability Findings
-            </button>
-            <button
-              onClick={() => setActiveTab('crawlMap')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
-                activeTab === 'crawlMap' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              <GitMerge className="w-4 h-4 mr-2" /> Crawl Map
-            </button>
-            <button
-              onClick={() => setActiveTab('drift')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
-                activeTab === 'drift' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              Posture Drift
-            </button>
-            <button
-              onClick={() => setActiveTab('evidence')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
-                activeTab === 'evidence' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              <Camera className="w-4 h-4 mr-2" /> Evidence
-            </button>
-            <button
-              onClick={() => setActiveTab('policies')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
-                activeTab === 'policies' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 mr-2" /> Policy Results
-            </button>
+        <div className="overflow-x-auto border-b border-border">
+          <nav className="flex min-w-max gap-6">
+            <TabButton active={activeTab === 'findings'} onClick={() => setActiveTab('findings')}>Findings</TabButton>
+            <TabButton active={activeTab === 'crawlMap'} onClick={() => setActiveTab('crawlMap')} icon={<GitMerge className="h-4 w-4" />}>Crawl Map</TabButton>
+            <TabButton active={activeTab === 'drift'} onClick={() => setActiveTab('drift')}>Posture Drift</TabButton>
+            <TabButton active={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')} icon={<Camera className="h-4 w-4" />}>Evidence</TabButton>
+            <TabButton active={activeTab === 'policies'} onClick={() => setActiveTab('policies')} icon={<ShieldCheck className="h-4 w-4" />}>Policy Results</TabButton>
           </nav>
         </div>
 
-        <div className="mt-6">
-          {activeTab === 'findings' && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Findings</h2>
-              {findings.length > 0 ? (
-                <div className="space-y-4">
-                  {findings.map(f => (
-                    <div key={f.id} className="bg-card border border-border p-5 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-lg flex items-center">
-                          <span className={`border px-2 py-0.5 rounded text-xs uppercase mr-3 ${getSeverityColor(f.severity)}`}>
-                            {f.severity}
-                          </span>
-                          {f.title}
-                        </h3>
-                        <span className="text-sm text-muted-foreground">{f.category}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3 font-mono bg-muted/50 p-2 rounded">{f.affected_url}</p>
-                      <p className="text-sm mb-4">{f.description}</p>
-                      
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm mt-4">
-                        <div className="bg-background/50 p-4 rounded border border-border">
-                          <p className="font-bold mb-2 flex items-center text-destructive"><AlertTriangle className="w-4 h-4 mr-2"/> Impact</p>
-                          <p className="text-muted-foreground">{f.impact}</p>
-                        </div>
-                        <div className="bg-background/50 p-4 rounded border border-border">
-                          <p className="font-bold mb-2 flex items-center text-primary"><ShieldAlert className="w-4 h-4 mr-2"/> Remediation</p>
-                          <p className="text-muted-foreground">{f.remediation}</p>
-                        </div>
-                      </div>
+        {activeTab === 'findings' && (
+          <SectionCard title="Findings" subtitle="Summary, evidence, impact, remediation, and retest status for detected issues.">
+            {findings.length > 0 ? (
+              <div className="space-y-4">
+                {findings.map(finding => (
+                  <div key={finding.id} className="space-y-3">
+                    <FindingCard finding={finding} />
+                    <div className="grid gap-3 rounded-lg border border-border bg-background/50 p-4 text-sm lg:grid-cols-2">
+                      <DetailBlock title="OWASP Mapping" text={`${finding.category} · safe passive assessment mapping`} />
+                      <DetailBlock title="Status / Retest" text="Open in demo data. Retest after remediation is applied." />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground p-8 text-center bg-card rounded-lg border border-border">
-                  {selectedScan.status === 'completed' ? 'No vulnerabilities found.' : 'Scan is still processing...'}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No findings yet" description={selectedScan.status === 'completed' ? 'No vulnerabilities were found in this demo scan.' : 'Scan results are still processing.'} />
+            )}
+          </SectionCard>
+        )}
 
-          {activeTab === 'crawlMap' && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Crawl Map</h2>
-              {crawlNodes.length > 0 ? (
-                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted text-muted-foreground text-xs uppercase font-semibold">
-                      <tr>
-                        <th className="px-4 py-3">Path</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3">Depth</th>
-                        <th className="px-4 py-3">Forms</th>
-                        <th className="px-4 py-3">Login Input</th>
-                        <th className="px-4 py-3">Findings</th>
+        {activeTab === 'crawlMap' && (
+          <SectionCard title="Crawl Map" subtitle="Pages observed during the safe scan crawl.">
+            {crawlNodes.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="border-b border-border text-xs font-semibold text-muted-foreground">
+                    <tr><th className="py-3 pr-4">Path</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Depth</th><th className="py-3 pr-4">Forms</th><th className="py-3 pr-4">Login Input</th><th className="py-3">Findings</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {[...crawlNodes].sort((a, b) => a.depth - b.depth).map(node => (
+                      <tr key={node.id} className="hover:bg-muted/30">
+                        <td className="py-4 pr-4 break-all font-mono text-xs">{node.path}</td>
+                        <td className="py-4 pr-4"><StatusBadge status={node.status_code === 200 ? 'passed' : 'failed'} /></td>
+                        <td className="py-4 pr-4">Level {node.depth}</td>
+                        <td className="py-4 pr-4">{node.has_forms ? 'Yes' : 'No'}</td>
+                        <td className="py-4 pr-4">{node.has_password_field ? 'Yes' : 'No'}</td>
+                        <td className="py-4 font-semibold">{node.finding_count || '-'}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {crawlNodes.sort((a, b) => a.depth - b.depth).map(node => (
-                        <tr key={node.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                          <td className="px-4 py-3 font-mono text-xs">{node.path}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded text-xs font-bold ${node.status_code === 200 ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-                              {node.status_code || '-'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">Level {node.depth}</td>
-                          <td className="px-4 py-3">{node.has_forms ? 'Yes' : 'No'}</td>
-                          <td className="px-4 py-3 text-destructive font-medium">{node.has_password_field ? 'Yes' : 'No'}</td>
-                          <td className="px-4 py-3">
-                            {node.finding_count > 0 ? (
-                              <span className="bg-destructive/20 text-destructive px-2 py-1 rounded font-bold">{node.finding_count}</span>
-                            ) : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-muted-foreground p-8 text-center bg-card rounded-lg border border-border">
-                  {selectedScan.status === 'completed' ? 'No pages crawled.' : 'Scan is still processing...'}
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : <EmptyState title="No crawl records" description="No pages were crawled for this scan." />}
+          </SectionCard>
+        )}
 
-          {activeTab === 'drift' && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Posture Drift</h2>
-              {postureDiff ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-card border border-border p-6 rounded-xl flex flex-col items-center justify-center text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Summary</p>
-                    <div className="flex items-center mb-2">
-                      {postureDiff.risk_score_delta > 0 ? (
-                        <TrendingUp className="w-8 h-8 text-destructive mr-2" />
-                      ) : postureDiff.risk_score_delta < 0 ? (
-                        <TrendingDown className="w-8 h-8 text-green-500 mr-2" />
-                      ) : (
-                        <Minus className="w-8 h-8 text-muted-foreground mr-2" />
-                      )}
-                      <span className="text-2xl font-bold">{postureDiff.summary}</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">Compared to previous scan #{postureDiff.previous_scan_id}</p>
-                    <p className="mt-4 font-bold">
-                      Risk Score Change: <span className={postureDiff.risk_score_delta > 0 ? 'text-destructive' : postureDiff.risk_score_delta < 0 ? 'text-green-500' : ''}>
-                        {postureDiff.risk_score_delta > 0 ? '+' : ''}{postureDiff.risk_score_delta.toFixed(1)}
-                      </span>
-                    </p>
-                    <p className="mt-1 font-bold">
-                      Posture Score Change: <span className={postureDiff.posture_score_delta < 0 ? 'text-destructive' : postureDiff.posture_score_delta > 0 ? 'text-green-500' : ''}>
-                        {postureDiff.posture_score_delta > 0 ? '+' : ''}{postureDiff.posture_score_delta}
-                      </span>
-                    </p>
-                  </div>
-                  
-                  <div className="bg-card border border-border p-6 rounded-xl flex flex-col justify-center space-y-4">
-                    <div className="flex justify-between items-center border-b border-border pb-2">
-                      <span className="font-medium text-muted-foreground">New Findings</span>
-                      <span className="font-bold text-destructive">{postureDiff.new_findings_count}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-border pb-2">
-                      <span className="font-medium text-muted-foreground">Resolved Findings</span>
-                      <span className="font-bold text-green-500">{postureDiff.resolved_findings_count}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-muted-foreground">Unchanged Findings</span>
-                      <span className="font-bold">{postureDiff.unchanged_findings_count}</span>
-                    </div>
-                  </div>
+        {activeTab === 'drift' && (
+          <SectionCard title="Posture Drift" subtitle="Comparison with the previous scan for the same target.">
+            {postureDiff ? (
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-lg border border-border bg-background/60 p-5 lg:col-span-2">
+                  <p className="text-sm text-muted-foreground">Summary</p>
+                  <p className="mt-2 text-xl font-semibold">{postureDiff.summary}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Compared with scan #{postureDiff.previous_scan_id}</p>
                 </div>
-              ) : (
-                <div className="text-muted-foreground p-8 text-center bg-card rounded-lg border border-border">
-                  {selectedScan.status === 'completed' ? 'No posture drift available (this may be the first scan for this target).' : 'Scan is still processing...'}
+                <div className="space-y-3 rounded-lg border border-border bg-background/60 p-5">
+                  <DriftMetric label="Risk delta" value={postureDiff.risk_score_delta.toFixed(1)} danger={postureDiff.risk_score_delta > 0} />
+                  <DriftMetric label="Posture delta" value={postureDiff.posture_score_delta.toString()} danger={postureDiff.posture_score_delta < 0} />
+                  <DriftMetric label="New findings" value={postureDiff.new_findings_count.toString()} danger={postureDiff.new_findings_count > 0} />
+                  <DriftMetric label="Resolved" value={postureDiff.resolved_findings_count.toString()} />
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            ) : <EmptyState title="No drift available" description="This may be the first scan for the selected target." />}
+          </SectionCard>
+        )}
 
-          {activeTab === 'evidence' && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Evidence Artifacts</h2>
-              {evidence.length > 0 ? (
-                <div className="space-y-4">
-                  {evidence.map(ev => (
-                    <div key={ev.id} className="bg-card border border-border p-5 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-lg flex items-center">
-                          <Camera className="w-5 h-5 mr-3 text-muted-foreground"/>
-                          {ev.title}
-                        </h3>
-                        <span className="text-sm text-muted-foreground bg-secondary/30 px-2 py-1 rounded capitalize">{ev.artifact_type.replace('_', ' ')}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3 font-mono bg-muted/50 p-2 rounded">{ev.related_url}</p>
-                      
-                      {ev.redacted_text && (
-                        <div className="mt-4 bg-background/50 border border-border p-4 rounded-md overflow-x-auto max-h-96 overflow-y-auto">
-                          <pre className="text-xs font-mono whitespace-pre-wrap">{ev.redacted_text}</pre>
-                        </div>
-                      )}
+        {activeTab === 'evidence' && (
+          <SectionCard title="Evidence Artifacts" subtitle="Redacted evidence collected during the safe assessment.">
+            {evidence.length > 0 ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {evidence.map(item => (
+                  <article key={item.id} className="rounded-lg border border-border bg-background/60 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-semibold">{item.title}</h3>
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium capitalize">{item.artifact_type.replace('_', ' ')}</span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground p-8 text-center bg-card rounded-lg border border-border">
-                  {selectedScan.status === 'completed' ? 'No evidence artifacts captured.' : 'Scan is still processing...'}
-                </div>
-              )}
-            </div>
-          )}
+                    <p className="mt-3 break-all font-mono text-xs text-muted-foreground">{item.related_url}</p>
+                    {item.redacted_text && <pre className="mt-4 max-h-72 overflow-auto rounded-md border border-border bg-card p-3 text-xs leading-5 text-muted-foreground">{item.redacted_text}</pre>}
+                  </article>
+                ))}
+              </div>
+            ) : <EmptyState title="No evidence captured" description="Evidence artifacts will appear here after supported scans." />}
+          </SectionCard>
+        )}
 
-          {activeTab === 'policies' && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Policy Compliance Results</h2>
-              {policyResults.length > 0 ? (
-                <div className="space-y-6">
-                  {policyResults.map(pack => (
-                    <div key={pack.policy_id} className="bg-card border border-border p-6 rounded-xl">
-                      <h3 className="font-bold text-lg mb-4 flex items-center">
-                        <ShieldCheck className="w-5 h-5 mr-2 text-primary" /> {pack.title}
-                      </h3>
-                      <div className="space-y-3">
-                        {pack.checks.map((check: any) => (
-                          <div key={check.check_id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-background border border-border rounded-lg">
-                            <div className="mb-2 md:mb-0">
-                              <p className="font-medium flex items-center">
-                                {check.status === 'passed' ? (
-                                  <CheckCircle2 className="w-4 h-4 text-green-500 mr-2" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-destructive mr-2" />
-                                )}
-                                {check.title}
-                              </p>
-                              {check.status === 'failed' && (
-                                <p className="text-xs text-muted-foreground mt-1 ml-6">Violations: {check.violating_findings.join(', ')}</p>
-                              )}
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${check.status === 'passed' ? 'bg-green-500/20 text-green-500' : 'bg-destructive/20 text-destructive'}`}>
-                              {check.status}
-                            </span>
+        {activeTab === 'policies' && (
+          <SectionCard title="Policy Compliance Results" subtitle="Checks mapped to findings from this scan.">
+            {policyResults.length > 0 ? (
+              <div className="space-y-4">
+                {policyResults.map(pack => (
+                  <div key={pack.policy_id} className="rounded-lg border border-border bg-background/60 p-4">
+                    <h3 className="mb-3 font-semibold">{pack.title}</h3>
+                    <div className="space-y-3">
+                      {pack.checks.map((check: any) => (
+                        <div key={check.check_id} className="flex flex-col gap-3 rounded-md border border-border bg-card/70 p-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="flex items-center gap-2 text-sm font-medium">{check.status === 'passed' ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <XCircle className="h-4 w-4 text-red-300" />}{check.title}</p>
+                            {check.status === 'failed' && <p className="mt-1 text-sm leading-5 text-muted-foreground">Violations: {check.violating_findings.join(', ')}</p>}
                           </div>
-                        ))}
-                      </div>
+                          <StatusBadge status={check.status} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground p-8 text-center bg-card rounded-lg border border-border">
-                  {selectedScan.status === 'completed' ? 'No policy results available.' : 'Scan is still processing...'}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+                  </div>
+                ))}
+              </div>
+            ) : <EmptyState title="No policy results" description="Policy results are generated for completed demo scans." />}
+          </SectionCard>
+        )}
+      </PageShell>
     );
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Scans</h1>
-        <Link to="/scans/new" className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-          <Play className="w-4 h-4 mr-2" />
-          New Scan
-        </Link>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Scans"
+        subtitle="Demo data. Review scan records, inspect evidence, and open findings without leaving the scan workflow."
+        actions={<Link to="/scans/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"><Play className="h-4 w-4" /> New Scan</Link>}
+      />
 
       {showNewScan && (
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm max-w-2xl">
-          <h2 className="text-xl font-bold mb-4">Start New Scan</h2>
-          <form onSubmit={handleStartScan} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Target</label>
-              <select required className="w-full bg-background border border-input rounded-md px-3 py-2" value={formData.target_id} onChange={e => setFormData({...formData, target_id: e.target.value})}>
+        <SectionCard title="Start New Scan" subtitle="Launch a safe demo scan against an authorized target.">
+          <form onSubmit={handleStartScan} className="grid gap-4 lg:grid-cols-[1fr_260px_auto] lg:items-end">
+            <label className="space-y-2 text-sm font-medium">Target
+              <select required className="h-10 w-full rounded-md border border-input bg-background px-3" value={formData.target_id} onChange={e => setFormData({ ...formData, target_id: e.target.value })}>
                 <option value="" disabled>Select a target...</option>
-                {targets.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.base_url})</option>
-                ))}
+                {targets.map(target => <option key={target.id} value={target.id}>{target.name} ({target.base_url})</option>)}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Scan Profile</label>
-              <select className="w-full bg-background border border-input rounded-md px-3 py-2" value={formData.profile} onChange={e => setFormData({...formData, profile: e.target.value})}>
+            </label>
+            <label className="space-y-2 text-sm font-medium">Scan Profile
+              <select className="h-10 w-full rounded-md border border-input bg-background px-3" value={formData.profile} onChange={e => setFormData({ ...formData, profile: e.target.value })}>
                 <option value="Passive Scan">Passive Scan</option>
                 <option value="Standard Safe Scan">Standard Safe Scan</option>
                 <option value="Full Safe Scan">Full Safe Scan</option>
               </select>
-              <p className="text-xs text-muted-foreground mt-2">All profiles use safe, non-destructive reconnaissance methods.</p>
-            </div>
-            <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={() => setShowNewScan(false)} className="px-4 py-2 border border-border rounded-md hover:bg-muted">Cancel</button>
-              <button type="submit" disabled={!formData.target_id} className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50">Start Scan</button>
+            </label>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setShowNewScan(false)} className="h-10 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted">Cancel</button>
+              <button type="submit" disabled={!formData.target_id} className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Start</button>
             </div>
           </form>
-        </div>
+        </SectionCard>
       )}
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground text-xs uppercase font-semibold">
-            <tr>
-              <th className="px-6 py-4">ID</th>
-              <th className="px-6 py-4">Target</th>
-              <th className="px-6 py-4">Profile</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Risk Score</th>
-              <th className="px-6 py-4">Findings</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scans.map(scan => (
-              <tr key={scan.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                <td className="px-6 py-4">#{scan.id}</td>
-                <td className="px-6 py-4 font-medium">{getTargetName(scan.target_id)}</td>
-                <td className="px-6 py-4">{scan.profile}</td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${scan.status === 'completed' ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'}`}>
-                    {scan.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 font-bold">{scan.risk_score.toFixed(1)}</td>
-                <td className="px-6 py-4">{scan.total_findings}</td>
-                <td className="px-6 py-4 text-right">
-                  <button onClick={() => loadScanDetails(scan)} className="text-primary hover:underline flex items-center justify-end w-full">
-                    View Details <ChevronRight className="w-4 h-4 ml-1"/>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && scans.length === 0 && (
-          <div className="p-12 text-center text-muted-foreground">
-            No scans initiated yet.
+      <SectionCard title="Scan Records" subtitle="Status, target, profile, findings, posture, and risk score for each scan.">
+        {scans.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="border-b border-border text-xs font-semibold text-muted-foreground">
+                <tr><th className="py-3 pr-4">ID</th><th className="py-3 pr-4">Target</th><th className="py-3 pr-4">Profile</th><th className="py-3 pr-4">Started</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Findings</th><th className="py-3 pr-4">Risk</th><th className="py-3 text-right">Action</th></tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {scans.map(scan => (
+                  <tr key={scan.id} className="hover:bg-muted/30">
+                    <td className="py-4 pr-4 font-semibold">#{scan.id}</td>
+                    <td className="py-4 pr-4 font-medium">{getTargetName(scan.target_id)}</td>
+                    <td className="py-4 pr-4 text-muted-foreground">{scan.profile}</td>
+                    <td className="py-4 pr-4 text-muted-foreground">{new Date(scan.started_at).toLocaleString()}</td>
+                    <td className="py-4 pr-4"><StatusBadge status={scan.status} /></td>
+                    <td className="py-4 pr-4 font-semibold">{scan.total_findings}</td>
+                    <td className="py-4 pr-4"><RiskScoreBadge score={scan.risk_score} /></td>
+                    <td className="py-4 text-right"><button onClick={() => loadScanDetails(scan)} className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10">View Details <ChevronRight className="h-4 w-4" /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        ) : !loading && <EmptyState title="No scans yet" description="Start a safe scan to populate this table." action={<Link to="/scans/new" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Start Scan</Link>} />}
+      </SectionCard>
+    </PageShell>
+  );
+}
+
+function PostureMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-semibold">{value}<span className="text-sm text-muted-foreground">/100</span></p>
+    </div>
+  );
+}
+
+function TabButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} className={`inline-flex items-center gap-2 border-b-2 py-3 text-sm font-semibold transition-colors ${active ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+      {icon}{children}
+    </button>
+  );
+}
+
+function DetailBlock({ title, text }: { title: string; text: string }) {
+  return (
+    <div>
+      <p className="font-semibold">{title}</p>
+      <p className="mt-1 leading-6 text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+function DriftMetric({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={danger ? 'font-semibold text-red-300' : 'font-semibold text-foreground'}>{value}</span>
     </div>
   );
 }

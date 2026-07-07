@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { apiClient } from '../api/client';
 import type { Target } from '../types';
 import { Target as TargetIcon, Play, AlertCircle, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { getTargets, startDemoScan } from '../data/demoData';
 
 export function NewScan() {
   const [searchParams] = useSearchParams();
@@ -16,22 +16,13 @@ export function NewScan() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchTargets();
-  }, []);
-
-  const fetchTargets = async () => {
-    try {
-      const response = await apiClient.get('/targets');
-      setTargets(response.data);
-      if (!selectedTargetId && response.data.length > 0) {
-        setSelectedTargetId(response.data[0].id.toString());
-      }
-    } catch (error) {
-      toast.error('Failed to load targets');
-    } finally {
-      setLoading(false);
+    const demoTargets = getTargets();
+    setTargets(demoTargets);
+    if (!selectedTargetId && demoTargets.length > 0) {
+      setSelectedTargetId(demoTargets[0].id.toString());
     }
-  };
+    setLoading(false);
+  }, [selectedTargetId]);
 
   const handleStartScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,16 +30,11 @@ export function NewScan() {
 
     setStarting(true);
     try {
-      const response = await apiClient.post('/scans/start', null, {
-        params: {
-          target_id: selectedTargetId,
-          profile: profile
-        }
-      });
+      const response = startDemoScan(Number(selectedTargetId), profile);
       toast.success('Scan started successfully!');
-      navigate(`/scans?highlight=${response.data.id}`);
-    } catch (error) {
-      toast.error('Failed to start scan. Ensure the target exists and is authorized.');
+      navigate(`/scans?highlight=${response.id}`);
+    } catch {
+      toast.error('Failed to start demo scan.');
     } finally {
       setStarting(false);
     }

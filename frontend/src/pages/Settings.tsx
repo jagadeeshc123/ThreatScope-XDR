@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
 import type { AppSettings } from '../types';
 import { Save, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { getSettings, resetSettings as resetDemoSettings, updateSettings as updateDemoSettings } from '../data/demoData';
 
 export function Settings() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -14,14 +14,8 @@ export function Settings() {
   }, []);
 
   const fetchSettings = async () => {
-    try {
-      const res = await apiClient.get('/settings');
-      setSettings(res.data);
-    } catch (e) {
-      toast.error('Failed to load settings');
-    } finally {
-      setLoading(false);
-    }
+    setSettings(getSettings());
+    setLoading(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -29,9 +23,9 @@ export function Settings() {
     if (!settings) return;
     setSaving(true);
     try {
-      await apiClient.patch('/settings', settings);
+      updateDemoSettings(settings);
       toast.success('Settings saved successfully');
-    } catch (e) {
+    } catch {
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
@@ -41,10 +35,9 @@ export function Settings() {
   const handleReset = async () => {
     if (!confirm('Are you sure you want to reset all settings to defaults?')) return;
     try {
-      const res = await apiClient.post('/settings/reset');
-      setSettings(res.data);
+      setSettings(resetDemoSettings());
       toast.success('Settings reset to defaults');
-    } catch (e) {
+    } catch {
       toast.error('Failed to reset settings');
     }
   };

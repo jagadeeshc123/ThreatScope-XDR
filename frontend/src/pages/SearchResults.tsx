@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { apiClient } from '../api/client';
 import type { SearchResults } from '../types';
 import { Search, Target, Activity, AlertTriangle, FileText, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { searchDemo } from '../data/demoData';
 
 export function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -12,24 +12,20 @@ export function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (query) {
-      performSearch();
-    } else {
+    if (!query) {
       setLoading(false);
+      return;
     }
-  }, [query]);
 
-  const performSearch = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/search?q=${encodeURIComponent(query)}`);
-      setResults(response.data);
-    } catch (error) {
+      setResults(searchDemo(query));
+    } catch {
       toast.error('Search failed');
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
 
   if (loading) {
     return <div className="p-6">Searching...</div>;
