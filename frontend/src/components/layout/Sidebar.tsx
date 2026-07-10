@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, LayoutDashboard, Target, Activity, FileText, Settings } from 'lucide-react';
+import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network } from 'lucide-react';
 import clsx from 'clsx';
 
 export function Sidebar() {
@@ -9,6 +9,7 @@ export function Sidebar() {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Targets', path: '/targets', icon: Target },
     { name: 'Scans', path: '/scans', icon: Activity },
+    { name: 'API Security', path: '/api-security', icon: Network },
     { name: 'Reports', path: '/reports', icon: FileText },
     { name: 'Policies', path: '/policies', icon: Shield },
   ];

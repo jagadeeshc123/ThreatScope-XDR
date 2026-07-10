@@ -171,3 +171,6 @@ class AppSettings(Base):
     auto_generate_report = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+from app.modules.api_security.models import ApiAssessment, ApiEndpoint, ApiImportArtifact  # noqa: E402,F401

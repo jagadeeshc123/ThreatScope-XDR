@@ -1,5 +1,12 @@
 import type {
   AppSettings,
+  ApiAssessment,
+  ApiAssessmentDetail,
+  ApiEndpoint,
+  ApiImportResult,
+  ApiSecurityOverview,
+  ApiSecuritySummary,
+  ApiSourceType,
   CrawlNode,
   DashboardSummary,
   EvidenceArtifact,
@@ -26,6 +33,22 @@ export type TargetUpdatePayload = Partial<TargetCreatePayload>;
 export interface ScanCreatePayload {
   target_id: number;
   profile: string;
+}
+
+export interface ApiAssessmentCreatePayload {
+  name: string;
+  description?: string | null;
+  source_type: ApiSourceType;
+}
+
+export interface ApiEndpointFilters {
+  method?: string;
+  auth?: 'authenticated' | 'unauthenticated';
+  deprecated?: boolean;
+  risk?: 'info' | 'low' | 'medium' | 'high';
+  tag?: string;
+  q?: string;
+  sort?: 'method' | 'path' | 'authentication' | 'risk';
 }
 
 export interface PolicyResultCheck {
@@ -125,6 +148,40 @@ export const vulnscopeApi = {
 
   listPolicies: () => data<PolicyPack[]>(apiClient.get('/policies/')),
   search: (query: string) => data<SearchResults>(apiClient.get('/search/', { params: { q: query } })),
+
+  getApiSecurityOverview: () => data<ApiSecurityOverview>(apiClient.get('/api-security/overview')),
+  listApiAssessments: () => data<ApiAssessment[]>(apiClient.get('/api-security/assessments')),
+  createApiAssessment: (payload: ApiAssessmentCreatePayload) => data<ApiAssessment>(apiClient.post('/api-security/assessments', payload)).then(assessment => {
+    dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+    return assessment;
+  }),
+  getApiAssessment: (assessmentId: number) => data<ApiAssessmentDetail>(apiClient.get(`/api-security/assessments/${assessmentId}`)),
+  deleteApiAssessment: (assessmentId: number) => data<{ ok: boolean }>(apiClient.delete(`/api-security/assessments/${assessmentId}`)).then(result => {
+    dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+    return result;
+  }),
+  importOpenApi: (assessmentId: number, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return data<ApiImportResult>(apiClient.post(`/api-security/assessments/${assessmentId}/import/openapi`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).then(result => {
+      dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+      return result;
+    });
+  },
+  importPostman: (assessmentId: number, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return data<ApiImportResult>(apiClient.post(`/api-security/assessments/${assessmentId}/import/postman`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).then(result => {
+      dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+      return result;
+    });
+  },
+  listApiEndpoints: (assessmentId: number, filters: ApiEndpointFilters = {}) => data<ApiEndpoint[]>(apiClient.get(`/api-security/assessments/${assessmentId}/endpoints`, { params: filters })),
+  getApiSecuritySummary: (assessmentId: number) => data<ApiSecuritySummary>(apiClient.get(`/api-security/assessments/${assessmentId}/summary`)),
 
   listNotifications: (limit = 50) => data<Notification[]>(apiClient.get('/notifications/', { params: { limit } })),
   getUnreadNotificationCount: () => data<{ unread_count: number }>(apiClient.get('/notifications/unread-count')),

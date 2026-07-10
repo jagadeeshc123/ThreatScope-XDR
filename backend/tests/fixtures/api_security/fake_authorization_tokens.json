@@ -1,0 +1,7 @@
+{
+  "Authorization": "Bearer FAKE_BEARER_TOKEN_DO_NOT_USE_123456789",
+  "apiKey": "FAKE_API_KEY_DO_NOT_USE",
+  "client_secret": "FAKE_CLIENT_SECRET_DO_NOT_USE",
+  "password": "FAKE_PASSWORD_DO_NOT_USE",
+  "cookie": "FAKE_SESSION_COOKIE_DO_NOT_USE"
+}

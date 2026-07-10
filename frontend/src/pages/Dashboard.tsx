@@ -6,6 +6,7 @@ import {
   ArrowRight,
   FileText,
   Radar,
+  Network,
   Search,
   Shield,
   ShieldAlert,
@@ -109,6 +110,13 @@ export function Dashboard() {
         <StatCard label="Critical / High" value={highPriority} detail="Priority queue" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
         <StatCard label="Reports" value={reports.length} detail="Generated outputs" icon={<FileText className="h-5 w-5" />} tone="default" />
         <StatCard label="Posture Score" value={completedScans.length > 0 ? <>{summary.overall_posture_score}<span className="text-base text-muted-foreground">/100</span></> : 'N/A'} detail="Completed scans only" icon={<Shield className="h-5 w-5" />} tone="good" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="API Assessments" value={summary.api_assessment_count} detail="Passive API inventory" icon={<Network className="h-5 w-5" />} tone="info" />
+        <StatCard label="API Endpoints" value={summary.api_endpoint_count} detail="Imported definitions" icon={<Activity className="h-5 w-5" />} tone="default" />
+        <StatCard label="Unauthenticated APIs" value={summary.api_unauthenticated_endpoint_count} detail="No auth declared" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="High-Risk APIs" value={summary.api_high_risk_endpoint_count} detail="Metadata risk signals" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">

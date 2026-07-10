@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "Safe Demo Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "FAKE_COLLECTION_TOKEN_DO_NOT_USE",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "List users",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/users?limit=25",
+          "path": ["users"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "25"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer FAKE_HEADER_TOKEN_DO_NOT_USE"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Create payment",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/payment",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"password\":\"FAKE_PASSWORD_DO_NOT_USE\",\"amount\":42}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

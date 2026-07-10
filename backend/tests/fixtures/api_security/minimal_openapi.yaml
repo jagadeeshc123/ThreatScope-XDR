@@ -1,0 +1,37 @@
+openapi: 3.1.0
+info:
+  title: YAML Demo API
+  version: "2.0"
+servers:
+  - url: https://yaml.example.test/api
+security:
+  - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /profile:
+    get:
+      operationId: getProfile
+      summary: Current profile
+      tags:
+        - profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json: {}
+  /billing/invoices:
+    post:
+      summary: Create invoice
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created

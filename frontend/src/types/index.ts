@@ -105,6 +105,10 @@ export interface DashboardSummary {
   high_findings: number;
   overall_risk_score: number;
   overall_posture_score: number;
+  api_assessment_count: number;
+  api_endpoint_count: number;
+  api_unauthenticated_endpoint_count: number;
+  api_high_risk_endpoint_count: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -154,4 +158,88 @@ export interface SearchResults {
   scans: Scan[];
   findings: Finding[];
   reports: Report[];
+  api_assessments: ApiAssessment[];
+  api_endpoints: ApiEndpoint[];
+}
+
+export type ApiSourceType = 'openapi' | 'postman' | 'manual';
+export type ApiAssessmentStatus = 'draft' | 'processing' | 'completed' | 'failed';
+export type ApiRiskLevel = 'info' | 'low' | 'medium' | 'high';
+
+export interface ApiAssessment {
+  id: number;
+  name: string;
+  description: string | null;
+  source_type: ApiSourceType;
+  source_filename: string | null;
+  status: ApiAssessmentStatus;
+  base_url: string | null;
+  api_version: string | null;
+  endpoint_count: number;
+  unauthenticated_endpoint_count: number;
+  high_risk_endpoint_count: number;
+  risk_score: number;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiImportArtifact {
+  id: number;
+  assessment_id: number;
+  artifact_type: 'openapi' | 'postman';
+  filename: string;
+  parsed_summary: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiAssessmentDetail extends ApiAssessment {
+  artifacts: ApiImportArtifact[];
+}
+
+export interface ApiEndpoint {
+  id: number;
+  assessment_id: number;
+  path: string;
+  method: string;
+  operation_id: string | null;
+  summary: string | null;
+  description: string | null;
+  auth_required: boolean;
+  auth_schemes: string[];
+  request_content_types: string[];
+  response_content_types: string[];
+  parameters: Array<Record<string, unknown>>;
+  tags: string[];
+  folder_path: string | null;
+  deprecated: boolean;
+  preliminary_risk_level: ApiRiskLevel;
+  preliminary_risk_reasons: string[];
+  created_at: string;
+}
+
+export interface ApiSecurityOverview {
+  total_assessments: number;
+  endpoints_inventoried: number;
+  unauthenticated_endpoints: number;
+  high_risk_endpoints: number;
+  recent_assessments: ApiAssessment[];
+}
+
+export interface ApiSecuritySummary {
+  assessment: ApiAssessment;
+  endpoint_count: number;
+  unauthenticated_endpoint_count: number;
+  high_risk_endpoint_count: number;
+  risk_distribution: Record<ApiRiskLevel, number>;
+  methods: Record<string, number>;
+  tags: string[];
+}
+
+export interface ApiImportResult {
+  assessment: ApiAssessment;
+  artifact: ApiImportArtifact;
+  endpoints_discovered: number;
+  unauthenticated_endpoints: number;
+  high_risk_endpoints: number;
 }

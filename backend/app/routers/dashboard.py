@@ -12,6 +12,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     total_scans = db.query(models.Scan).count()
     active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
     total_findings = db.query(models.Finding).count()
+    api_assessment_count = db.query(models.ApiAssessment).count()
+    api_endpoint_count = db.query(models.ApiEndpoint).count()
+    api_unauthenticated_endpoint_count = db.query(models.ApiEndpoint).filter(models.ApiEndpoint.auth_required == False).count()
+    api_high_risk_endpoint_count = db.query(models.ApiEndpoint).filter(models.ApiEndpoint.preliminary_risk_level == "high").count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -50,6 +54,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         high_findings=distribution["high"],
         overall_risk_score=round(avg_risk, 2),
         overall_posture_score=int(avg_posture),
+        api_assessment_count=api_assessment_count,
+        api_endpoint_count=api_endpoint_count,
+        api_unauthenticated_endpoint_count=api_unauthenticated_endpoint_count,
+        api_high_risk_endpoint_count=api_high_risk_endpoint_count,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

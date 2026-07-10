@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowRight, FileText, Search, Target } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, FileText, Network, Search, Target } from 'lucide-react';
 import type { SearchResults } from '../types';
 import { vulnscopeApi } from '../api/vulnscope';
 import { EmptyState, PageHeader, PageShell } from '../components/ui';
@@ -30,11 +30,11 @@ export function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query]);
 
-  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length : 0;
 
   return (
     <PageShell className="max-w-5xl">
-      <PageHeader title={query ? `Search results for "${query}"` : 'Search VulnScope'} subtitle={query && !loading && !error ? `${totalResults} matching records across targets, scans, findings, and reports.` : 'Search the current Web Exposure workspace.'} />
+      <PageHeader title={query ? `Search results for "${query}"` : 'Search VulnScope'} subtitle={query && !loading && !error ? `${totalResults} matching records across Web Exposure and API Security.` : 'Search the current ThreatScope workspace.'} />
       {!query && <EmptyState title="Enter a search term" description="Use the search field in the top bar to find targets, scans, findings, and reports." icon={<Search className="h-8 w-8" />} />}
       {loading && <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">Searching backend records...</div>}
       {!loading && error && <EmptyState title="Search unavailable" description={error} />}
@@ -52,6 +52,12 @@ export function SearchResultsPage() {
           </ResultGroup>
           <ResultGroup title="Reports" icon={<FileText className="h-5 w-5 text-fuchsia-300" />} count={results.reports.length}>
             {results.reports.map(report => <ResultLink key={report.id} to={`/reports?reportId=${report.id}`} title={report.title} detail={`Generated ${new Date(report.created_at).toLocaleString()}`} />)}
+          </ResultGroup>
+          <ResultGroup title="API Assessments" icon={<Network className="h-5 w-5 text-indigo-300" />} count={results.api_assessments.length}>
+            {results.api_assessments.map(assessment => <ResultLink key={assessment.id} to={`/api-security/assessments/${assessment.id}`} title={assessment.name} detail={`${assessment.source_type.toUpperCase()} | ${assessment.endpoint_count} endpoints | ${assessment.status}`} />)}
+          </ResultGroup>
+          <ResultGroup title="API Endpoints" icon={<Network className="h-5 w-5 text-violet-300" />} count={results.api_endpoints.length}>
+            {results.api_endpoints.map(endpoint => <ResultLink key={endpoint.id} to={`/api-security/assessments/${endpoint.assessment_id}/endpoints?q=${encodeURIComponent(endpoint.path)}`} title={`${endpoint.method} ${endpoint.path}`} detail={`${endpoint.preliminary_risk_level.toUpperCase()} | ${endpoint.auth_required ? 'Auth required' : 'No auth declared'}`} />)}
           </ResultGroup>
         </div>
       )}

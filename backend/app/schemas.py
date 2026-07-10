@@ -161,6 +161,10 @@ class DashboardSummary(BaseModel):
     high_findings: int
     overall_risk_score: float
     overall_posture_score: int
+    api_assessment_count: int = 0
+    api_endpoint_count: int = 0
+    api_unauthenticated_endpoint_count: int = 0
+    api_high_risk_endpoint_count: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -244,3 +248,5 @@ class SearchResults(BaseModel):
     scans: List[Scan]
     findings: List[Finding]
     reports: List[Report]
+    api_assessments: List[dict] = []
+    api_endpoints: List[dict] = []

@@ -1,0 +1,29 @@
+{
+  "info": {
+    "name": "Nested Safe Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Export internal report",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/internal/report/export",
+                  "path": ["internal", "report", "export"]
+                },
+                "description": "Fake request definition only."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
