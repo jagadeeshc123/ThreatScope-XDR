@@ -27,6 +27,14 @@ def generate_report_endpoint(scan_id: int, db: Session = Depends(get_db)):
         html_content=html_content
     )
     db.add(db_report)
+    db.flush()
+    db.add(models.Notification(
+        title="Report Generated",
+        message=f"Report #{db_report.id} for scan #{scan.id} is ready.",
+        type="success",
+        entity_type="report",
+        entity_id=db_report.id
+    ))
     db.commit()
     db.refresh(db_report)
 
@@ -53,3 +61,16 @@ def download_report(report_id: int, db: Session = Depends(get_db)):
     return Response(content=report.html_content, media_type="text/html", headers={
         "Content-Disposition": f"attachment; filename=report_{report_id}.html"
     })
+
+@router.delete("/{report_id}")
+def delete_report(report_id: int, db: Session = Depends(get_db)):
+    report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    db.query(models.Notification).filter(
+        models.Notification.entity_type == "report",
+        models.Notification.entity_id == report_id,
+    ).delete(synchronize_session=False)
+    db.delete(report)
+    db.commit()
+    return {"ok": True}

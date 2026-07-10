@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { getProfile, updateProfile as updateDemoProfile } from '../data/demoData';
+import { vulnscopeApi } from '../api/vulnscope';
 
 export function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -19,24 +20,37 @@ export function Profile() {
   }, []);
 
   const fetchProfile = async () => {
-    const profile = getProfile();
-    setFormData({
-      full_name: profile.full_name,
-      email: profile.email,
-      organization: profile.organization,
-      role: profile.role,
-      avatar_initials: profile.avatar_initials,
-    });
-    setLoading(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const profile = await vulnscopeApi.getProfile();
+      setFormData({
+        full_name: profile.full_name,
+        email: profile.email,
+        organization: profile.organization,
+        role: profile.role,
+        avatar_initials: profile.avatar_initials,
+      });
+    } catch {
+      setError('Profile could not be loaded from the backend.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      updateDemoProfile(formData);
+      const profile = await vulnscopeApi.updateProfile(formData);
+      setFormData({
+        full_name: profile.full_name,
+        email: profile.email,
+        organization: profile.organization,
+        role: profile.role,
+        avatar_initials: profile.avatar_initials,
+      });
       toast.success('Profile updated successfully');
-      // Update topbar instantly by dispatching event if needed, but fetchProfile runs on intervals
     } catch {
       toast.error('Failed to update profile');
     } finally {
@@ -44,7 +58,8 @@ export function Profile() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading profile...</div>;
+  if (loading) return <div className="p-6 text-muted-foreground">Loading profile...</div>;
+  if (error) return <div className="mx-auto max-w-3xl p-8 text-center"><h1 className="text-xl font-semibold">Profile unavailable</h1><p className="mt-2 text-sm text-muted-foreground">{error}</p><button onClick={() => void fetchProfile()} className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Try Again</button></div>;
 
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-8">

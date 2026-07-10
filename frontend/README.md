@@ -1,32 +1,49 @@
-# React + TypeScript + Vite
+# VulnScope Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React, TypeScript, Vite, Tailwind CSS, Recharts, Lucide React, and Sonner power the VulnScope interface.
 
-Currently, two official plugins are available:
+## Local Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The frontend defaults to `http://localhost:5173`.
+
+Set `VITE_API_URL` when the FastAPI backend is not running on `http://localhost:8000`.
+
+```bash
+VITE_API_URL=http://localhost:8000 npm run dev
+```
+
+On Windows PowerShell, use `npm.cmd` if script execution is blocked:
+
+```bash
+npm.cmd run dev
+```
+
+## Useful Commands
+
+```bash
+npm run build
+npm run lint
+npm run preview
+```
+
+## Data Mode
+
+The UI reads operational data exclusively from the FastAPI backend through `src/api/vulnscope.ts`. No static fallback dataset is bundled with the frontend.
+
+For a full stack local run:
+
+```bash
+docker-compose up --build
+```
+
+From the project root, this starts:
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+- Authorized local test target: `http://localhost:8081`

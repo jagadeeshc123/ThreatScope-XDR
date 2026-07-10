@@ -27,7 +27,7 @@ export function LandingPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-4">
             <Link to="/scans/new" className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-              Launch Demo Scan <ArrowRight className="w-4 h-4" />
+              Launch Scan <ArrowRight className="w-4 h-4" />
             </Link>
             <Link to="/targets" className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-border font-medium hover:bg-muted transition-colors">
               View Targets <Search className="w-4 h-4" />

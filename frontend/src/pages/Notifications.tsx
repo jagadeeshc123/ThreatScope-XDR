@@ -2,32 +2,45 @@ import { useState, useEffect } from 'react';
 import type { Notification } from '../types';
 import { Bell, Check, CheckCircle2, Trash2, Info, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { deleteNotification as deleteDemoNotification, getNotifications, markAllNotificationsRead as markAllDemoNotificationsRead, markNotificationRead as markDemoNotificationRead } from '../data/demoData';
+import { useNavigate } from 'react-router-dom';
+import { vulnscopeApi, VULNSCOPE_EVENTS } from '../api/vulnscope';
 
 export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchNotifications();
+    void fetchNotifications();
+    const refresh = () => void fetchNotifications();
+    window.addEventListener(VULNSCOPE_EVENTS.notificationsUpdated, refresh);
+    return () => window.removeEventListener(VULNSCOPE_EVENTS.notificationsUpdated, refresh);
   }, []);
 
   const fetchNotifications = async () => {
-    setNotifications(getNotifications(100));
-    setLoading(false);
+    setLoading(true);
+    setError(null);
+    try {
+      setNotifications(await vulnscopeApi.listNotifications(100));
+    } catch {
+      setError('Notifications could not be loaded from the backend.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const markAsRead = async (id: number) => {
     try {
-      markDemoNotificationRead(id);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
-    } catch {}
+      await vulnscopeApi.markNotificationRead(id);
+      setNotifications(current => current.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch { toast.error('Failed to mark notification as read'); }
   };
 
   const markAllRead = async () => {
     try {
-      markAllDemoNotificationsRead();
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      await vulnscopeApi.markAllNotificationsRead();
+      setNotifications(current => current.map(n => ({ ...n, is_read: true })));
       toast.success('All notifications marked as read');
     } catch {
       toast.error('Failed to mark all as read');
@@ -35,13 +48,21 @@ export function Notifications() {
   };
 
   const deleteNotification = async (id: number) => {
+    if (!confirm('Delete this notification?')) return;
     try {
-      deleteDemoNotification(id);
-      setNotifications(notifications.filter(n => n.id !== id));
+      await vulnscopeApi.deleteNotification(id);
+      setNotifications(current => current.filter(n => n.id !== id));
       toast.success('Notification deleted');
     } catch {
       toast.error('Failed to delete notification');
     }
+  };
+
+  const openNotification = async (notification: Notification) => {
+    if (!notification.is_read) await markAsRead(notification.id);
+    if (notification.entity_type === 'scan' && notification.entity_id) navigate(`/scans?highlight=${notification.entity_id}`);
+    if (notification.entity_type === 'report' && notification.entity_id) navigate(`/reports?reportId=${notification.entity_id}`);
+    if (notification.entity_type === 'target' && notification.entity_id) navigate(`/targets?highlight=${notification.entity_id}`);
   };
 
   const getIcon = (type: string) => {
@@ -54,6 +75,7 @@ export function Notifications() {
   };
 
   if (loading) return <div className="p-6">Loading notifications...</div>;
+  if (error) return <div className="mx-auto max-w-4xl p-8 text-center"><h1 className="text-xl font-semibold">Notifications unavailable</h1><p className="mt-2 text-sm text-muted-foreground">{error}</p><button onClick={() => void fetchNotifications()} className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Try Again</button></div>;
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
@@ -82,7 +104,7 @@ export function Notifications() {
         ) : (
           <div className="divide-y divide-border">
             {notifications.map(n => (
-              <div key={n.id} className={`p-4 flex gap-4 items-start transition-colors ${!n.is_read ? 'bg-primary/5' : 'hover:bg-muted/50'}`}>
+              <div key={n.id} role="button" tabIndex={0} onClick={() => void openNotification(n)} onKeyDown={event => { if (event.key === 'Enter') void openNotification(n); }} className={`p-4 flex cursor-pointer gap-4 items-start transition-colors ${!n.is_read ? 'bg-primary/5' : 'hover:bg-muted/50'}`}>
                 <div className="shrink-0 mt-1">
                   {getIcon(n.type)}
                 </div>
@@ -102,7 +124,7 @@ export function Notifications() {
                 <div className="shrink-0 flex space-x-2">
                   {!n.is_read && (
                     <button 
-                      onClick={() => markAsRead(n.id)}
+                      onClick={event => { event.stopPropagation(); void markAsRead(n.id); }}
                       title="Mark as read"
                       className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
                     >
@@ -110,7 +132,7 @@ export function Notifications() {
                     </button>
                   )}
                   <button 
-                    onClick={() => deleteNotification(n.id)}
+                    onClick={event => { event.stopPropagation(); void deleteNotification(n.id); }}
                     title="Delete"
                     className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                   >

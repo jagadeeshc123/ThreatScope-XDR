@@ -1,14 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowRight, FileText, Plus, ShieldAlert, ShieldCheck, Target as TargetIcon, Trash2 } from 'lucide-react';
-import type { Target } from '../types';
-import { createTarget as createDemoTarget, deleteTarget as deleteDemoTarget, getTargets, listFindings, listReports, listScans } from '../data/demoData';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Activity, AlertTriangle, ArrowRight, FileText, Pencil, Plus, ShieldAlert, ShieldCheck, Target as TargetIcon, Trash2 } from 'lucide-react';
+import type { Finding, Report, Scan, Target } from '../types';
+import { vulnscopeApi } from '../api/vulnscope';
+import { toast } from 'sonner';
 import { EmptyState, FindingCard, PageHeader, PageShell, RiskScoreBadge, SectionCard, SeverityBadge, StatCard, StatusBadge } from '../components/ui';
 
 export function Targets() {
+  const [searchParams] = useSearchParams();
+  const highlightedTargetId = Number(searchParams.get('highlight')) || null;
   const [targets, setTargets] = useState<Target[]>([]);
+  const [scans, setScans] = useState<Scan[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [latestFindings, setLatestFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingTargetId, setEditingTargetId] = useState<number | null>(null);
   const [selectedTargetId, setSelectedTargetId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -17,52 +25,110 @@ export function Targets() {
     authorization_confirmed: false,
   });
 
-  const fetchTargets = () => {
-    const items = getTargets();
-    setTargets(items);
-    setSelectedTargetId(current => current || items[0]?.id || null);
-    setLoading(false);
-  };
+  const fetchTargets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [apiTargets, apiScans, apiReports] = await Promise.all([
+        vulnscopeApi.listTargets(),
+        vulnscopeApi.listScans(),
+        vulnscopeApi.listReports(),
+      ]);
+      setTargets(apiTargets);
+      setScans(apiScans);
+      setReports(apiReports);
+      setSelectedTargetId(current => highlightedTargetId || current || apiTargets[0]?.id || null);
+    } catch {
+      setError('Targets could not be loaded from the backend.');
+    } finally {
+      setLoading(false);
+    }
+  }, [highlightedTargetId]);
 
   useEffect(() => {
-    fetchTargets();
-  }, []);
+    void fetchTargets();
+  }, [fetchTargets]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.authorization_confirmed) return;
-    createDemoTarget(formData);
-    setShowForm(false);
-    setFormData({ name: '', base_url: '', environment: 'development', authorization_confirmed: false });
-    fetchTargets();
+    try {
+      if (editingTargetId) {
+        await vulnscopeApi.updateTarget(editingTargetId, formData);
+        toast.success('Target updated.');
+      } else {
+        await vulnscopeApi.createTarget(formData);
+        toast.success('Target added.');
+      }
+      setShowForm(false);
+      setEditingTargetId(null);
+      setFormData({ name: '', base_url: '', environment: 'development', authorization_confirmed: false });
+      await fetchTargets();
+    } catch {
+      toast.error('Target could not be added.');
+    }
   };
 
-  const deleteTarget = (event: React.MouseEvent, id: number) => {
+  const openCreateForm = () => {
+    setEditingTargetId(null);
+    setFormData({ name: '', base_url: '', environment: 'development', authorization_confirmed: false });
+    setShowForm(true);
+  };
+
+  const openEditForm = (target: Target) => {
+    setEditingTargetId(target.id);
+    setFormData({
+      name: target.name,
+      base_url: target.base_url,
+      environment: target.environment,
+      authorization_confirmed: target.authorization_confirmed,
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const deleteTarget = async (event: React.MouseEvent, id: number) => {
     event.stopPropagation();
     if (!confirm('Are you sure you want to delete this target?')) return;
-    deleteDemoTarget(id);
-    setSelectedTargetId(current => current === id ? null : current);
-    fetchTargets();
+    try {
+      await vulnscopeApi.deleteTarget(id);
+      setSelectedTargetId(current => current === id ? null : current);
+      toast.success('Target deleted.');
+      await fetchTargets();
+    } catch {
+      toast.error('Target could not be deleted. Delete its scans first if it is in use.');
+    }
   };
 
-  const scans = listScans();
-  const reports = listReports();
   const selectedTarget = targets.find(target => target.id === selectedTargetId) || targets[0] || null;
   const selectedScans = selectedTarget ? scans.filter(scan => scan.target_id === selectedTarget.id) : [];
   const latestScan = selectedScans[0] || null;
-  const latestFindings = latestScan ? listFindings(latestScan.id).slice(0, 3) : [];
+  const latestCompletedScan = selectedScans.find(scan => scan.status === 'completed') || null;
+  const latestScanId = latestCompletedScan?.id;
   const targetReports = selectedTarget ? reports.filter(report => report.target_id === selectedTarget.id) : [];
+
+  useEffect(() => {
+    if (!latestScanId) {
+      setLatestFindings([]);
+      return;
+    }
+
+    vulnscopeApi.listFindings(latestScanId)
+      .then(items => setLatestFindings(items.slice(0, 3)))
+      .catch(() => setLatestFindings([]));
+  }, [latestScanId]);
 
   const targetMetrics = (target: Target) => {
     const targetScans = scans.filter(scan => scan.target_id === target.id);
     const latest = targetScans[0] || null;
+    const latestCompleted = targetScans.find(scan => scan.status === 'completed') || null;
     const targetReports = reports.filter(report => report.target_id === target.id);
     return {
       scanCount: targetScans.length,
       findingCount: targetScans.reduce((total, scan) => total + scan.total_findings, 0),
       reportCount: targetReports.length,
       latest,
-      risk: latest?.risk_score ?? 0,
+      latestCompleted,
     };
   };
 
@@ -70,16 +136,18 @@ export function Targets() {
     <PageShell>
       <PageHeader
         title="Targets"
-        subtitle="Demo data. Manage authorized web assets and review each target's latest posture, findings, scans, and reports."
+        subtitle="Manage backend-authorized web assets and review each target's latest posture, findings, scans, and reports."
         actions={
-          <button onClick={() => setShowForm(value => !value)} className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+          <button onClick={openCreateForm} className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
             <Plus className="h-4 w-4" /> Add Target
           </button>
         }
       />
 
+      {error && <EmptyState title="Targets unavailable" description={error} action={<button onClick={() => void fetchTargets()} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Try Again</button>} />}
+
       {showForm && (
-        <SectionCard title="Add New Target" subtitle="Only add systems you own or are explicitly authorized to assess.">
+        <SectionCard title={editingTargetId ? 'Edit Target' : 'Add New Target'} subtitle="Only add systems you own or are explicitly authorized to assess.">
           <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm font-medium">
               Target Name
@@ -103,8 +171,8 @@ export function Targets() {
               <span><strong className="block text-foreground">Authorization Confirmation</strong>I own this system or have explicit permission to conduct safe security testing on this target.</span>
             </label>
             <div className="flex justify-end gap-3 lg:col-span-2">
-              <button type="button" onClick={() => setShowForm(false)} className="h-10 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted">Cancel</button>
-              <button type="submit" disabled={!formData.authorization_confirmed} className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Save Target</button>
+              <button type="button" onClick={() => { setShowForm(false); setEditingTargetId(null); }} className="h-10 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted">Cancel</button>
+              <button type="submit" disabled={!formData.authorization_confirmed} className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{editingTargetId ? 'Update Target' : 'Save Target'}</button>
             </div>
           </form>
         </SectionCard>
@@ -123,16 +191,17 @@ export function Targets() {
                     <StatusBadge status={selectedTarget.authorization_confirmed ? 'authorized' : 'unauthorized'} />
                   </div>
                 </div>
-                <Link to={`/scans/new?targetId=${selectedTarget.id}`} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-                  New Scan <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="flex gap-2">
+                  <button onClick={() => openEditForm(selectedTarget)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted"><Pencil className="h-4 w-4" /> Edit</button>
+                  <Link to={`/scans/new?targetId=${selectedTarget.id}`} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">New Scan <ArrowRight className="h-4 w-4" /></Link>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label="Scans" value={selectedScans.length} icon={<Activity className="h-5 w-5" />} tone="info" />
                 <StatCard label="Findings" value={selectedScans.reduce((total, scan) => total + scan.total_findings, 0)} icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
                 <StatCard label="Reports" value={targetReports.length} icon={<FileText className="h-5 w-5" />} />
-                <StatCard label="Latest Posture" value={latestScan ? `${latestScan.overall_posture_score}/100` : '-'} icon={<ShieldCheck className="h-5 w-5" />} tone="good" />
+                <StatCard label="Latest Posture" value={latestCompletedScan ? `${latestCompletedScan.overall_posture_score}/100` : 'N/A'} icon={<ShieldCheck className="h-5 w-5" />} tone="good" />
               </div>
 
               {latestScan ? (
@@ -141,12 +210,13 @@ export function Targets() {
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
                         <h3 className="font-semibold">Latest scan</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">#{latestScan.id} · {latestScan.profile}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">#{latestScan.id} - {latestScan.profile}</p>
                       </div>
                       <StatusBadge status={latestScan.status} />
                     </div>
-                    <RiskScoreBadge score={latestScan.risk_score} />
-                    <p className="mt-3 text-sm text-muted-foreground">Completed {latestScan.completed_at ? new Date(latestScan.completed_at).toLocaleString() : 'not yet completed'}</p>
+                    {latestScan.status === 'completed' ? <RiskScoreBadge score={latestScan.risk_score} /> : <p className="text-sm font-medium text-muted-foreground">Assessment scores unavailable</p>}
+                    {latestScan.error_message && <p className="mt-3 text-sm text-red-300">{latestScan.error_message}</p>}
+                    <p className="mt-3 text-sm text-muted-foreground">{latestScan.completed_at ? `Finished ${new Date(latestScan.completed_at).toLocaleString()}` : 'Not yet completed'}</p>
                   </div>
                   <div className="rounded-lg border border-border bg-background/60 p-4">
                     <h3 className="mb-3 font-semibold">Latest findings</h3>
@@ -181,7 +251,7 @@ export function Targets() {
                 <h3 className="mb-3 font-semibold">Reports</h3>
                 <div className="space-y-3">
                   {targetReports.slice(0, 3).map(report => (
-                    <Link key={report.id} to="/reports" className="block rounded-md border border-border bg-card/70 p-3 hover:bg-muted/40">
+                    <Link key={report.id} to={`/reports?reportId=${report.id}`} className="block rounded-md border border-border bg-card/70 p-3 hover:bg-muted/40">
                       <p className="text-sm font-medium">{report.title}</p>
                       <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{report.executive_summary}</p>
                     </Link>
@@ -205,7 +275,7 @@ export function Targets() {
                   <h3 className="text-lg font-semibold">{target.name}</h3>
                   <p className="mt-1 break-all font-mono text-xs leading-5 text-muted-foreground">{target.base_url}</p>
                 </div>
-                <span onClick={(event) => deleteTarget(event, target.id)} className="rounded-md p-2 text-muted-foreground opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100">
+                <span onClick={(event) => void deleteTarget(event, target.id)} className="rounded-md p-2 text-muted-foreground opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100">
                   <Trash2 className="h-4 w-4" />
                 </span>
               </div>
@@ -225,7 +295,7 @@ export function Targets() {
                       <p className="text-xs text-muted-foreground">Latest scan</p>
                       <p className="text-sm font-medium">#{metrics.latest.id} · {new Date(metrics.latest.started_at).toLocaleDateString()}</p>
                     </div>
-                    <RiskScoreBadge score={metrics.risk} />
+                    {metrics.latestCompleted ? <RiskScoreBadge score={metrics.latestCompleted.risk_score} /> : <span className="text-sm text-muted-foreground">No completed score</span>}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No scans yet</p>
@@ -237,7 +307,7 @@ export function Targets() {
       </div>
 
       {!loading && targets.length === 0 && (
-        <EmptyState title="No targets yet" description="Add an authorized target to begin a safe assessment workflow." icon={<AlertTriangle className="h-8 w-8" />} action={<button onClick={() => setShowForm(true)} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Add Target</button>} />
+        <EmptyState title="No targets yet" description="Add an authorized target to begin a safe assessment workflow." icon={<AlertTriangle className="h-8 w-8" />} action={<button onClick={openCreateForm} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Add Target</button>} />
       )}
 
       {latestFindings.length > 0 && (

@@ -27,7 +27,7 @@ def startup_event():
             profile = models.UserProfile(
                 full_name="Security Analyst",
                 email="analyst@vulnscope.local",
-                organization="VulnScope Demo Lab",
+                organization="VulnScope",
                 role="Security Analyst",
                 avatar_initials="SA"
             )

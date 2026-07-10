@@ -12,19 +12,19 @@ from app.scanner.orchestrator import run_scan
 from app.scanner.reports.report_generator import generate_report
 import json
 
-# --- Demo Target Server ---
-class DemoTargetHandler(BaseHTTPRequestHandler):
+# --- Local Test Target Server ---
+class TestTargetHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
-        self.send_header('Server', 'VulnScope-Demo')
+        self.send_header('Server', 'VulnScope-Test')
         self.send_header('Set-Cookie', 'session=123')
         self.end_headers()
 
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
-        self.send_header('Server', 'VulnScope-Demo')
+        self.send_header('Server', 'VulnScope-Test')
         self.send_header('Set-Cookie', 'session=123') # Insecure cookie
         self.end_headers()
         
@@ -38,7 +38,7 @@ class DemoTargetHandler(BaseHTTPRequestHandler):
         self.wfile.write(html.encode())
 
 def run_server():
-    server = HTTPServer(('127.0.0.1', 8081), DemoTargetHandler)
+    server = HTTPServer(('127.0.0.1', 8081), TestTargetHandler)
     server.serve_forever()
 
 server_thread = threading.Thread(target=run_server, daemon=True)
@@ -53,10 +53,10 @@ db = SessionLocal()
 print("1. DB reset complete.")
 settings = models.AppSettings(max_pages_full=10, max_pages_standard=5, max_depth_full=3, max_depth_standard=2)
 db.add(settings)
-target = models.Target(name="Local Demo Target", base_url="http://127.0.0.1:8081", domain="127.0.0.1:8081", environment="local")
+target = models.Target(name="Local Test Target", base_url="http://127.0.0.1:8081", domain="127.0.0.1:8081", environment="local")
 db.add(target)
 db.commit()
-print(f"2. Created demo target: {target.base_url}")
+print(f"2. Created test target: {target.base_url}")
 
 # --- Scans ---
 print("\n--- Running First Full Safe Scan ---")

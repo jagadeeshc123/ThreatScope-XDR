@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Target } from '../types';
 import { Target as TargetIcon, Play, AlertCircle, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { getTargets, startDemoScan } from '../data/demoData';
+import { vulnscopeApi } from '../api/vulnscope';
 
 export function NewScan() {
   const [searchParams] = useSearchParams();
@@ -13,16 +13,27 @@ export function NewScan() {
   const [profile, setProfile] = useState('Standard Safe Scan');
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const demoTargets = getTargets();
-    setTargets(demoTargets);
-    if (!selectedTargetId && demoTargets.length > 0) {
-      setSelectedTargetId(demoTargets[0].id.toString());
-    }
-    setLoading(false);
-  }, [selectedTargetId]);
+    const loadTargets = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [apiTargets, settings] = await Promise.all([vulnscopeApi.listTargets(), vulnscopeApi.getSettings()]);
+        setTargets(apiTargets);
+        setProfile(settings.default_scan_profile);
+        setSelectedTargetId(current => current || apiTargets[0]?.id.toString() || '');
+      } catch {
+        setError('Targets and scanner defaults could not be loaded from the backend.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadTargets();
+  }, []);
 
   const handleStartScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +41,11 @@ export function NewScan() {
 
     setStarting(true);
     try {
-      const response = startDemoScan(Number(selectedTargetId), profile);
+      const response = await vulnscopeApi.startScan({ target_id: Number(selectedTargetId), profile });
       toast.success('Scan started successfully!');
       navigate(`/scans?highlight=${response.id}`);
     } catch {
-      toast.error('Failed to start demo scan.');
+      toast.error('Failed to start scan.');
     } finally {
       setStarting(false);
     }
@@ -43,6 +54,7 @@ export function NewScan() {
   if (loading) {
     return <div className="p-6 text-muted-foreground">Loading targets...</div>;
   }
+  if (error) return <div className="mx-auto max-w-4xl p-8 text-center"><h1 className="text-xl font-semibold">New scan unavailable</h1><p className="mt-2 text-sm text-muted-foreground">{error}</p><button onClick={() => navigate('/scans')} className="mt-4 rounded-md border border-border px-4 py-2 text-sm font-semibold">Back to Scans</button></div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -52,7 +64,7 @@ export function NewScan() {
         </button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">New Scan</h1>
-          <p className="text-muted-foreground mt-2">Configure and launch a new security assessment.</p>
+          <p className="text-muted-foreground mt-2">Configure and launch a new backend security assessment.</p>
         </div>
       </div>
 

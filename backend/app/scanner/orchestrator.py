@@ -12,6 +12,7 @@ from app.scanner.checks import (
 from app.scanner.risk_scoring import calculate_risk_score
 from app.scanner.posture_scoring import calculate_posture_scores
 from app.scanner.remediation import get_remediation_for_finding
+from app.scanner.reports.report_generator import generate_report
 
 def utcnow():
     return datetime.now(timezone.utc)
@@ -39,7 +40,11 @@ async def async_run_scan(scan_id: int):
         db.add(notif_start)
         db.commit()
         
-        http_client = SafeHTTPClient()
+        settings = db.query(models.AppSettings).first() or models.AppSettings()
+        http_client = SafeHTTPClient(
+            timeout=settings.request_timeout_seconds,
+            rate_limit_delay=settings.rate_limit_delay_ms / 1000
+        )
         findings_data = []
         
         # 1. Base URL fetch
@@ -48,6 +53,13 @@ async def async_run_scan(scan_id: int):
             scan.status = "failed"
             scan.error_message = error or "No response from base URL"
             scan.completed_at = utcnow()
+            db.add(models.Notification(
+                title="Scan Failed",
+                message=f"Scan #{scan.id} could not reach {base_url}: {scan.error_message[:120]}",
+                type="danger",
+                entity_type="scan",
+                entity_id=scan.id
+            ))
             db.commit()
             await http_client.close()
             return
@@ -76,8 +88,6 @@ async def async_run_scan(scan_id: int):
         findings_data.extend(technology_disclosure.check_technology_disclosure(base_url, headers, html_content))
         
         if scan.profile in ["Standard Safe Scan", "Full Safe Scan"]:
-            # Fetch settings
-            settings = db.query(models.AppSettings).first()
             max_pages = settings.max_pages_full if scan.profile == "Full Safe Scan" else settings.max_pages_standard
             max_depth = settings.max_depth_full if scan.profile == "Full Safe Scan" else settings.max_depth_standard
             
@@ -218,6 +228,24 @@ async def async_run_scan(scan_id: int):
             entity_id=scan.id
         )
         db.add(notif_complete)
+
+        if settings.auto_generate_report and not db.query(models.Report).filter(models.Report.scan_id == scan.id).first():
+            report = models.Report(
+                scan_id=scan.id,
+                target_id=scan.target_id,
+                title=f"Security Assessment Report - {target.name}",
+                executive_summary=f"Automated assessment resulted in {scan.total_findings} findings.",
+                html_content=generate_report(db, scan)
+            )
+            db.add(report)
+            db.flush()
+            db.add(models.Notification(
+                title="Report Generated",
+                message=f"Report #{report.id} for scan #{scan.id} is ready.",
+                type="success",
+                entity_type="report",
+                entity_id=report.id
+            ))
         
         # Check for criticals
         criticals = [f for f in findings_data if f["severity"] == "critical"]

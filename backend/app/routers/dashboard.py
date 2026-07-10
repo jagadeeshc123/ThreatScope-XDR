@@ -10,11 +10,12 @@ router = APIRouter()
 def get_dashboard_summary(db: Session = Depends(get_db)):
     total_targets = db.query(models.Target).count()
     total_scans = db.query(models.Scan).count()
+    active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
     total_findings = db.query(models.Finding).count()
     
-    # Calculate overall risk score and posture score
-    avg_risk = db.query(func.avg(models.Scan.risk_score)).scalar() or 0.0
-    avg_posture = db.query(func.avg(models.Scan.overall_posture_score)).scalar() or 100.0
+    # Failed and in-progress scans do not contain assessment scores.
+    avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
+    avg_posture = db.query(func.avg(models.Scan.overall_posture_score)).filter(models.Scan.status == "completed").scalar() or 0.0
 
     # severity distribution
     severities = ["critical", "high", "medium", "low", "info"]
@@ -25,14 +26,28 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
 
     recent_scans = db.query(models.Scan).order_by(models.Scan.started_at.desc()).limit(5).all()
     
-    # Target with highest risk
-    targets = db.query(models.Target).all()
+    target_risk_rows = (
+        db.query(models.Target.id, func.avg(models.Scan.risk_score).label("avg_risk"))
+        .join(models.Scan, models.Scan.target_id == models.Target.id)
+        .filter(models.Scan.status == "completed")
+        .group_by(models.Target.id)
+        .order_by(func.avg(models.Scan.risk_score).desc())
+        .limit(3)
+        .all()
+    )
     highest_risk_targets = []
+    for row in target_risk_rows:
+        target = db.query(models.Target).filter(models.Target.id == row.id).first()
+        if target:
+            highest_risk_targets.append(target)
     
     return schemas.DashboardSummary(
         total_targets=total_targets,
         total_scans=total_scans,
+        active_scans=active_scans,
         total_findings=total_findings,
+        critical_findings=distribution["critical"],
+        high_findings=distribution["high"],
         overall_risk_score=round(avg_risk, 2),
         overall_posture_score=int(avg_posture),
         severity_distribution=distribution,

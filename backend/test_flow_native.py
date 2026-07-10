@@ -9,10 +9,16 @@ Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
-print("1. Add built-in demo target.")
+print("1. Add built-in test target.")
 settings = models.AppSettings(max_pages_full=10, max_pages_standard=5, max_depth_full=3, max_depth_standard=2)
 db.add(settings)
-target = models.Target(name="Local Demo Target", base_url="http://localhost:8081", domain="localhost:8081", environment="local")
+target = models.Target(
+    name="Local Test Target",
+    base_url="http://localhost:8081",
+    domain="localhost:8081",
+    environment="local",
+    authorization_confirmed=True,
+)
 db.add(target)
 db.commit()
 print(f"Target created with ID {target.id}")
@@ -20,9 +26,11 @@ print(f"Target created with ID {target.id}")
 # Mock SafeHTTPClient
 from httpx import Headers
 class MockResponse:
-    def __init__(self, text, url_str):
+    def __init__(self, text, url_str, status_code=200):
         self.text = text
-        self.headers = Headers({"Server": "MockServer", "Set-Cookie": "session=123"})
+        self.status_code = status_code
+        self.headers = Headers({"Server": "MockServer", "Set-Cookie": "session=123", "Content-Type": "text/html"})
+        self.url_str = url_str
         class MockUrl:
             scheme = "http"
         self.url = MockUrl()
@@ -32,25 +40,29 @@ async def mock_get(self, url, **kwargs):
         return MockResponse("<html><body><form><input type='password' name='pwd'/></form></body></html>", url), None
     return MockResponse("<html><body><a href='/login'>Login</a></body></html>", url), None
 
-with patch("app.scanner.http_client.SafeHTTPClient.get", new=mock_get):
-    with patch("app.scanner.http_client.SafeHTTPClient.close", new=AsyncMock()):
-        print("\n2. Run first Full Safe Scan.")
-        scan1 = models.Scan(target_id=target.id, profile="Full Safe Scan", status="running")
-        db.add(scan1)
-        db.commit()
-        run_scan(scan1.id)
-        db.refresh(scan1)
-        print(f"Scan 1 finished with status: {scan1.status}")
-        print(f"Scan 1 error: {scan1.error_message}")
+async def mock_head(self, url, **kwargs):
+    return MockResponse("", url), None
 
-        print("\n3. Run second Full Safe Scan.")
-        scan2 = models.Scan(target_id=target.id, profile="Full Safe Scan", status="running")
-        db.add(scan2)
-        db.commit()
-        run_scan(scan2.id)
-        db.refresh(scan2)
-        print(f"Scan 2 finished with status: {scan2.status}")
-        print(f"Scan 2 error: {scan2.error_message}")
+with patch("app.scanner.http_client.SafeHTTPClient.get", new=mock_get):
+    with patch("app.scanner.http_client.SafeHTTPClient.head", new=mock_head):
+        with patch("app.scanner.http_client.SafeHTTPClient.close", new=AsyncMock()):
+            print("\n2. Run first Full Safe Scan.")
+            scan1 = models.Scan(target_id=target.id, profile="Full Safe Scan", status="running")
+            db.add(scan1)
+            db.commit()
+            run_scan(scan1.id)
+            db.refresh(scan1)
+            print(f"Scan 1 finished with status: {scan1.status}")
+            print(f"Scan 1 error: {scan1.error_message}")
+
+            print("\n3. Run second Full Safe Scan.")
+            scan2 = models.Scan(target_id=target.id, profile="Full Safe Scan", status="running")
+            db.add(scan2)
+            db.commit()
+            run_scan(scan2.id)
+            db.refresh(scan2)
+            print(f"Scan 2 finished with status: {scan2.status}")
+            print(f"Scan 2 error: {scan2.error_message}")
 
 print("\n4. Confirm Crawl Map tab works.")
 nodes = db.query(models.CrawlNode).filter(models.CrawlNode.scan_id == scan2.id).all()
@@ -87,10 +99,11 @@ for ev in evidences:
     print(f" - {ev.artifact_type}: {ev.title} (URL: {ev.related_url})")
 
 print("\n9. Confirm Policy Results tab.")
-import json
-with open("app/policies/web_baseline.json") as f:
-    packs = [json.load(f)]
-print("Policy packs evaluated: (skipped evaluation logic to avoid dependencies)")
+from app.routers.scans import get_scan_policy_results
+policy_results = get_scan_policy_results(scan2.id, db)
+print("Policy packs evaluated:", len(policy_results))
+for pack in policy_results:
+    print(f" - {pack['title']} (Checks: {len(pack['checks'])})")
 
 print("\n10. Generate report.")
 html = generate_report(db, scan2)

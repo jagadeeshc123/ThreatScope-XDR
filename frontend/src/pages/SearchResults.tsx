@@ -1,149 +1,69 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Activity, AlertTriangle, ArrowRight, FileText, Search, Target } from 'lucide-react';
 import type { SearchResults } from '../types';
-import { Search, Target, Activity, AlertTriangle, FileText, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
-import { searchDemo } from '../data/demoData';
+import { vulnscopeApi } from '../api/vulnscope';
+import { EmptyState, PageHeader, PageShell } from '../components/ui';
 
 export function SearchResultsPage() {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
+  const query = searchParams.get('q')?.trim() || '';
   const [results, setResults] = useState<SearchResults | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     if (!query) {
+      setResults(null);
+      setError(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    try {
-      setResults(searchDemo(query));
-    } catch {
-      toast.error('Search failed');
-    } finally {
-      setLoading(false);
-    }
+    setError(null);
+    vulnscopeApi.search(query)
+      .then(data => { if (!cancelled) setResults(data); })
+      .catch(() => { if (!cancelled) setError('Search could not reach the VulnScope backend.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [query]);
 
-  if (loading) {
-    return <div className="p-6">Searching...</div>;
-  }
-
-  if (!query) {
-    return <div className="p-6 text-muted-foreground">Please enter a search query.</div>;
-  }
-
-  const totalResults = results ? (results.targets.length + results.scans.length + results.findings.length + results.reports.length) : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length : 0;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center space-x-3 mb-6">
-        <Search className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold tracking-tight">Search Results for "{query}"</h1>
-      </div>
-
-      <p className="text-muted-foreground">Found {totalResults} total results.</p>
-
-      {totalResults === 0 ? (
-        <div className="py-12 text-center bg-card border border-border rounded-xl">
-          <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-medium">No results found</h3>
-          <p className="text-muted-foreground mt-2">Try adjusting your search terms or search for something else.</p>
-        </div>
-      ) : (
+    <PageShell className="max-w-5xl">
+      <PageHeader title={query ? `Search results for "${query}"` : 'Search VulnScope'} subtitle={query && !loading && !error ? `${totalResults} matching records across targets, scans, findings, and reports.` : 'Search the current Web Exposure workspace.'} />
+      {!query && <EmptyState title="Enter a search term" description="Use the search field in the top bar to find targets, scans, findings, and reports." icon={<Search className="h-8 w-8" />} />}
+      {loading && <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">Searching backend records...</div>}
+      {!loading && error && <EmptyState title="Search unavailable" description={error} />}
+      {!loading && !error && query && totalResults === 0 && <EmptyState title="No results found" description="Try a target name, scan status, finding title, severity, URL, or report title." icon={<Search className="h-8 w-8" />} />}
+      {!loading && !error && totalResults > 0 && results && (
         <div className="space-y-8">
-          
-          {/* Targets */}
-          {results?.targets && results.targets.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold flex items-center border-b pb-2">
-                <Target className="w-5 h-5 mr-2 text-blue-500" />
-                Targets ({results.targets.length})
-              </h2>
-              <div className="grid gap-3">
-                {results.targets.map(t => (
-                  <Link key={t.id} to={`/targets`} className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors group">
-                    <div>
-                      <div className="font-medium">{t.name}</div>
-                      <div className="text-sm text-muted-foreground">{t.base_url}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Scans */}
-          {results?.scans && results.scans.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold flex items-center border-b pb-2">
-                <Activity className="w-5 h-5 mr-2 text-green-500" />
-                Scans ({results.scans.length})
-              </h2>
-              <div className="grid gap-3">
-                {results.scans.map(s => (
-                  <Link key={s.id} to={`/scans?highlight=${s.id}`} className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors group">
-                    <div>
-                      <div className="font-medium">Scan #{s.id} - {s.profile}</div>
-                      <div className="text-sm text-muted-foreground">Status: {s.status} | Risk Score: {s.risk_score}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Findings */}
-          {results?.findings && results.findings.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold flex items-center border-b pb-2">
-                <AlertTriangle className="w-5 h-5 mr-2 text-warning" />
-                Findings ({results.findings.length})
-              </h2>
-              <div className="grid gap-3">
-                {results.findings.map(f => (
-                  <Link key={f.id} to={`/scans?highlight=${f.scan_id}`} className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors group">
-                    <div>
-                      <div className="font-medium flex items-center">
-                        <span className={`w-2 h-2 rounded-full mr-2 ${f.severity === 'critical' ? 'bg-destructive' : f.severity === 'high' ? 'bg-orange-500' : 'bg-warning'}`}></span>
-                        {f.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground truncate max-w-2xl">{f.affected_url}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Reports */}
-          {results?.reports && results.reports.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold flex items-center border-b pb-2">
-                <FileText className="w-5 h-5 mr-2 text-purple-500" />
-                Reports ({results.reports.length})
-              </h2>
-              <div className="grid gap-3">
-                {results.reports.map(r => (
-                  <Link key={r.id} to={`/reports`} className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors group">
-                    <div>
-                      <div className="font-medium">{r.title}</div>
-                      <div className="text-sm text-muted-foreground">Generated at {new Date(r.created_at).toLocaleString()}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
+          <ResultGroup title="Targets" icon={<Target className="h-5 w-5 text-blue-400" />} count={results.targets.length}>
+            {results.targets.map(target => <ResultLink key={target.id} to={`/targets?highlight=${target.id}`} title={target.name} detail={target.base_url} />)}
+          </ResultGroup>
+          <ResultGroup title="Scans" icon={<Activity className="h-5 w-5 text-emerald-400" />} count={results.scans.length}>
+            {results.scans.map(scan => <ResultLink key={scan.id} to={`/scans?highlight=${scan.id}`} title={`Scan #${scan.id} - ${scan.profile}`} detail={`Status: ${scan.status} | Risk score: ${scan.risk_score}`} />)}
+          </ResultGroup>
+          <ResultGroup title="Findings" icon={<AlertTriangle className="h-5 w-5 text-amber-300" />} count={results.findings.length}>
+            {results.findings.map(finding => <ResultLink key={finding.id} to={`/scans?highlight=${finding.scan_id}&tab=findings`} title={`${finding.severity.toUpperCase()} - ${finding.title}`} detail={finding.affected_url} />)}
+          </ResultGroup>
+          <ResultGroup title="Reports" icon={<FileText className="h-5 w-5 text-fuchsia-300" />} count={results.reports.length}>
+            {results.reports.map(report => <ResultLink key={report.id} to={`/reports?reportId=${report.id}`} title={report.title} detail={`Generated ${new Date(report.created_at).toLocaleString()}`} />)}
+          </ResultGroup>
         </div>
       )}
-    </div>
+    </PageShell>
   );
+}
+
+function ResultGroup({ title, icon, count, children }: { title: string; icon: React.ReactNode; count: number; children: React.ReactNode }) {
+  if (!count) return null;
+  return <section className="space-y-3"><h2 className="flex items-center gap-2 border-b border-border pb-2 text-lg font-semibold">{icon}{title} ({count})</h2><div className="grid gap-3">{children}</div></section>;
+}
+
+function ResultLink({ to, title, detail }: { to: string; title: string; detail: string }) {
+  return <Link to={to} className="group flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary"><div className="min-w-0"><div className="font-medium">{title}</div><div className="mt-1 truncate text-sm text-muted-foreground">{detail}</div></div><ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" /></Link>;
 }

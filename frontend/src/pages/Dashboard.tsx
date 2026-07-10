@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Activity,
@@ -13,8 +13,8 @@ import {
   Target,
 } from 'lucide-react';
 import { Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
-import type { DashboardSummary } from '../types';
-import { getDashboardSummary, getPolicies, getTargets, listFindings, listReports, listScans } from '../data/demoData';
+import type { DashboardSummary, Finding, Report, Scan, Target as TargetRecord } from '../types';
+import { vulnscopeApi, type PolicyPack } from '../api/vulnscope';
 import { EmptyState, FindingCard, PageHeader, PageShell, RiskScoreBadge, SectionCard, SeverityBadge, StatCard, StatusBadge } from '../components/ui';
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -27,34 +27,60 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 export function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [scans, setScans] = useState<Scan[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [targets, setTargets] = useState<TargetRecord[]>([]);
+  const [policies, setPolicies] = useState<PolicyPack[]>([]);
+  const [recentFindings, setRecentFindings] = useState<Finding[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSummary(getDashboardSummary());
+    const loadDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [apiSummary, apiScans, apiReports, apiTargets, apiPolicies] = await Promise.all([
+          vulnscopeApi.getDashboardSummary(),
+          vulnscopeApi.listScans(),
+          vulnscopeApi.listReports(),
+          vulnscopeApi.listTargets(),
+          vulnscopeApi.listPolicies(),
+        ]);
+        const findingGroups = await Promise.all(
+          apiScans.slice(0, 5).map(scan => vulnscopeApi.listFindings(scan.id).catch(() => [])),
+        );
+        setSummary(apiSummary);
+        setScans(apiScans);
+        setReports(apiReports);
+        setTargets(apiTargets);
+        setPolicies(apiPolicies);
+        setRecentFindings(findingGroups.flat().sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4));
+      } catch {
+        setError('Dashboard data could not be loaded from the backend.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadDashboard();
   }, []);
 
-  const scans = useMemo(() => listScans(), []);
-  const reports = useMemo(() => listReports(), []);
-  const targets = useMemo(() => getTargets(), []);
-  const policies = useMemo(() => getPolicies(), []);
-
-  if (!summary) {
+  if (loading) {
     return <PageShell><div className="text-muted-foreground">Loading dashboard...</div></PageShell>;
   }
+  if (error || !summary) return <PageShell><EmptyState title="Dashboard unavailable" description={error || 'No dashboard summary was returned.'} /></PageShell>;
 
   const severityData = Object.entries(summary.severity_distribution)
     .map(([name, value]) => ({ name, value, color: SEVERITY_COLORS[name] || SEVERITY_COLORS.info }))
     .filter(item => item.value > 0);
 
-  const trendData = scans.slice(0, 7).reverse().map(scan => ({
+  const completedScans = scans.filter(scan => scan.status === 'completed');
+  const trendData = completedScans.slice(0, 7).reverse().map(scan => ({
     label: `#${scan.id}`,
     posture: scan.overall_posture_score,
     risk: Number(scan.risk_score.toFixed(1)),
   }));
-
-  const recentFindings = scans
-    .flatMap(scan => listFindings(scan.id))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .slice(0, 4);
 
   const highPriority = summary.critical_findings + summary.high_findings;
   const policyCheckCount = policies.reduce((total, policy) => total + policy.checks.length, 0);
@@ -63,7 +89,7 @@ export function Dashboard() {
     <PageShell>
       <PageHeader
         title="Dashboard Overview"
-        subtitle="Demo data. Monitor web application exposure, safe scan history, report coverage, and policy posture from one operational view."
+        subtitle="Monitor backend Web Exposure data, safe scan history, report coverage, and policy posture from one operational view."
         actions={
           <>
             <Link to="/scans/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
@@ -79,10 +105,10 @@ export function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <StatCard label="Targets" value={summary.total_targets} detail="Authorized assets" icon={<Target className="h-5 w-5" />} tone="info" />
         <StatCard label="Scans" value={summary.total_scans} detail={`${summary.active_scans} active`} icon={<Search className="h-5 w-5" />} tone="good" />
-        <StatCard label="Findings" value={summary.total_findings} detail="Open demo issues" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="Findings" value={summary.total_findings} detail="Observed issues" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
         <StatCard label="Critical / High" value={highPriority} detail="Priority queue" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
         <StatCard label="Reports" value={reports.length} detail="Generated outputs" icon={<FileText className="h-5 w-5" />} tone="default" />
-        <StatCard label="Posture Score" value={<>{summary.overall_posture_score}<span className="text-base text-muted-foreground">/100</span></>} detail="Average posture" icon={<Shield className="h-5 w-5" />} tone="good" />
+        <StatCard label="Posture Score" value={completedScans.length > 0 ? <>{summary.overall_posture_score}<span className="text-base text-muted-foreground">/100</span></> : 'N/A'} detail="Completed scans only" icon={<Shield className="h-5 w-5" />} tone="good" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">
@@ -155,8 +181,8 @@ export function Dashboard() {
                     <td className="py-4 pr-4">{targets.find(target => target.id === scan.target_id)?.name || `Target #${scan.target_id}`}</td>
                     <td className="py-4 pr-4 text-muted-foreground">{scan.profile}</td>
                     <td className="py-4 pr-4"><StatusBadge status={scan.status} /></td>
-                    <td className="py-4 pr-4 font-semibold">{scan.total_findings}</td>
-                    <td className="py-4"><RiskScoreBadge score={scan.risk_score} /></td>
+                    <td className="py-4 pr-4 font-semibold">{scan.status === 'completed' ? scan.total_findings : '-'}</td>
+                    <td className="py-4">{scan.status === 'completed' ? <RiskScoreBadge score={scan.risk_score} /> : <span className="text-muted-foreground">N/A</span>}</td>
                   </tr>
                 ))}
               </tbody>

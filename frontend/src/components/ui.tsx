@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { AlertTriangle, FileText, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
+import type { PolicyPack } from '../api/vulnscope';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info' | string;
 type Status = 'queued' | 'running' | 'completed' | 'failed' | 'passed' | string;
@@ -208,7 +209,7 @@ function InfoBlock({ title, icon, text }: { title: string; icon: ReactNode; text
   );
 }
 
-export function PolicyCard({ policy }: { policy: any }) {
+export function PolicyCard({ policy }: { policy: PolicyPack }) {
   return (
     <SectionCard className="h-full" bodyClassName="space-y-4">
       <div className="flex items-start gap-4">
@@ -225,7 +226,7 @@ export function PolicyCard({ policy }: { policy: any }) {
       </div>
       <p className="text-sm leading-6 text-muted-foreground">{policy.description}</p>
       <div className="space-y-3">
-        {policy.checks.map((check: any) => (
+        {policy.checks.map(check => (
           <div key={check.id} className="rounded-md border border-border bg-background/60 p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <p className="text-sm font-medium text-foreground">{check.title}</p>

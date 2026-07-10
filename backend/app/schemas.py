@@ -11,6 +11,12 @@ class TargetBase(BaseModel):
 class TargetCreate(TargetBase):
     pass
 
+class TargetUpdate(BaseModel):
+    name: Optional[str] = None
+    base_url: Optional[str] = None
+    environment: Optional[str] = None
+    authorization_confirmed: Optional[bool] = None
+
 class Target(TargetBase):
     id: int
     domain: str
@@ -149,7 +155,10 @@ class Report(ReportBase):
 class DashboardSummary(BaseModel):
     total_targets: int
     total_scans: int
+    active_scans: int
     total_findings: int
+    critical_findings: int
+    high_findings: int
     overall_risk_score: float
     overall_posture_score: int
     severity_distribution: dict
