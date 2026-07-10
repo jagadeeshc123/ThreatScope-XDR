@@ -7,9 +7,14 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.modules.api_security import schemas
+from app.modules.api_security.findings_engine import upsert_findings
 from app.modules.api_security.inventory import dumps_json, loads_json, risk_score_for_levels
+from app.modules.api_security.jwt_analyzer import DISCLAIMER, JwtAnalyzeError, analyze_jwt
+from app.modules.api_security.owasp_mapping import build_coverage
 from app.modules.api_security.parsers.openapi_parser import OpenApiParseError, parse_openapi
 from app.modules.api_security.parsers.postman_parser import PostmanParseError, parse_postman
+from app.modules.api_security.report_service import build_report_payload
+from app.modules.api_security.response_exposure import response_exposure_review
 
 
 def _notify(db: Session, title: str, message: str, kind: str, assessment_id: int | None = None) -> None:
@@ -53,6 +58,39 @@ def endpoint_to_schema(endpoint: models.ApiEndpoint) -> dict[str, Any]:
         "preliminary_risk_level": endpoint.preliminary_risk_level,
         "preliminary_risk_reasons": loads_json(endpoint.preliminary_risk_reasons_json, []),
         "created_at": endpoint.created_at,
+    }
+
+
+def jwt_to_schema(analysis: models.JwtAnalysis) -> dict[str, Any]:
+    return {
+        "id": analysis.id,
+        "assessment_id": analysis.assessment_id,
+        "token_fingerprint": analysis.token_fingerprint,
+        "header": loads_json(analysis.header_json_redacted, {}),
+        "payload": loads_json(analysis.payload_json_redacted, {}),
+        "algorithm": analysis.algorithm,
+        "issuer": analysis.issuer,
+        "audience": loads_json(analysis.audience_json, []),
+        "issued_at": analysis.issued_at,
+        "expires_at": analysis.expires_at,
+        "not_before": analysis.not_before,
+        "expiration_status": analysis.expiration_status,
+        "risk_score": analysis.risk_score,
+        "findings": loads_json(analysis.findings_json, []),
+        "disclaimer": DISCLAIMER,
+        "created_at": analysis.created_at,
+    }
+
+
+def report_to_schema(report: models.ApiReport) -> dict[str, Any]:
+    return {
+        "id": report.id,
+        "assessment_id": report.assessment_id,
+        "title": report.title,
+        "executive_summary": report.executive_summary,
+        "html_content": report.html_content,
+        "summary": loads_json(report.summary_json, {}),
+        "created_at": report.created_at,
     }
 
 
@@ -228,11 +266,15 @@ def list_endpoints(
 
 
 def overview(db: Session) -> dict[str, Any]:
+    owasp_indicators = db.query(models.ApiOwaspCoverage).filter(models.ApiOwaspCoverage.finding_count > 0).count()
     return {
         "total_assessments": db.query(models.ApiAssessment).count(),
         "endpoints_inventoried": db.query(func.coalesce(func.sum(models.ApiAssessment.endpoint_count), 0)).scalar() or 0,
         "unauthenticated_endpoints": db.query(func.coalesce(func.sum(models.ApiAssessment.unauthenticated_endpoint_count), 0)).scalar() or 0,
         "high_risk_endpoints": db.query(func.coalesce(func.sum(models.ApiAssessment.high_risk_endpoint_count), 0)).scalar() or 0,
+        "api_findings": db.query(models.ApiFinding).count(),
+        "high_risk_api_findings": db.query(models.ApiFinding).filter(models.ApiFinding.severity.in_(["high", "critical"])).count(),
+        "owasp_categories_with_indicators": owasp_indicators,
         "recent_assessments": db.query(models.ApiAssessment).order_by(models.ApiAssessment.created_at.desc()).limit(5).all(),
     }
 
@@ -257,3 +299,155 @@ def summary(db: Session, assessment_id: int) -> dict[str, Any]:
         "tags": sorted(tags),
     }
 
+
+def analyze_token(db: Session, payload: schemas.JwtAnalyzeRequest) -> dict[str, Any]:
+    if payload.assessment_id is not None:
+        get_assessment_or_404(db, payload.assessment_id)
+    try:
+        result = analyze_jwt(payload.token, payload.expected_issuer, payload.expected_audience)
+    except JwtAnalyzeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    analysis = models.JwtAnalysis(
+        assessment_id=payload.assessment_id,
+        token_fingerprint=result["token_fingerprint"],
+        header_json_redacted=json.dumps(result["header"], ensure_ascii=True, sort_keys=True),
+        payload_json_redacted=json.dumps(result["payload"], ensure_ascii=True, sort_keys=True),
+        algorithm=result["algorithm"],
+        issuer=result["issuer"],
+        audience_json=json.dumps(result["audience"], ensure_ascii=True),
+        issued_at=result["issued_at"],
+        expires_at=result["expires_at"],
+        not_before=result["not_before"],
+        expiration_status=result["expiration_status"],
+        risk_score=result["risk_score"],
+        findings_json=json.dumps(result["findings"], ensure_ascii=True, sort_keys=True),
+    )
+    db.add(analysis)
+    db.flush()
+    kind = "warning" if analysis.risk_score >= 4 else "info"
+    _notify(db, "JWT analyzed", f"JWT fingerprint {analysis.token_fingerprint[:12]} analyzed. Raw token was not stored.", kind, payload.assessment_id)
+    if analysis.risk_score >= 4:
+        _notify(db, "JWT risk detected", f"JWT analysis found risk score {analysis.risk_score}/10.", "warning", payload.assessment_id)
+    db.commit()
+    db.refresh(analysis)
+    return jwt_to_schema(analysis)
+
+
+def get_jwt_analysis_or_404(db: Session, analysis_id: int) -> models.JwtAnalysis:
+    analysis = db.query(models.JwtAnalysis).filter(models.JwtAnalysis.id == analysis_id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="JWT analysis not found.")
+    return analysis
+
+
+def list_jwt_analyses(db: Session, assessment_id: int | None = None) -> list[dict[str, Any]]:
+    query = db.query(models.JwtAnalysis)
+    if assessment_id is not None:
+        query = query.filter(models.JwtAnalysis.assessment_id == assessment_id)
+    return [jwt_to_schema(item) for item in query.order_by(models.JwtAnalysis.created_at.desc()).all()]
+
+
+def delete_jwt_analysis(db: Session, analysis_id: int) -> None:
+    analysis = get_jwt_analysis_or_404(db, analysis_id)
+    db.delete(analysis)
+    db.commit()
+
+
+def _refresh_coverage(db: Session, assessment: models.ApiAssessment, findings: list[models.ApiFinding]) -> list[models.ApiOwaspCoverage]:
+    db.query(models.ApiOwaspCoverage).filter(models.ApiOwaspCoverage.assessment_id == assessment.id).delete()
+    rows: list[models.ApiOwaspCoverage] = []
+    for item in build_coverage(assessment, findings):
+        row = models.ApiOwaspCoverage(assessment_id=assessment.id, **item)
+        db.add(row)
+        rows.append(row)
+    db.flush()
+    return rows
+
+
+def analyze_assessment(db: Session, assessment_id: int) -> dict[str, Any]:
+    assessment = get_assessment_or_404(db, assessment_id)
+    created, findings = upsert_findings(db, assessment)
+    coverage = _refresh_coverage(db, assessment, findings)
+    high_or_critical = sum(1 for finding in findings if finding.severity in {"high", "critical"})
+    _notify(db, "API assessment analyzed", f"Generated {created} new API finding(s) for '{assessment.name}'.", "success", assessment.id)
+    if high_or_critical:
+        _notify(db, "High-risk API finding created", f"{high_or_critical} high or critical API finding(s) are present.", "warning", assessment.id)
+    db.commit()
+    return {
+        "assessment_id": assessment.id,
+        "findings_created": created,
+        "findings_total": len(findings),
+        "high_or_critical_findings": high_or_critical,
+        "coverage_categories": len(coverage),
+    }
+
+
+def list_findings(db: Session, assessment_id: int, severity: str | None = None, source: str | None = None) -> list[models.ApiFinding]:
+    get_assessment_or_404(db, assessment_id)
+    query = db.query(models.ApiFinding).filter(models.ApiFinding.assessment_id == assessment_id)
+    if severity:
+        query = query.filter(models.ApiFinding.severity == severity)
+    if source:
+        query = query.filter(models.ApiFinding.source == source)
+    return query.order_by(models.ApiFinding.created_at.desc()).all()
+
+
+def get_finding_or_404(db: Session, finding_id: int) -> models.ApiFinding:
+    finding = db.query(models.ApiFinding).filter(models.ApiFinding.id == finding_id).first()
+    if not finding:
+        raise HTTPException(status_code=404, detail="API finding not found.")
+    return finding
+
+
+def owasp_coverage(db: Session, assessment_id: int) -> list[dict[str, Any]]:
+    assessment = get_assessment_or_404(db, assessment_id)
+    rows = db.query(models.ApiOwaspCoverage).filter(models.ApiOwaspCoverage.assessment_id == assessment_id).order_by(models.ApiOwaspCoverage.category_id).all()
+    if not rows:
+        rows = _refresh_coverage(db, assessment, list(assessment.findings))
+        db.commit()
+    findings = list(assessment.findings)
+    output = []
+    for row in rows:
+        related = [finding for finding in findings if finding.owasp_category and finding.owasp_category.startswith(row.category_id)]
+        item = schemas.ApiOwaspCoverageRead.model_validate(row).model_dump()
+        item["related_findings"] = related
+        output.append(item)
+    return output
+
+
+def response_exposure(db: Session, assessment_id: int) -> list[dict[str, Any]]:
+    return response_exposure_review(get_assessment_or_404(db, assessment_id))
+
+
+def create_report(db: Session, assessment_id: int) -> models.ApiReport:
+    assessment = get_assessment_or_404(db, assessment_id)
+    if not assessment.findings:
+        created, findings = upsert_findings(db, assessment)
+        _refresh_coverage(db, assessment, findings)
+    payload = build_report_payload(assessment)
+    report = models.ApiReport(
+        assessment_id=assessment.id,
+        title=payload["title"],
+        executive_summary=payload["executive_summary"],
+        html_content=payload["html_content"],
+        summary_json=json.dumps(payload["summary"], ensure_ascii=True, sort_keys=True),
+    )
+    db.add(report)
+    db.flush()
+    _notify(db, "API report generated", f"Generated API Security report for '{assessment.name}'.", "success", assessment.id)
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def list_reports(db: Session, assessment_id: int) -> list[models.ApiReport]:
+    get_assessment_or_404(db, assessment_id)
+    return db.query(models.ApiReport).filter(models.ApiReport.assessment_id == assessment_id).order_by(models.ApiReport.created_at.desc()).all()
+
+
+def get_report_or_404(db: Session, report_id: int) -> models.ApiReport:
+    report = db.query(models.ApiReport).filter(models.ApiReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="API report not found.")
+    return report

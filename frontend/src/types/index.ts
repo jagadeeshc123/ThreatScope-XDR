@@ -109,6 +109,9 @@ export interface DashboardSummary {
   api_endpoint_count: number;
   api_unauthenticated_endpoint_count: number;
   api_high_risk_endpoint_count: number;
+  api_finding_count: number;
+  api_high_risk_finding_count: number;
+  api_owasp_observed_category_count: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -160,6 +163,9 @@ export interface SearchResults {
   reports: Report[];
   api_assessments: ApiAssessment[];
   api_endpoints: ApiEndpoint[];
+  api_findings: ApiFinding[];
+  jwt_analyses: JwtAnalysis[];
+  api_reports: ApiReport[];
 }
 
 export type ApiSourceType = 'openapi' | 'postman' | 'manual';
@@ -223,6 +229,9 @@ export interface ApiSecurityOverview {
   endpoints_inventoried: number;
   unauthenticated_endpoints: number;
   high_risk_endpoints: number;
+  api_findings: number;
+  high_risk_api_findings: number;
+  owasp_categories_with_indicators: number;
   recent_assessments: ApiAssessment[];
 }
 
@@ -242,4 +251,84 @@ export interface ApiImportResult {
   endpoints_discovered: number;
   unauthenticated_endpoints: number;
   high_risk_endpoints: number;
+}
+
+export interface JwtAnalysis {
+  id: number;
+  assessment_id: number | null;
+  token_fingerprint: string;
+  header: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  algorithm: string | null;
+  issuer: string | null;
+  audience: string[];
+  issued_at: string | null;
+  expires_at: string | null;
+  not_before: string | null;
+  expiration_status: 'missing' | 'expired' | 'valid' | 'long_lived' | 'unknown';
+  risk_score: number;
+  findings: Array<{ code: string; title: string; severity: string; detail: string }>;
+  disclaimer: string;
+  created_at: string;
+}
+
+export interface ApiFinding {
+  id: number;
+  assessment_id: number;
+  endpoint_id: number | null;
+  title: string;
+  owasp_category: string | null;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  confidence: 'low' | 'medium' | 'high';
+  description: string;
+  evidence: string;
+  impact: string;
+  remediation: string;
+  source: 'openapi' | 'postman' | 'jwt' | 'response_schema' | 'inventory';
+  fingerprint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiOwaspCoverage {
+  id: number;
+  assessment_id: number;
+  category_id: string;
+  category_title: string;
+  status: 'covered' | 'partial' | 'not_observed' | 'not_applicable';
+  finding_count: number;
+  evidence_summary: string;
+  created_at: string;
+  updated_at: string;
+  related_findings: ApiFinding[];
+}
+
+export interface ResponseExposureItem {
+  endpoint_id: number | null;
+  method: string;
+  path: string;
+  status_code: string | null;
+  field_path: string;
+  exposure_type: string;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  explanation: string;
+  remediation: string;
+}
+
+export interface AnalyzeAssessmentResult {
+  assessment_id: number;
+  findings_created: number;
+  findings_total: number;
+  high_or_critical_findings: number;
+  coverage_categories: number;
+}
+
+export interface ApiReport {
+  id: number;
+  assessment_id: number;
+  title: string;
+  executive_summary: string;
+  html_content: string;
+  summary: Record<string, unknown>;
+  created_at: string;
 }

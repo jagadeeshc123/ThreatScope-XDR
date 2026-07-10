@@ -1,0 +1,52 @@
+{
+  "unauthenticated_state_change": {
+    "description": "A state-changing API operation is documented without an authentication requirement.",
+    "impact": "Attackers may be able to modify data or trigger workflow actions if runtime controls match the documentation gap.",
+    "remediation": "Require explicit authentication for the operation, document the expected security scheme in OpenAPI/Postman, and verify the runtime gateway or service rejects unauthenticated requests."
+  },
+  "sensitive_unauthenticated": {
+    "description": "A sensitive endpoint path is documented without authentication.",
+    "impact": "Sensitive account, payment, administrative, token, or internal resources may be exposed if implementation follows the imported definition.",
+    "remediation": "Document and enforce authentication, add authorization requirements for privileged resources, and review route ownership with the API team."
+  },
+  "deprecated_endpoint": {
+    "description": "A deprecated API operation remains present in the imported definition.",
+    "impact": "Older endpoints are often less monitored and may retain weaker controls or obsolete data contracts.",
+    "remediation": "Confirm whether the endpoint is still deployed, publish a retirement date, block new consumers, and remove the route when migration is complete."
+  },
+  "missing_security_scheme": {
+    "description": "The imported API definition does not document a reusable security scheme.",
+    "impact": "Consumers and reviewers cannot consistently understand expected authentication posture.",
+    "remediation": "Define OpenAPI securitySchemes or Postman auth configuration, apply global defaults where appropriate, and explicitly override only public endpoints."
+  },
+  "inconsistent_auth": {
+    "description": "Authentication requirements vary across related endpoint inventory.",
+    "impact": "Inconsistent documentation can hide accidental public routes or weaken review coverage.",
+    "remediation": "Normalize security requirements by resource family, document public exceptions, and add CI checks for unexpected unauthenticated operations."
+  },
+  "sensitive_response_field": {
+    "description": "A response schema or example documents a sensitive field name.",
+    "impact": "Sensitive values may be exposed to clients or logs if response filtering is not enforced.",
+    "remediation": "Remove sensitive fields from response DTOs, apply field-level authorization, redact secrets before serialization, and add contract tests for response payloads."
+  },
+  "missing_rate_limit": {
+    "description": "The imported definition does not document rate-limit or quota metadata.",
+    "impact": "Clients and reviewers cannot determine intended resource-consumption controls.",
+    "remediation": "Document rate-limit headers, quota behavior, retry guidance, and per-consumer throttling expectations."
+  },
+  "missing_operation_id": {
+    "description": "An operation lacks an operationId and summary.",
+    "impact": "Undocumented operations are harder to inventory, test, monitor, and assign ownership.",
+    "remediation": "Add stable operation IDs, summaries, owner tags, and change-control metadata to the API contract."
+  },
+  "insecure_http_server": {
+    "description": "A server URL uses cleartext HTTP.",
+    "impact": "Clients may transmit tokens or sensitive data without transport protection.",
+    "remediation": "Use HTTPS server URLs only, redirect HTTP to HTTPS, and verify TLS configuration at the gateway."
+  },
+  "jwt_risk": {
+    "description": "Decoded JWT metadata contains security risk indicators.",
+    "impact": "Weak token metadata can increase authentication and session-management risk if used in production.",
+    "remediation": "Use strong signing algorithms, short lifetimes, issuer and audience validation, minimal claims, and do not place secrets in tokens."
+  }
+}

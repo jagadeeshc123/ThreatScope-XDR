@@ -165,6 +165,9 @@ class DashboardSummary(BaseModel):
     api_endpoint_count: int = 0
     api_unauthenticated_endpoint_count: int = 0
     api_high_risk_endpoint_count: int = 0
+    api_finding_count: int = 0
+    api_high_risk_finding_count: int = 0
+    api_owasp_observed_category_count: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -250,3 +253,6 @@ class SearchResults(BaseModel):
     reports: List[Report]
     api_assessments: List[dict] = []
     api_endpoints: List[dict] = []
+    api_findings: List[dict] = []
+    jwt_analyses: List[dict] = []
+    api_reports: List[dict] = []

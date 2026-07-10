@@ -30,7 +30,7 @@ export function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query]);
 
-  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length : 0;
 
   return (
     <PageShell className="max-w-5xl">
@@ -58,6 +58,15 @@ export function SearchResultsPage() {
           </ResultGroup>
           <ResultGroup title="API Endpoints" icon={<Network className="h-5 w-5 text-violet-300" />} count={results.api_endpoints.length}>
             {results.api_endpoints.map(endpoint => <ResultLink key={endpoint.id} to={`/api-security/assessments/${endpoint.assessment_id}/endpoints?q=${encodeURIComponent(endpoint.path)}`} title={`${endpoint.method} ${endpoint.path}`} detail={`${endpoint.preliminary_risk_level.toUpperCase()} | ${endpoint.auth_required ? 'Auth required' : 'No auth declared'}`} />)}
+          </ResultGroup>
+          <ResultGroup title="API Findings" icon={<AlertTriangle className="h-5 w-5 text-red-300" />} count={results.api_findings.length}>
+            {results.api_findings.map(finding => <ResultLink key={finding.id} to={`/api-security/assessments/${finding.assessment_id}`} title={`${finding.severity.toUpperCase()} - ${finding.title}`} detail={`${finding.owasp_category || 'Unmapped'} | ${finding.source}`} />)}
+          </ResultGroup>
+          <ResultGroup title="JWT Analyses" icon={<Network className="h-5 w-5 text-cyan-300" />} count={results.jwt_analyses.length}>
+            {results.jwt_analyses.map(analysis => <ResultLink key={analysis.id} to={`/api-security/jwt/${analysis.id}`} title={`JWT ${analysis.token_fingerprint.slice(0, 12)}`} detail={`${analysis.algorithm || 'No alg'} | risk ${analysis.risk_score}/10 | ${analysis.expiration_status}`} />)}
+          </ResultGroup>
+          <ResultGroup title="API Reports" icon={<FileText className="h-5 w-5 text-indigo-300" />} count={results.api_reports.length}>
+            {results.api_reports.map(report => <ResultLink key={report.id} to={`/api-security/assessments/${report.assessment_id}`} title={report.title} detail={`Generated ${new Date(report.created_at).toLocaleString()}`} />)}
           </ResultGroup>
         </div>
       )}

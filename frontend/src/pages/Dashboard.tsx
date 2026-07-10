@@ -117,6 +117,8 @@ export function Dashboard() {
         <StatCard label="API Endpoints" value={summary.api_endpoint_count} detail="Imported definitions" icon={<Activity className="h-5 w-5" />} tone="default" />
         <StatCard label="Unauthenticated APIs" value={summary.api_unauthenticated_endpoint_count} detail="No auth declared" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
         <StatCard label="High-Risk APIs" value={summary.api_high_risk_endpoint_count} detail="Metadata risk signals" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
+        <StatCard label="API Findings" value={summary.api_finding_count} detail={`${summary.api_high_risk_finding_count} high risk`} icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="OWASP Indicators" value={summary.api_owasp_observed_category_count} detail="Observed categories" icon={<Shield className="h-5 w-5" />} tone="info" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">

@@ -1,0 +1,12 @@
+[
+  {"id": "API1:2023", "title": "Broken Object Level Authorization", "manual_validation_note": "Potential object-level authorization indicators require manual validation; imported metadata alone cannot confirm BOLA."},
+  {"id": "API2:2023", "title": "Broken Authentication", "manual_validation_note": "Authentication declarations and JWT metadata can indicate risk, but signature and runtime enforcement are not verified in this phase."},
+  {"id": "API3:2023", "title": "Broken Object Property Level Authorization", "manual_validation_note": "Sensitive response fields are static exposure indicators; object-property authorization is not confirmed without runtime validation."},
+  {"id": "API4:2023", "title": "Unrestricted Resource Consumption", "manual_validation_note": "Rate-limit, pagination, and size indicators are documentation checks only; no stress testing is performed."},
+  {"id": "API5:2023", "title": "Broken Function Level Authorization", "manual_validation_note": "Privileged route indicators require manual authorization validation; no BFLA test is executed."},
+  {"id": "API6:2023", "title": "Unrestricted Access to Sensitive Business Flows", "manual_validation_note": "Business-flow abuse is not tested in this phase; static indicators are treated as partial at most."},
+  {"id": "API7:2023", "title": "Server Side Request Forgery", "manual_validation_note": "URL-like parameter indicators require manual SSRF validation; no outbound request is made."},
+  {"id": "API8:2023", "title": "Security Misconfiguration", "manual_validation_note": "Static configuration gaps can be observed from definitions, but deployment behavior is not tested."},
+  {"id": "API9:2023", "title": "Improper Inventory Management", "manual_validation_note": "Deprecated, duplicate, and undocumented inventory signals are static metadata observations."},
+  {"id": "API10:2023", "title": "Unsafe Consumption of APIs", "manual_validation_note": "External dependency and third-party consumption risks are only inferred from imported metadata."}
+]

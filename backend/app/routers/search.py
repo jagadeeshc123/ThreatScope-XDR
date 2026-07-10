@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app import schemas, models
 from app.database import get_db
-from app.modules.api_security.service import endpoint_to_schema
+from app.modules.api_security.service import endpoint_to_schema, jwt_to_schema, report_to_schema
 
 router = APIRouter()
 
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[])
         
     query = f"%{q}%"
     
@@ -64,6 +64,31 @@ def search(q: str = "", db: Session = Depends(get_db)):
             models.ApiEndpoint.tags_json.ilike(query),
         )
     ).limit(15).all()
+
+    api_findings = db.query(models.ApiFinding).filter(
+        or_(
+            models.ApiFinding.title.ilike(query),
+            models.ApiFinding.severity.ilike(query),
+            models.ApiFinding.owasp_category.ilike(query),
+            models.ApiFinding.source.ilike(query),
+        )
+    ).limit(15).all()
+
+    jwt_analyses = db.query(models.JwtAnalysis).filter(
+        or_(
+            models.JwtAnalysis.token_fingerprint.ilike(query),
+            models.JwtAnalysis.algorithm.ilike(query),
+            models.JwtAnalysis.issuer.ilike(query),
+            models.JwtAnalysis.expiration_status.ilike(query),
+        )
+    ).limit(10).all()
+
+    api_reports = db.query(models.ApiReport).filter(
+        or_(
+            models.ApiReport.title.ilike(query),
+            models.ApiReport.executive_summary.ilike(query),
+        )
+    ).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -79,4 +104,15 @@ def search(q: str = "", db: Session = Depends(get_db)):
             "created_at": item.created_at.isoformat() if item.created_at else None,
         } for item in api_assessments],
         api_endpoints=[endpoint_to_schema(item) for item in api_endpoints],
+        api_findings=[{
+            "id": item.id,
+            "assessment_id": item.assessment_id,
+            "title": item.title,
+            "severity": item.severity,
+            "owasp_category": item.owasp_category,
+            "source": item.source,
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+        } for item in api_findings],
+        jwt_analyses=[jwt_to_schema(item) for item in jwt_analyses],
+        api_reports=[report_to_schema(item) for item in api_reports],
     )

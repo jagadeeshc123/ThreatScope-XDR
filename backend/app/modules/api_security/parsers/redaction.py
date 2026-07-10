@@ -55,7 +55,7 @@ def redact_data(value: Any) -> Any:
         sibling_value_is_sensitive = isinstance(declared_key, str) and _is_sensitive_key(declared_key)
         result: dict[str, Any] = {}
         for key, item in value.items():
-            if _is_sensitive_key(str(key)) or (sibling_value_is_sensitive and str(key).lower() in {"value", "initialvalue", "currentvalue"}):
+            if (_is_sensitive_key(str(key)) and not isinstance(item, dict)) or (sibling_value_is_sensitive and str(key).lower() in {"value", "initialvalue", "currentvalue"}):
                 result[key] = REDACTED
             else:
                 result[key] = redact_data(item)

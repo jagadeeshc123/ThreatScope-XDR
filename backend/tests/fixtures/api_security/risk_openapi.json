@@ -1,0 +1,86 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Risk Fixture API",
+    "version": "3.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://api-risk.example.test"
+    },
+    {
+      "url": "https://staging-risk.example.test"
+    }
+  ],
+  "paths": {
+    "/account/token": {
+      "post": {
+        "summary": "Create token",
+        "parameters": [
+          {
+            "name": "redirect_url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "profile": {
+                      "type": "object",
+                      "properties": {
+                        "ssn": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/legacy/admin/export": {
+      "get": {
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "Export"
+          }
+        }
+      }
+    }
+  }
+}

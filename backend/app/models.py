@@ -173,4 +173,12 @@ class AppSettings(Base):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 
-from app.modules.api_security.models import ApiAssessment, ApiEndpoint, ApiImportArtifact  # noqa: E402,F401
+from app.modules.api_security.models import (  # noqa: E402,F401
+    ApiAssessment,
+    ApiEndpoint,
+    ApiFinding,
+    ApiImportArtifact,
+    ApiOwaspCoverage,
+    ApiReport,
+    JwtAnalysis,
+)

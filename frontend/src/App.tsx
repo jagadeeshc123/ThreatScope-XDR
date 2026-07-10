@@ -21,6 +21,8 @@ const NewApiAssessment = lazy(() => import('./pages/api-security/NewApiAssessmen
 const ImportApiDefinition = lazy(() => import('./pages/api-security/ImportApiDefinition').then(module => ({ default: module.ImportApiDefinition })));
 const ApiAssessmentDetails = lazy(() => import('./pages/api-security/ApiAssessmentDetails').then(module => ({ default: module.ApiAssessmentDetails })));
 const EndpointInventory = lazy(() => import('./pages/api-security/EndpointInventory').then(module => ({ default: module.EndpointInventory })));
+const JwtAnalyzer = lazy(() => import('./pages/api-security/JwtAnalyzer').then(module => ({ default: module.JwtAnalyzer })));
+const JwtAnalysisDetails = lazy(() => import('./pages/api-security/JwtAnalysisDetails').then(module => ({ default: module.JwtAnalysisDetails })));
 
 function Layout() {
   return (
@@ -55,6 +57,8 @@ function App() {
           <Route path="/api-security/assessments/:assessmentId" element={<Suspense fallback={<LoadingRoute />}><ApiAssessmentDetails /></Suspense>} />
           <Route path="/api-security/assessments/:assessmentId/import" element={<Suspense fallback={<LoadingRoute />}><ImportApiDefinition /></Suspense>} />
           <Route path="/api-security/assessments/:assessmentId/endpoints" element={<Suspense fallback={<LoadingRoute />}><EndpointInventory /></Suspense>} />
+          <Route path="/api-security/jwt" element={<Suspense fallback={<LoadingRoute />}><JwtAnalyzer /></Suspense>} />
+          <Route path="/api-security/jwt/:analysisId" element={<Suspense fallback={<LoadingRoute />}><JwtAnalysisDetails /></Suspense>} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />

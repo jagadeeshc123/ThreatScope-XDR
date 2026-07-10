@@ -3,7 +3,13 @@ import type {
   ApiAssessment,
   ApiAssessmentDetail,
   ApiEndpoint,
+  ApiFinding,
   ApiImportResult,
+  ApiOwaspCoverage,
+  ApiReport,
+  AnalyzeAssessmentResult,
+  JwtAnalysis,
+  ResponseExposureItem,
   ApiSecurityOverview,
   ApiSecuritySummary,
   ApiSourceType,
@@ -49,6 +55,13 @@ export interface ApiEndpointFilters {
   tag?: string;
   q?: string;
   sort?: 'method' | 'path' | 'authentication' | 'risk';
+}
+
+export interface JwtAnalyzePayload {
+  token: string;
+  assessment_id?: number | null;
+  expected_issuer?: string | null;
+  expected_audience?: string | null;
 }
 
 export interface PolicyResultCheck {
@@ -182,6 +195,28 @@ export const vulnscopeApi = {
   },
   listApiEndpoints: (assessmentId: number, filters: ApiEndpointFilters = {}) => data<ApiEndpoint[]>(apiClient.get(`/api-security/assessments/${assessmentId}/endpoints`, { params: filters })),
   getApiSecuritySummary: (assessmentId: number) => data<ApiSecuritySummary>(apiClient.get(`/api-security/assessments/${assessmentId}/summary`)),
+  analyzeApiAssessment: (assessmentId: number) => data<AnalyzeAssessmentResult>(apiClient.post(`/api-security/assessments/${assessmentId}/analyze`)).then(result => {
+    dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+    return result;
+  }),
+  listApiFindings: (assessmentId: number, filters: { severity?: string; source?: string } = {}) => data<ApiFinding[]>(apiClient.get(`/api-security/assessments/${assessmentId}/findings`, { params: filters })),
+  getApiFinding: (findingId: number) => data<ApiFinding>(apiClient.get(`/api-security/findings/${findingId}`)),
+  getApiOwaspCoverage: (assessmentId: number) => data<ApiOwaspCoverage[]>(apiClient.get(`/api-security/assessments/${assessmentId}/owasp-coverage`)),
+  getResponseExposure: (assessmentId: number) => data<ResponseExposureItem[]>(apiClient.get(`/api-security/assessments/${assessmentId}/response-exposure`)),
+  generateApiReport: (assessmentId: number) => data<ApiReport>(apiClient.post(`/api-security/assessments/${assessmentId}/reports`)).then(report => {
+    dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+    return report;
+  }),
+  listApiReports: (assessmentId: number) => data<ApiReport[]>(apiClient.get(`/api-security/assessments/${assessmentId}/reports`)),
+  getApiReport: (reportId: number) => data<ApiReport>(apiClient.get(`/api-security/reports/${reportId}`)),
+  downloadApiReport: (reportId: number) => data<Blob>(apiClient.get(`/api-security/reports/${reportId}/download`, { responseType: 'blob' })),
+  analyzeJwt: (payload: JwtAnalyzePayload) => data<JwtAnalysis>(apiClient.post('/api-security/jwt/analyze', payload)).then(result => {
+    dispatch(VULNSCOPE_EVENTS.notificationsUpdated);
+    return result;
+  }),
+  listJwtAnalyses: (assessmentId?: number) => data<JwtAnalysis[]>(apiClient.get('/api-security/jwt/analyses', { params: assessmentId ? { assessment_id: assessmentId } : {} })),
+  getJwtAnalysis: (analysisId: number) => data<JwtAnalysis>(apiClient.get(`/api-security/jwt/analyses/${analysisId}`)),
+  deleteJwtAnalysis: (analysisId: number) => data<{ ok: boolean }>(apiClient.delete(`/api-security/jwt/analyses/${analysisId}`)),
 
   listNotifications: (limit = 50) => data<Notification[]>(apiClient.get('/notifications/', { params: { limit } })),
   getUnreadNotificationCount: () => data<{ unread_count: number }>(apiClient.get('/notifications/unread-count')),
