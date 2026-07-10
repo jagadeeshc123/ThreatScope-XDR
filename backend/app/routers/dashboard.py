@@ -19,6 +19,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     api_finding_count = db.query(models.ApiFinding).count()
     api_high_risk_finding_count = db.query(models.ApiFinding).filter(models.ApiFinding.severity.in_(["high", "critical"])).count()
     api_owasp_observed_category_count = db.query(models.ApiOwaspCoverage).filter(models.ApiOwaspCoverage.finding_count > 0).count()
+    api_matrix_total = sum(assessment.endpoint_count * len(assessment.api_roles) for assessment in db.query(models.ApiAssessment).all())
+    api_matrix_reviewed = db.query(models.AuthorizationMatrixEntry).filter(models.AuthorizationMatrixEntry.review_status == "reviewed").count()
+    api_authorization_matrix_coverage = round((api_matrix_reviewed / api_matrix_total) * 100, 1) if api_matrix_total else 0
+    api_unresolved_authorization_review_count = db.query(models.AuthorizationReview).filter(models.AuthorizationReview.analyst_decision.in_(["open", "needs_testing"])).count()
+    api_business_flow_count = db.query(models.ApiBusinessFlow).count()
+    api_high_risk_flow_indicator_count = db.query(models.ApiBusinessFlowRisk).filter(models.ApiBusinessFlowRisk.severity == "high", models.ApiBusinessFlowRisk.status == "open").count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -64,6 +70,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         api_finding_count=api_finding_count,
         api_high_risk_finding_count=api_high_risk_finding_count,
         api_owasp_observed_category_count=api_owasp_observed_category_count,
+        api_authorization_matrix_coverage=api_authorization_matrix_coverage,
+        api_unresolved_authorization_review_count=api_unresolved_authorization_review_count,
+        api_business_flow_count=api_business_flow_count,
+        api_high_risk_flow_indicator_count=api_high_risk_flow_indicator_count,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

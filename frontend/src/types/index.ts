@@ -112,6 +112,10 @@ export interface DashboardSummary {
   api_finding_count: number;
   api_high_risk_finding_count: number;
   api_owasp_observed_category_count: number;
+  api_authorization_matrix_coverage: number;
+  api_unresolved_authorization_review_count: number;
+  api_business_flow_count: number;
+  api_high_risk_flow_indicator_count: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -166,6 +170,10 @@ export interface SearchResults {
   api_findings: ApiFinding[];
   jwt_analyses: JwtAnalysis[];
   api_reports: ApiReport[];
+  api_roles: ApiRole[];
+  authorization_reviews: AuthorizationReview[];
+  api_business_flows: ApiBusinessFlow[];
+  api_business_flow_risks: ApiBusinessFlowRisk[];
 }
 
 export type ApiSourceType = 'openapi' | 'postman' | 'manual';
@@ -284,7 +292,7 @@ export interface ApiFinding {
   evidence: string;
   impact: string;
   remediation: string;
-  source: 'openapi' | 'postman' | 'jwt' | 'response_schema' | 'inventory';
+  source: 'openapi' | 'postman' | 'jwt' | 'response_schema' | 'inventory' | 'authorization_matrix' | 'object_level_review' | 'function_level_review' | 'property_level_review' | 'business_flow';
   fingerprint: string;
   created_at: string;
   updated_at: string;
@@ -331,4 +339,127 @@ export interface ApiReport {
   html_content: string;
   summary: Record<string, unknown>;
   created_at: string;
+}
+
+export type ApiPrivilegeLevel = 'public' | 'user' | 'privileged' | 'admin' | 'service';
+export type ApiExpectedAccess = 'allow' | 'deny' | 'conditional' | 'unknown';
+export type ApiObjectScope = 'own' | 'assigned' | 'tenant' | 'organization' | 'global' | 'unknown';
+
+export interface ApiRole {
+  id: number;
+  assessment_id: number;
+  name: string;
+  description: string | null;
+  privilege_level: ApiPrivilegeLevel;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiIdentity {
+  id: number;
+  assessment_id: number;
+  label: string;
+  role_id: number | null;
+  identity_type: 'anonymous' | 'user' | 'admin' | 'service_account' | 'custom';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthorizationMatrixEntry {
+  id: number;
+  assessment_id: number;
+  endpoint_id: number;
+  role_id: number;
+  expected_access: ApiExpectedAccess;
+  object_scope: ApiObjectScope;
+  expected_conditions: Record<string, unknown> | null;
+  analyst_notes: string | null;
+  review_status: 'not_reviewed' | 'reviewed' | 'requires_validation';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthorizationReview {
+  id: number;
+  assessment_id: number;
+  endpoint_id: number;
+  matrix_entry_id: number | null;
+  review_type: 'object_level' | 'function_level' | 'property_level';
+  expected_behavior: string;
+  observed_metadata: string;
+  risk_indicator: string;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  confidence: 'low' | 'medium' | 'high';
+  manual_validation_required: boolean;
+  analyst_decision: 'open' | 'accepted' | 'rejected' | 'needs_testing';
+  notes: string | null;
+  validation_checklist: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthorizationGenerationResult {
+  matrix_entries_created: number;
+  reviews_created: number;
+  unresolved_high_risk_reviews: number;
+  disclaimer: string;
+}
+
+export interface ApiBusinessFlowStep {
+  id: number;
+  flow_id: number;
+  step_order: number;
+  endpoint_id: number | null;
+  action_name: string;
+  expected_actor_role: string | null;
+  prerequisite_description: string | null;
+  expected_state_before: string | null;
+  expected_state_after: string | null;
+  sensitive_operation: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiBusinessFlowRisk {
+  id: number;
+  flow_id: number;
+  assessment_id?: number;
+  step_id: number | null;
+  risk_type: string;
+  title: string;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  confidence: 'low' | 'medium' | 'high';
+  description: string;
+  evidence_summary: string;
+  remediation: string;
+  manual_validation_required: boolean;
+  status: 'open' | 'accepted' | 'resolved';
+  owasp_category: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiBusinessFlow {
+  id: number;
+  assessment_id: number;
+  name: string;
+  description: string;
+  business_goal: string | null;
+  actor_roles: string[];
+  status: 'draft' | 'reviewed' | 'approved';
+  risk_score: number;
+  steps: ApiBusinessFlowStep[];
+  risks: ApiBusinessFlowRisk[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiBusinessFlowAnalysis {
+  flow_id: number;
+  risks_created: number;
+  risks_total: number;
+  high_risk_indicators: number;
+  risk_score: number;
+  disclaimer: string;
 }

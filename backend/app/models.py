@@ -182,3 +182,14 @@ from app.modules.api_security.models import (  # noqa: E402,F401
     ApiReport,
     JwtAnalysis,
 )
+from app.modules.api_security.authorization.models import (  # noqa: E402,F401
+    ApiIdentity,
+    ApiRole,
+    AuthorizationMatrixEntry,
+    AuthorizationReview,
+)
+from app.modules.api_security.business_flows.models import (  # noqa: E402,F401
+    ApiBusinessFlow,
+    ApiBusinessFlowRisk,
+    ApiBusinessFlowStep,
+)

@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, FileJson, Network, Play, ScrollText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ApiAssessmentDetail, ApiEndpoint, ApiFinding, ApiOwaspCoverage, ApiReport, ResponseExposureItem } from '../../types';
+import type { ApiAssessmentDetail, ApiBusinessFlow, ApiEndpoint, ApiFinding, ApiOwaspCoverage, ApiReport, ApiRole, AuthorizationReview, ResponseExposureItem } from '../../types';
 import { vulnscopeApi } from '../../api/vulnscope';
 import { EmptyState, PageHeader, PageShell, SectionCard, SeverityBadge, StatCard, StatusBadge } from '../../components/ui';
 import { ApiSourceBadge } from './components/ApiSourceBadge';
 import { EndpointTable } from './components/EndpointTable';
 
-type Tab = 'overview' | 'inventory' | 'findings' | 'owasp' | 'exposure' | 'imports' | 'reports';
+type Tab = 'overview' | 'inventory' | 'findings' | 'owasp' | 'exposure' | 'authorization' | 'authorization-reviews' | 'business-flows' | 'imports' | 'reports';
 
 export function ApiAssessmentDetails() {
   const { assessmentId } = useParams();
@@ -20,19 +20,25 @@ export function ApiAssessmentDetails() {
   const [coverage, setCoverage] = useState<ApiOwaspCoverage[]>([]);
   const [exposure, setExposure] = useState<ResponseExposureItem[]>([]);
   const [reports, setReports] = useState<ApiReport[]>([]);
+  const [roles, setRoles] = useState<ApiRole[]>([]);
+  const [authorizationReviews, setAuthorizationReviews] = useState<AuthorizationReview[]>([]);
+  const [businessFlows, setBusinessFlows] = useState<ApiBusinessFlow[]>([]);
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
 
   const load = useCallback(async () => {
-    const [detail, apiEndpoints, apiFindings, apiCoverage, apiExposure, apiReports] = await Promise.all([
+    const [detail, apiEndpoints, apiFindings, apiCoverage, apiExposure, apiReports, apiRoles, apiAuthorizationReviews, apiBusinessFlows] = await Promise.all([
       vulnscopeApi.getApiAssessment(numericId),
       vulnscopeApi.listApiEndpoints(numericId).catch(() => []),
       vulnscopeApi.listApiFindings(numericId).catch(() => []),
       vulnscopeApi.getApiOwaspCoverage(numericId).catch(() => []),
       vulnscopeApi.getResponseExposure(numericId).catch(() => []),
       vulnscopeApi.listApiReports(numericId).catch(() => []),
+      vulnscopeApi.listApiRoles(numericId).catch(() => []),
+      vulnscopeApi.listAuthorizationReviews(numericId).catch(() => []),
+      vulnscopeApi.listBusinessFlows(numericId).catch(() => []),
     ]);
     setAssessment(detail);
     setEndpoints(apiEndpoints);
@@ -40,6 +46,9 @@ export function ApiAssessmentDetails() {
     setCoverage(apiCoverage);
     setExposure(apiExposure);
     setReports(apiReports);
+    setRoles(apiRoles);
+    setAuthorizationReviews(apiAuthorizationReviews);
+    setBusinessFlows(apiBusinessFlows);
   }, [numericId]);
 
   useEffect(() => {
@@ -87,7 +96,7 @@ export function ApiAssessmentDetails() {
   if (loading) return <PageShell><div className="text-muted-foreground">Loading assessment...</div></PageShell>;
   if (!assessment) return <PageShell><EmptyState title="Assessment unavailable" description="The API assessment could not be loaded." /></PageShell>;
 
-  const tabs: Array<[Tab, string]> = [['overview', 'Overview'], ['inventory', 'Endpoint Inventory'], ['findings', 'Findings'], ['owasp', 'OWASP Coverage'], ['exposure', 'Response Exposure'], ['imports', 'Import Details'], ['reports', 'Reports']];
+  const tabs: Array<[Tab, string]> = [['overview', 'Overview'], ['inventory', 'Endpoint Inventory'], ['findings', 'Findings'], ['owasp', 'OWASP Coverage'], ['exposure', 'Response Exposure'], ['authorization', 'Authorization Matrix'], ['authorization-reviews', 'Authorization Reviews'], ['business-flows', 'Business Flows'], ['imports', 'Import Details'], ['reports', 'Reports']];
 
   return (
     <PageShell>
@@ -126,6 +135,9 @@ export function ApiAssessmentDetails() {
         {filteredFindings.length ? <div className="space-y-3">{filteredFindings.map(finding => <article key={finding.id} className="rounded-md border border-border bg-background/60 p-4"><div className="flex flex-wrap items-center gap-2"><SeverityBadge severity={finding.severity} /><span className="text-xs text-muted-foreground">{finding.owasp_category || 'Unmapped'} | {finding.source} | {finding.confidence} confidence</span></div><h3 className="mt-2 font-semibold">{finding.title}</h3><p className="mt-2 text-sm text-muted-foreground">{finding.description}</p><p className="mt-2 text-sm text-muted-foreground"><strong className="text-foreground">Evidence:</strong> {finding.evidence}</p><p className="mt-2 text-sm text-muted-foreground"><strong className="text-foreground">Remediation:</strong> {finding.remediation}</p></article>)}</div> : <EmptyState title="No findings yet" description="Run assessment analysis to generate passive API findings." />}</SectionCard>}
       {tab === 'owasp' && <SectionCard title="OWASP API Security Top 10 Coverage" subtitle="Conservative static mapping; manual validation notes are included."><div className="space-y-3">{coverage.map(item => <article key={item.category_id} className="rounded-md border border-border bg-background/60 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">{item.category_id} {item.category_title}</h3><span className="rounded-full border border-border px-2.5 py-1 text-xs capitalize">{item.status.replaceAll('_', ' ')}</span></div><p className="mt-2 text-sm text-muted-foreground">{item.evidence_summary}</p><p className="mt-2 text-xs text-indigo-200">{item.finding_count} related finding indicators</p></article>)}</div></SectionCard>}
       {tab === 'exposure' && <SectionCard title="Response Exposure" subtitle="Field names and schema metadata only; no requests executed.">{exposure.length ? <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="border-b border-border text-xs text-muted-foreground"><tr><th className="py-3 pr-4">Endpoint</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Field</th><th className="py-3 pr-4">Type</th><th className="py-3 pr-4">Severity</th><th className="py-3">Remediation</th></tr></thead><tbody className="divide-y divide-border">{exposure.map((item, index) => <tr key={`${item.method}-${item.path}-${item.field_path}-${index}`}><td className="py-4 pr-4 font-mono text-xs">{item.method} {item.path}</td><td className="py-4 pr-4">{item.status_code || '-'}</td><td className="py-4 pr-4">{item.field_path}</td><td className="py-4 pr-4">{item.exposure_type}</td><td className="py-4 pr-4"><SeverityBadge severity={item.severity} /></td><td className="py-4 text-xs text-muted-foreground">{item.remediation}</td></tr>)}</tbody></table></div> : <EmptyState title="No response exposure indicators" description="No sensitive response schema fields were observed in imported metadata." />}</SectionCard>}
+      {tab === 'authorization' && <SectionCard title="Authorization Matrix" subtitle={`${roles.length} roles configured across ${endpoints.length} endpoints.`}><p className="text-sm text-muted-foreground">Define expected access, object scope, conditions, notes, and analyst review status in the matrix workspace.</p><Link to={`/api-security/assessments/${assessment.id}/authorization`} className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-indigo-500 px-4 text-sm font-semibold text-white">Open matrix workspace <ArrowRight className="h-4 w-4" /></Link></SectionCard>}
+      {tab === 'authorization-reviews' && <SectionCard title="Authorization Reviews" subtitle={`${authorizationReviews.filter(item => item.analyst_decision === 'open' || item.analyst_decision === 'needs_testing').length} unresolved of ${authorizationReviews.length} review items.`}><p className="text-sm text-muted-foreground">Review potential object-, function-, and property-level authorization indicators with safe validation checklists.</p><Link to={`/api-security/assessments/${assessment.id}/authorization-reviews`} className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-indigo-500 px-4 text-sm font-semibold text-white">Open review queue <ArrowRight className="h-4 w-4" /></Link></SectionCard>}
+      {tab === 'business-flows' && <SectionCard title="Business Flows" subtitle={`${businessFlows.length} configured workflows and ${businessFlows.reduce((total, flow) => total + flow.risks.filter(risk => risk.status === 'open').length, 0)} open indicators.`}><p className="text-sm text-muted-foreground">Model ordered endpoint-linked steps, actor roles, prerequisites, and expected state transitions.</p><Link to={`/api-security/assessments/${assessment.id}/business-flows`} className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-indigo-500 px-4 text-sm font-semibold text-white">Open flow workspace <ArrowRight className="h-4 w-4" /></Link></SectionCard>}
       {tab === 'imports' && <SectionCard title="Import Details">{assessment.artifacts.length ? <div className="space-y-4">{assessment.artifacts.map(artifact => <pre key={artifact.id} className="overflow-auto rounded-md border border-border bg-background/70 p-4 text-xs text-muted-foreground">{JSON.stringify({ filename: artifact.filename, artifact_type: artifact.artifact_type, parsed_summary: artifact.parsed_summary, created_at: artifact.created_at }, null, 2)}</pre>)}</div> : <p className="text-sm text-muted-foreground">No import artifacts have been recorded.</p>}</SectionCard>}
       {tab === 'reports' && <SectionCard title="Reports">{reports.length ? <div className="space-y-3">{reports.map(report => <article key={report.id} className="rounded-md border border-border bg-background/60 p-4"><h3 className="font-semibold">{report.title}</h3><p className="mt-2 text-sm text-muted-foreground">{report.executive_summary}</p><div className="mt-3 flex flex-wrap gap-2"><Link to={`/api-security/reports/${report.id}`} className="text-sm font-semibold text-indigo-200 hover:underline">View record</Link><button onClick={() => void vulnscopeApi.downloadApiReport(report.id)} className="text-sm font-semibold text-indigo-200 hover:underline">Download HTML</button></div></article>)}</div> : <EmptyState title="No reports yet" description="Generate an API Security report after analysis." />}</SectionCard>}
     </PageShell>

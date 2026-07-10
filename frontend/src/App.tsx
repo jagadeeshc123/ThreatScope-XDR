@@ -23,6 +23,11 @@ const ApiAssessmentDetails = lazy(() => import('./pages/api-security/ApiAssessme
 const EndpointInventory = lazy(() => import('./pages/api-security/EndpointInventory').then(module => ({ default: module.EndpointInventory })));
 const JwtAnalyzer = lazy(() => import('./pages/api-security/JwtAnalyzer').then(module => ({ default: module.JwtAnalyzer })));
 const JwtAnalysisDetails = lazy(() => import('./pages/api-security/JwtAnalysisDetails').then(module => ({ default: module.JwtAnalysisDetails })));
+const AuthorizationMatrix = lazy(() => import('./pages/api-security/authorization/AuthorizationMatrix').then(module => ({ default: module.AuthorizationMatrix })));
+const AuthorizationReviews = lazy(() => import('./pages/api-security/authorization/AuthorizationReviews').then(module => ({ default: module.AuthorizationReviews })));
+const BusinessFlowList = lazy(() => import('./pages/api-security/business-flows/BusinessFlowList').then(module => ({ default: module.BusinessFlowList })));
+const BusinessFlowEditor = lazy(() => import('./pages/api-security/business-flows/BusinessFlowEditor').then(module => ({ default: module.BusinessFlowEditor })));
+const BusinessFlowDetails = lazy(() => import('./pages/api-security/business-flows/BusinessFlowDetails').then(module => ({ default: module.BusinessFlowDetails })));
 
 function Layout() {
   return (
@@ -59,6 +64,11 @@ function App() {
           <Route path="/api-security/assessments/:assessmentId/endpoints" element={<Suspense fallback={<LoadingRoute />}><EndpointInventory /></Suspense>} />
           <Route path="/api-security/jwt" element={<Suspense fallback={<LoadingRoute />}><JwtAnalyzer /></Suspense>} />
           <Route path="/api-security/jwt/:analysisId" element={<Suspense fallback={<LoadingRoute />}><JwtAnalysisDetails /></Suspense>} />
+          <Route path="/api-security/assessments/:assessmentId/authorization" element={<Suspense fallback={<LoadingRoute />}><AuthorizationMatrix /></Suspense>} />
+          <Route path="/api-security/assessments/:assessmentId/authorization-reviews" element={<Suspense fallback={<LoadingRoute />}><AuthorizationReviews /></Suspense>} />
+          <Route path="/api-security/assessments/:assessmentId/business-flows" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowList /></Suspense>} />
+          <Route path="/api-security/business-flows/:flowId" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowDetails /></Suspense>} />
+          <Route path="/api-security/business-flows/:flowId/edit" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowEditor /></Suspense>} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />

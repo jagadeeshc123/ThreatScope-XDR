@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowRight, FileText, Network, Search, Target } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, FileText, Network, Search, Shield, ShieldAlert, Target } from 'lucide-react';
 import type { SearchResults } from '../types';
 import { vulnscopeApi } from '../api/vulnscope';
 import { EmptyState, PageHeader, PageShell } from '../components/ui';
@@ -30,7 +30,7 @@ export function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query]);
 
-  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length + results.api_roles.length + results.authorization_reviews.length + results.api_business_flows.length + results.api_business_flow_risks.length : 0;
 
   return (
     <PageShell className="max-w-5xl">
@@ -67,6 +67,18 @@ export function SearchResultsPage() {
           </ResultGroup>
           <ResultGroup title="API Reports" icon={<FileText className="h-5 w-5 text-indigo-300" />} count={results.api_reports.length}>
             {results.api_reports.map(report => <ResultLink key={report.id} to={`/api-security/assessments/${report.assessment_id}`} title={report.title} detail={`Generated ${new Date(report.created_at).toLocaleString()}`} />)}
+          </ResultGroup>
+          <ResultGroup title="API Roles" icon={<Shield className="h-5 w-5 text-indigo-300" />} count={results.api_roles.length}>
+            {results.api_roles.map(role => <ResultLink key={role.id} to={`/api-security/assessments/${role.assessment_id}/authorization`} title={role.name} detail={`${role.privilege_level} privilege | ${role.description || 'No description'}`} />)}
+          </ResultGroup>
+          <ResultGroup title="Authorization Reviews" icon={<ShieldAlert className="h-5 w-5 text-amber-300" />} count={results.authorization_reviews.length}>
+            {results.authorization_reviews.map(review => <ResultLink key={review.id} to={`/api-security/assessments/${review.assessment_id}/authorization-reviews`} title={review.risk_indicator} detail={`${review.review_type.replaceAll('_', ' ')} | ${review.severity} | ${review.analyst_decision}`} />)}
+          </ResultGroup>
+          <ResultGroup title="Business Flows" icon={<Network className="h-5 w-5 text-cyan-300" />} count={results.api_business_flows.length}>
+            {results.api_business_flows.map(flow => <ResultLink key={flow.id} to={`/api-security/business-flows/${flow.id}`} title={flow.name} detail={`${flow.status} | risk ${flow.risk_score}/100`} />)}
+          </ResultGroup>
+          <ResultGroup title="Business Flow Risks" icon={<AlertTriangle className="h-5 w-5 text-orange-300" />} count={results.api_business_flow_risks.length}>
+            {results.api_business_flow_risks.map(risk => <ResultLink key={risk.id} to={`/api-security/business-flows/${risk.flow_id}`} title={risk.title} detail={`${risk.severity} | ${risk.status} | ${risk.risk_type.replaceAll('_', ' ')}`} />)}
           </ResultGroup>
         </div>
       )}

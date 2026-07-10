@@ -142,7 +142,7 @@ class ApiFindingRead(BaseModel):
     evidence: str
     impact: str
     remediation: str
-    source: Literal["openapi", "postman", "jwt", "response_schema", "inventory"]
+    source: Literal["openapi", "postman", "jwt", "response_schema", "inventory", "authorization_matrix", "object_level_review", "function_level_review", "property_level_review", "business_flow"]
     fingerprint: str
     created_at: datetime
     updated_at: datetime

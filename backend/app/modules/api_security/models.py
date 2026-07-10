@@ -35,6 +35,11 @@ class ApiAssessment(Base):
     findings = relationship("ApiFinding", back_populates="assessment", cascade="all, delete-orphan")
     owasp_coverage = relationship("ApiOwaspCoverage", back_populates="assessment", cascade="all, delete-orphan")
     api_reports = relationship("ApiReport", back_populates="assessment", cascade="all, delete-orphan")
+    api_roles = relationship("ApiRole", back_populates="assessment", cascade="all, delete-orphan")
+    api_identities = relationship("ApiIdentity", back_populates="assessment", cascade="all, delete-orphan")
+    authorization_matrix_entries = relationship("AuthorizationMatrixEntry", back_populates="assessment", cascade="all, delete-orphan")
+    authorization_reviews = relationship("AuthorizationReview", back_populates="assessment", cascade="all, delete-orphan")
+    business_flows = relationship("ApiBusinessFlow", back_populates="assessment", cascade="all, delete-orphan")
 
 
 class ApiEndpoint(Base):

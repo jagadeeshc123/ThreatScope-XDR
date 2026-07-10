@@ -1,0 +1,36 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Authorization Flow Fixture", "version": "1.0.0"},
+  "servers": [{"url": "https://never-contact.example.test"}],
+  "security": [{"BearerAuth": []}],
+  "paths": {
+    "/users/{userId}": {
+      "patch": {
+        "summary": "Update a user role and profile",
+        "parameters": [
+          {"name": "userId", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "role", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {"application/json": {"schema": {"type": "object", "properties": {"salary": {"type": "number"}, "internal_notes": {"type": "string"}}}}}
+          }
+        }
+      }
+    },
+    "/admin/users/{userId}": {
+      "delete": {
+        "summary": "Delete a user",
+        "responses": {"204": {"description": "Deleted"}}
+      }
+    },
+    "/payments/{paymentId}/submit": {
+      "post": {
+        "summary": "Submit payment",
+        "responses": {"202": {"description": "Submitted"}}
+      }
+    }
+  },
+  "components": {"securitySchemes": {"BearerAuth": {"type": "http", "scheme": "bearer"}}}
+}

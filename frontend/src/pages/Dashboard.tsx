@@ -119,6 +119,10 @@ export function Dashboard() {
         <StatCard label="High-Risk APIs" value={summary.api_high_risk_endpoint_count} detail="Metadata risk signals" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
         <StatCard label="API Findings" value={summary.api_finding_count} detail={`${summary.api_high_risk_finding_count} high risk`} icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
         <StatCard label="OWASP Indicators" value={summary.api_owasp_observed_category_count} detail="Observed categories" icon={<Shield className="h-5 w-5" />} tone="info" />
+        <StatCard label="Matrix Coverage" value={`${summary.api_authorization_matrix_coverage}%`} detail="Analyst-reviewed cells" icon={<ShieldCheck className="h-5 w-5" />} tone="good" />
+        <StatCard label="Authorization Reviews" value={summary.api_unresolved_authorization_review_count} detail="Unresolved validation items" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="Business Flows" value={summary.api_business_flow_count} detail="Configured workflows" icon={<Network className="h-5 w-5" />} tone="info" />
+        <StatCard label="High-Risk Flow Indicators" value={summary.api_high_risk_flow_indicator_count} detail="Open passive indicators" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">

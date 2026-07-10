@@ -168,6 +168,10 @@ class DashboardSummary(BaseModel):
     api_finding_count: int = 0
     api_high_risk_finding_count: int = 0
     api_owasp_observed_category_count: int = 0
+    api_authorization_matrix_coverage: float = 0
+    api_unresolved_authorization_review_count: int = 0
+    api_business_flow_count: int = 0
+    api_high_risk_flow_indicator_count: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -256,3 +260,7 @@ class SearchResults(BaseModel):
     api_findings: List[dict] = []
     jwt_analyses: List[dict] = []
     api_reports: List[dict] = []
+    api_roles: List[dict] = []
+    authorization_reviews: List[dict] = []
+    api_business_flows: List[dict] = []
+    api_business_flow_risks: List[dict] = []

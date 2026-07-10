@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[])
         
     query = f"%{q}%"
     
@@ -89,6 +89,11 @@ def search(q: str = "", db: Session = Depends(get_db)):
             models.ApiReport.executive_summary.ilike(query),
         )
     ).limit(10).all()
+
+    api_roles = db.query(models.ApiRole).filter(or_(models.ApiRole.name.ilike(query), models.ApiRole.description.ilike(query), models.ApiRole.privilege_level.ilike(query))).limit(10).all()
+    authorization_reviews = db.query(models.AuthorizationReview).filter(or_(models.AuthorizationReview.review_type.ilike(query), models.AuthorizationReview.risk_indicator.ilike(query), models.AuthorizationReview.expected_behavior.ilike(query), models.AuthorizationReview.analyst_decision.ilike(query))).limit(15).all()
+    api_business_flows = db.query(models.ApiBusinessFlow).filter(or_(models.ApiBusinessFlow.name.ilike(query), models.ApiBusinessFlow.description.ilike(query), models.ApiBusinessFlow.business_goal.ilike(query))).limit(10).all()
+    api_business_flow_risks = db.query(models.ApiBusinessFlowRisk).join(models.ApiBusinessFlow).filter(or_(models.ApiBusinessFlowRisk.title.ilike(query), models.ApiBusinessFlowRisk.risk_type.ilike(query), models.ApiBusinessFlowRisk.evidence_summary.ilike(query))).limit(15).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -115,4 +120,8 @@ def search(q: str = "", db: Session = Depends(get_db)):
         } for item in api_findings],
         jwt_analyses=[jwt_to_schema(item) for item in jwt_analyses],
         api_reports=[report_to_schema(item) for item in api_reports],
+        api_roles=[{"id": item.id, "assessment_id": item.assessment_id, "name": item.name, "privilege_level": item.privilege_level, "description": item.description} for item in api_roles],
+        authorization_reviews=[{"id": item.id, "assessment_id": item.assessment_id, "endpoint_id": item.endpoint_id, "review_type": item.review_type, "severity": item.severity, "risk_indicator": item.risk_indicator, "analyst_decision": item.analyst_decision} for item in authorization_reviews],
+        api_business_flows=[{"id": item.id, "assessment_id": item.assessment_id, "name": item.name, "description": item.description, "status": item.status, "risk_score": item.risk_score} for item in api_business_flows],
+        api_business_flow_risks=[{"id": item.id, "flow_id": item.flow_id, "assessment_id": item.flow.assessment_id, "title": item.title, "severity": item.severity, "status": item.status, "risk_type": item.risk_type} for item in api_business_flow_risks],
     )

@@ -135,6 +135,11 @@ def _replace_inventory(
     filename: str,
     parsed: dict[str, Any],
 ) -> tuple[models.ApiImportArtifact, list[models.ApiEndpoint]]:
+    endpoint_ids = [row[0] for row in db.query(models.ApiEndpoint.id).filter(models.ApiEndpoint.assessment_id == assessment.id).all()]
+    if endpoint_ids:
+        db.query(models.AuthorizationReview).filter(models.AuthorizationReview.endpoint_id.in_(endpoint_ids)).delete(synchronize_session=False)
+        db.query(models.AuthorizationMatrixEntry).filter(models.AuthorizationMatrixEntry.endpoint_id.in_(endpoint_ids)).delete(synchronize_session=False)
+        db.query(models.ApiBusinessFlowStep).filter(models.ApiBusinessFlowStep.endpoint_id.in_(endpoint_ids)).update({models.ApiBusinessFlowStep.endpoint_id: None}, synchronize_session=False)
     db.query(models.ApiEndpoint).filter(models.ApiEndpoint.assessment_id == assessment.id).delete()
     db.query(models.ApiImportArtifact).filter(models.ApiImportArtifact.assessment_id == assessment.id).delete()
 
@@ -435,7 +440,7 @@ def create_report(db: Session, assessment_id: int) -> models.ApiReport:
     )
     db.add(report)
     db.flush()
-    _notify(db, "API report generated", f"Generated API Security report for '{assessment.name}'.", "success", assessment.id)
+    _notify(db, "API report generated", f"Generated API Security report for '{assessment.name}', including authorization and business-flow review sections.", "success", assessment.id)
     db.commit()
     db.refresh(report)
     return report

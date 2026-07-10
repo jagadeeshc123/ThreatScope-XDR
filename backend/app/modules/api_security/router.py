@@ -7,9 +7,13 @@ from app.modules.api_security import schemas, service
 from app.modules.api_security.validators import OPENAPI_EXTENSIONS, POSTMAN_EXTENSIONS, read_validated_upload
 from app.database import get_db
 from app import models
+from app.modules.api_security.authorization.router import router as authorization_router
+from app.modules.api_security.business_flows.router import router as business_flows_router
 
 
 router = APIRouter()
+router.include_router(authorization_router)
+router.include_router(business_flows_router)
 
 
 @router.get("/overview", response_model=schemas.ApiSecurityOverview)
@@ -100,7 +104,7 @@ def analyze_assessment(assessment_id: int, db: Session = Depends(get_db)):
 def list_findings(
     assessment_id: int,
     severity: Optional[str] = Query(default=None, pattern="^(info|low|medium|high|critical)$"),
-    source: Optional[str] = Query(default=None, pattern="^(openapi|postman|jwt|response_schema|inventory)$"),
+    source: Optional[str] = Query(default=None, pattern="^(openapi|postman|jwt|response_schema|inventory|authorization_matrix|object_level_review|function_level_review|property_level_review|business_flow)$"),
     db: Session = Depends(get_db),
 ):
     return service.list_findings(db, assessment_id, severity, source)
