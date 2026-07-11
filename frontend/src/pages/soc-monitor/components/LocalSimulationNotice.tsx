@@ -1,0 +1,2 @@
+import { ShieldCheck } from 'lucide-react';
+export function LocalSimulationNotice({ children = 'Local simulation only — this does not modify any real firewall or network control.' }: { children?: React.ReactNode }) { return <div className="flex gap-3 rounded-lg border border-indigo-400/30 bg-indigo-500/10 p-4 text-sm text-indigo-100"><ShieldCheck className="h-5 w-5 shrink-0" /><div>{children}</div></div>; }

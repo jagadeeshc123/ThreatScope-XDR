@@ -1,0 +1,2 @@
+{"timestamp":"2026-01-01T10:00:00Z","event_type":"web_request","source_ip":"203.0.113.45","path":"/protected","status_code":401}
+{"timestamp":"2026-01-01T10:00:10Z","event_type":"api_request","source_ip":"203.0.113.45","path":"/api/protected","status_code":403}

@@ -1,0 +1,16 @@
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import type { SocDetectionRule } from '../../types';
+import { vulnscopeApi } from '../../api/vulnscope';
+import { EmptyState, PageHeader, PageShell } from '../../components/ui';
+import { RuleCard } from './components/RuleCard';
+
+export function DetectionRules() {
+  const [rules, setRules] = useState<SocDetectionRule[]>([]); const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => { try { setRules(await vulnscopeApi.listSocRules()); } catch { toast.error('Rules could not be loaded.'); } finally { setLoading(false); } }, []);
+  useEffect(() => { void load(); }, [load]);
+  const edit = async (rule: SocDetectionRule) => { const threshold = Number(prompt('Threshold', String(rule.threshold))); const windowSeconds = Number(prompt('Window seconds', String(rule.window_seconds))); if (!threshold || !windowSeconds) return; try { await vulnscopeApi.updateSocRule(rule.id, { threshold, window_seconds: windowSeconds }); toast.success('Rule updated.'); await load(); } catch { toast.error('Rule validation failed.'); } };
+  const create = async () => { const ruleCode = prompt('Custom rule code (uppercase letters/numbers)', 'CUSTOM-001'); const name = prompt('Rule name', 'Custom authentication threshold'); if (!ruleCode || !name) return; try { await vulnscopeApi.createSocRule({ rule_code: ruleCode.toUpperCase(), name, description: 'Analyst-defined declarative authentication threshold.', rule_type: 'threshold', enabled: true, severity: 'medium', confidence: 'medium', window_seconds: 300, threshold: 5, group_by: 'source_ip', conditions_json: { event_types: ['authentication'], outcomes: ['failure', 'denied'] }, remediation: 'Review correlated events and validate the actor context.' }); toast.success('Custom rule created.'); await load(); } catch { toast.error('Custom rule validation failed.'); } };
+  const run = async () => { try { const result = await vulnscopeApi.runSocDetections(); toast.success(`${result.alerts_created} alerts created; ${result.duplicate_alerts_skipped} duplicates skipped.`); } catch { toast.error('Detection run failed.'); } };
+  return <PageShell><PageHeader title="Detection Rules" subtitle="Bounded, declarative local correlation rules. No arbitrary code or SQL is accepted." actions={<div className="flex gap-2"><button onClick={() => void create()} className="rounded-md border border-border px-4 py-2 text-sm font-semibold">Create basic rule</button><button onClick={() => void run()} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Run enabled rules</button></div>} />{loading ? <p>Loading rules...</p> : rules.length ? <div className="grid gap-4 xl:grid-cols-2">{rules.map(rule => <RuleCard key={rule.id} rule={rule} onToggle={() => void vulnscopeApi.updateSocRule(rule.id, { enabled: !rule.enabled }).then(load)} onEdit={() => void edit(rule)} onDelete={() => { if (confirm(`Delete ${rule.rule_code}?`)) void vulnscopeApi.deleteSocRule(rule.id).then(load).catch(() => toast.error('Rule could not be deleted.')); }} />)}</div> : <EmptyState title="No rules" description="Default rules are seeded by the backend." />}</PageShell>;
+}

@@ -1,0 +1,3 @@
+{"timestamp":"2026-01-01T10:00:00+00:00","event_type":"authentication","src_ip":"192.0.2.10","user":"demo-alice","outcome":"failure","password":"fake-never-store"}
+{"timestamp":"2026-01-01T10:00:10+00:00","event_type":"web_request","client_ip":"198.51.100.20","method":"GET","path":"/demo","status":200,"authorization":"Bearer fake-token"}
+malformed-json

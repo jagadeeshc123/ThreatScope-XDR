@@ -1,0 +1,2 @@
+import type { SocSeverity } from '../../../types';
+export function AlertSeverityBadge({ severity }: { severity: SocSeverity }) { const colors = { critical: 'bg-red-500/20 text-red-300', high: 'bg-orange-500/20 text-orange-300', medium: 'bg-amber-500/20 text-amber-300', low: 'bg-blue-500/20 text-blue-300', info: 'bg-slate-500/20 text-slate-300' }; return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${colors[severity]}`}>{severity}</span>; }

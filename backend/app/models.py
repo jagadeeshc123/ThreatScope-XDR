@@ -193,3 +193,15 @@ from app.modules.api_security.business_flows.models import (  # noqa: E402,F401
     ApiBusinessFlowRisk,
     ApiBusinessFlowStep,
 )
+from app.modules.soc_monitor.models import (  # noqa: E402,F401
+    SocActivity,
+    SocAlert,
+    SocAlertEvent,
+    SocBlocklistEntry,
+    SocDetectionRule,
+    SocEvent,
+    SocLogImport,
+    SocLogSource,
+    SocReport,
+    SocThreatIntelResult,
+)

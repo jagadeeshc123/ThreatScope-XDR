@@ -34,6 +34,8 @@ def startup_event():
             db.add(profile)
             
         db.commit()
+        from app.modules.soc_monitor.detection_rules import seed_default_rules
+        seed_default_rules(db)
     finally:
         db.close()
 
@@ -56,6 +58,7 @@ def read_root():
 
 from app.routers import targets, scans, dashboard, reports, notifications, profile, settings, search, policies
 from app.modules.api_security.router import router as api_security_router
+from app.modules.soc_monitor.router import router as soc_monitor_router
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"])
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(policies.router, prefix="/api/policies", tags=["Policies"])
@@ -66,3 +69,4 @@ app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
 app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
 app.include_router(api_security_router, prefix="/api/api-security", tags=["API Security"])
+app.include_router(soc_monitor_router, prefix="/api/soc", tags=["SOC Monitor"])

@@ -86,6 +86,10 @@ export function Topbar() {
     if (notification.entity_type === 'scan' && notification.entity_id) return `/scans?highlight=${notification.entity_id}`;
     if (notification.entity_type === 'report' && notification.entity_id) return `/reports?reportId=${notification.entity_id}`;
     if (notification.entity_type === 'target' && notification.entity_id) return `/targets?highlight=${notification.entity_id}`;
+    if (notification.entity_type === 'soc_alert' && notification.entity_id) return `/soc/alerts/${notification.entity_id}`;
+    if (notification.entity_type === 'soc_report' && notification.entity_id) return `/soc/reports/${notification.entity_id}`;
+    if (notification.entity_type === 'soc_import') return '/soc/imports';
+    if (notification.entity_type === 'soc_blocklist') return '/soc/blocklist';
     return '/notifications';
   };
 

@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[])
         
     query = f"%{q}%"
     
@@ -94,6 +94,11 @@ def search(q: str = "", db: Session = Depends(get_db)):
     authorization_reviews = db.query(models.AuthorizationReview).filter(or_(models.AuthorizationReview.review_type.ilike(query), models.AuthorizationReview.risk_indicator.ilike(query), models.AuthorizationReview.expected_behavior.ilike(query), models.AuthorizationReview.analyst_decision.ilike(query))).limit(15).all()
     api_business_flows = db.query(models.ApiBusinessFlow).filter(or_(models.ApiBusinessFlow.name.ilike(query), models.ApiBusinessFlow.description.ilike(query), models.ApiBusinessFlow.business_goal.ilike(query))).limit(10).all()
     api_business_flow_risks = db.query(models.ApiBusinessFlowRisk).join(models.ApiBusinessFlow).filter(or_(models.ApiBusinessFlowRisk.title.ilike(query), models.ApiBusinessFlowRisk.risk_type.ilike(query), models.ApiBusinessFlowRisk.evidence_summary.ilike(query))).limit(15).all()
+    soc_events = db.query(models.SocEvent).filter(or_(models.SocEvent.message.ilike(query), models.SocEvent.raw_preview_redacted.ilike(query), models.SocEvent.source_ip.ilike(query), models.SocEvent.username.ilike(query), models.SocEvent.request_path.ilike(query))).limit(15).all()
+    soc_alerts = db.query(models.SocAlert).filter(or_(models.SocAlert.title.ilike(query), models.SocAlert.evidence_summary.ilike(query), models.SocAlert.source_ip.ilike(query), models.SocAlert.username.ilike(query))).limit(15).all()
+    soc_rules = db.query(models.SocDetectionRule).filter(or_(models.SocDetectionRule.rule_code.ilike(query), models.SocDetectionRule.name.ilike(query), models.SocDetectionRule.description.ilike(query))).limit(10).all()
+    soc_reports = db.query(models.SocReport).filter(models.SocReport.title.ilike(query)).limit(10).all()
+    soc_blocklist_entries = db.query(models.SocBlocklistEntry).filter(or_(models.SocBlocklistEntry.indicator_value.ilike(query), models.SocBlocklistEntry.reason.ilike(query))).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -124,4 +129,9 @@ def search(q: str = "", db: Session = Depends(get_db)):
         authorization_reviews=[{"id": item.id, "assessment_id": item.assessment_id, "endpoint_id": item.endpoint_id, "review_type": item.review_type, "severity": item.severity, "risk_indicator": item.risk_indicator, "analyst_decision": item.analyst_decision} for item in authorization_reviews],
         api_business_flows=[{"id": item.id, "assessment_id": item.assessment_id, "name": item.name, "description": item.description, "status": item.status, "risk_score": item.risk_score} for item in api_business_flows],
         api_business_flow_risks=[{"id": item.id, "flow_id": item.flow_id, "assessment_id": item.flow.assessment_id, "title": item.title, "severity": item.severity, "status": item.status, "risk_type": item.risk_type} for item in api_business_flow_risks],
+        soc_events=[{"id": item.id, "event_type": item.event_type, "severity": item.severity, "event_time": item.event_time, "source_ip": item.source_ip, "username": item.username, "snippet": (item.message or item.raw_preview_redacted or "")[:240]} for item in soc_events],
+        soc_alerts=[{"id": item.id, "title": item.title, "severity": item.severity, "status": item.status, "snippet": item.evidence_summary[:240]} for item in soc_alerts],
+        soc_rules=[{"id": item.id, "rule_code": item.rule_code, "name": item.name, "severity": item.severity, "enabled": item.enabled} for item in soc_rules],
+        soc_reports=[{"id": item.id, "title": item.title, "created_at": item.created_at} for item in soc_reports],
+        soc_blocklist_entries=[{"id": item.id, "indicator_type": item.indicator_type, "indicator_value": item.indicator_value, "status": item.status, "reason": item.reason[:240]} for item in soc_blocklist_entries],
     )

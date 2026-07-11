@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network } from 'lucide-react';
+import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network, Radar, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 
 export function Sidebar() {
@@ -44,6 +44,12 @@ export function Sidebar() {
             </Link>
           );
         })}
+        <details className="group pt-1" open={location.pathname.startsWith('/soc')}>
+          <summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium", location.pathname.startsWith('/soc') ? "bg-sidebar-primary/12 text-sidebar-primary" : "text-sidebar-foreground/72 hover:bg-sidebar-accent/70")}><Radar className="h-4 w-4"/><span className="flex-1">SOC Monitor</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180"/></summary>
+          <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">
+            {[['Overview','/soc'],['Sources','/soc/sources'],['Events','/soc/events'],['Alerts','/soc/alerts'],['Rules','/soc/rules'],['Simulator','/soc/simulator'],['Blocklist','/soc/blocklist'],['Reports','/soc/reports']].map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs", location.pathname===path||path!=='/soc'&&location.pathname.startsWith(`${path}/`) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>{name}</Link>)}
+          </div>
+        </details>
       </nav>
       <div className="border-t border-border p-3">
         <Link to="/settings" className={clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors", location.pathname === '/settings' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>

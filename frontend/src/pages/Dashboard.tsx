@@ -90,7 +90,7 @@ export function Dashboard() {
     <PageShell>
       <PageHeader
         title="Dashboard Overview"
-        subtitle="Monitor backend Web Exposure data, safe scan history, report coverage, and policy posture from one operational view."
+        subtitle="Monitor Web Exposure, API Security, and local SOC telemetry from one operational view."
         actions={
           <>
             <Link to="/scans/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
@@ -123,6 +123,14 @@ export function Dashboard() {
         <StatCard label="Authorization Reviews" value={summary.api_unresolved_authorization_review_count} detail="Unresolved validation items" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
         <StatCard label="Business Flows" value={summary.api_business_flow_count} detail="Configured workflows" icon={<Network className="h-5 w-5" />} tone="info" />
         <StatCard label="High-Risk Flow Indicators" value={summary.api_high_risk_flow_indicator_count} detail="Open passive indicators" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <StatCard label="SOC Events" value={summary.soc_total_events} detail="Normalized local records" icon={<Radar className="h-5 w-5" />} tone="info" />
+        <StatCard label="Open SOC Alerts" value={summary.soc_open_alerts} detail="Open or investigating" icon={<ShieldAlert className="h-5 w-5" />} tone="warn" />
+        <StatCard label="High / Critical SOC" value={summary.soc_high_critical_alerts} detail="Priority investigations" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
+        <StatCard label="Active SOC Rules" value={summary.soc_active_rules} detail="Local correlation rules" icon={<ShieldCheck className="h-5 w-5" />} tone="good" />
+        <StatCard label="Simulated Blocklist" value={summary.soc_active_blocklist_entries} detail="Application-only entries" icon={<Shield className="h-5 w-5" />} tone="default" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">

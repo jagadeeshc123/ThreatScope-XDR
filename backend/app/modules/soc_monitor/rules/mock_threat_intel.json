@@ -1,0 +1,5 @@
+{
+  "ip:192.0.2.66": {"reputation":"malicious","confidence":"high","tags":["demo-brute-force"],"explanation":"Reserved demonstration indicator associated with repeated authentication failures."},
+  "ip:198.51.100.77": {"reputation":"suspicious","confidence":"medium","tags":["demo-path-probing"],"explanation":"Reserved demonstration indicator associated with path probing."},
+  "username:demo-admin": {"reputation":"suspicious","confidence":"low","tags":["demo-privileged-identity"],"explanation":"Synthetic privileged identity included in the local catalog."}
+}

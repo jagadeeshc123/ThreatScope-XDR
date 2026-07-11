@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowRight, FileText, Network, Search, Shield, ShieldAlert, Target } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, FileText, Network, Radar, Search, Shield, ShieldAlert, Target } from 'lucide-react';
 import type { SearchResults } from '../types';
 import { vulnscopeApi } from '../api/vulnscope';
 import { EmptyState, PageHeader, PageShell } from '../components/ui';
@@ -30,11 +30,11 @@ export function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query]);
 
-  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length + results.api_roles.length + results.authorization_reviews.length + results.api_business_flows.length + results.api_business_flow_risks.length : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length + results.api_roles.length + results.authorization_reviews.length + results.api_business_flows.length + results.api_business_flow_risks.length + results.soc_events.length + results.soc_alerts.length + results.soc_rules.length + results.soc_reports.length + results.soc_blocklist_entries.length : 0;
 
   return (
     <PageShell className="max-w-5xl">
-      <PageHeader title={query ? `Search results for "${query}"` : 'Search VulnScope'} subtitle={query && !loading && !error ? `${totalResults} matching records across Web Exposure and API Security.` : 'Search the current ThreatScope workspace.'} />
+      <PageHeader title={query ? `Search results for "${query}"` : 'Search VulnScope'} subtitle={query && !loading && !error ? `${totalResults} matching records across Web Exposure, API Security, and SOC Monitor.` : 'Search the current ThreatScope workspace.'} />
       {!query && <EmptyState title="Enter a search term" description="Use the search field in the top bar to find targets, scans, findings, and reports." icon={<Search className="h-8 w-8" />} />}
       {loading && <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">Searching backend records...</div>}
       {!loading && error && <EmptyState title="Search unavailable" description={error} />}
@@ -79,6 +79,21 @@ export function SearchResultsPage() {
           </ResultGroup>
           <ResultGroup title="Business Flow Risks" icon={<AlertTriangle className="h-5 w-5 text-orange-300" />} count={results.api_business_flow_risks.length}>
             {results.api_business_flow_risks.map(risk => <ResultLink key={risk.id} to={`/api-security/business-flows/${risk.flow_id}`} title={risk.title} detail={`${risk.severity} | ${risk.status} | ${risk.risk_type.replaceAll('_', ' ')}`} />)}
+          </ResultGroup>
+          <ResultGroup title="SOC Events" icon={<Radar className="h-5 w-5 text-cyan-300" />} count={results.soc_events.length}>
+            {results.soc_events.map(event => <ResultLink key={event.id} to={`/soc/events/${event.id}`} title={`${event.event_type.replaceAll('_', ' ')} · ${event.severity}`} detail={`${event.source_ip || event.username || 'Unattributed'} · ${event.snippet}`} />)}
+          </ResultGroup>
+          <ResultGroup title="SOC Alerts" icon={<ShieldAlert className="h-5 w-5 text-red-300" />} count={results.soc_alerts.length}>
+            {results.soc_alerts.map(alert => <ResultLink key={alert.id} to={`/soc/alerts/${alert.id}`} title={`${alert.severity.toUpperCase()} · ${alert.title}`} detail={`${alert.status} · ${alert.snippet}`} />)}
+          </ResultGroup>
+          <ResultGroup title="SOC Rules" icon={<Shield className="h-5 w-5 text-indigo-300" />} count={results.soc_rules.length}>
+            {results.soc_rules.map(rule => <ResultLink key={rule.id} to="/soc/rules" title={`${rule.rule_code} · ${rule.name}`} detail={`${rule.severity} · ${rule.enabled ? 'enabled' : 'disabled'}`} />)}
+          </ResultGroup>
+          <ResultGroup title="SOC Reports" icon={<FileText className="h-5 w-5 text-cyan-300" />} count={results.soc_reports.length}>
+            {results.soc_reports.map(report => <ResultLink key={report.id} to={`/soc/reports/${report.id}`} title={report.title} detail={`Generated ${new Date(report.created_at).toLocaleString()}`} />)}
+          </ResultGroup>
+          <ResultGroup title="Simulated Blocklist" icon={<Shield className="h-5 w-5 text-amber-300" />} count={results.soc_blocklist_entries.length}>
+            {results.soc_blocklist_entries.map(entry => <ResultLink key={entry.id} to="/soc/blocklist" title={`${entry.indicator_type}: ${entry.indicator_value}`} detail={`${entry.status} · ${entry.reason}`} />)}
           </ResultGroup>
         </div>
       )}

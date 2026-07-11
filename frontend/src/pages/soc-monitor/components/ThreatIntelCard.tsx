@@ -1,0 +1,2 @@
+import type { SocThreatIntelResult } from '../../../types';
+export function ThreatIntelCard({ result }: { result: SocThreatIntelResult }) { return <div className="rounded-lg border border-border bg-background/60 p-4"><div className="flex justify-between gap-3"><strong>{result.indicator_type}: {result.indicator_value}</strong><span className="uppercase text-amber-300">{result.reputation}</span></div><p className="mt-2 text-sm text-muted-foreground">{result.explanation}</p><p className="mt-3 text-xs text-indigo-200">{result.disclaimer}</p></div>; }

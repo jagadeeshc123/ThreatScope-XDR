@@ -28,6 +28,18 @@ const AuthorizationReviews = lazy(() => import('./pages/api-security/authorizati
 const BusinessFlowList = lazy(() => import('./pages/api-security/business-flows/BusinessFlowList').then(module => ({ default: module.BusinessFlowList })));
 const BusinessFlowEditor = lazy(() => import('./pages/api-security/business-flows/BusinessFlowEditor').then(module => ({ default: module.BusinessFlowEditor })));
 const BusinessFlowDetails = lazy(() => import('./pages/api-security/business-flows/BusinessFlowDetails').then(module => ({ default: module.BusinessFlowDetails })));
+const SocOverview = lazy(() => import('./pages/soc-monitor/SocOverview').then(module => ({ default: module.SocOverview })));
+const LogSources = lazy(() => import('./pages/soc-monitor/LogSources').then(module => ({ default: module.LogSources })));
+const LogImports = lazy(() => import('./pages/soc-monitor/LogImports').then(module => ({ default: module.LogImports })));
+const EventExplorer = lazy(() => import('./pages/soc-monitor/EventExplorer').then(module => ({ default: module.EventExplorer })));
+const EventDetails = lazy(() => import('./pages/soc-monitor/EventDetails').then(module => ({ default: module.EventDetails })));
+const DetectionRules = lazy(() => import('./pages/soc-monitor/DetectionRules').then(module => ({ default: module.DetectionRules })));
+const AlertList = lazy(() => import('./pages/soc-monitor/AlertList').then(module => ({ default: module.AlertList })));
+const AlertDetails = lazy(() => import('./pages/soc-monitor/AlertDetails').then(module => ({ default: module.AlertDetails })));
+const LogSimulator = lazy(() => import('./pages/soc-monitor/LogSimulator').then(module => ({ default: module.LogSimulator })));
+const LocalBlocklist = lazy(() => import('./pages/soc-monitor/LocalBlocklist').then(module => ({ default: module.LocalBlocklist })));
+const SocReports = lazy(() => import('./pages/soc-monitor/SocReports').then(module => ({ default: module.SocReports })));
+const SocReportDetails = lazy(() => import('./pages/soc-monitor/SocReportDetails').then(module => ({ default: module.SocReportDetails })));
 
 function Layout() {
   return (
@@ -44,7 +56,7 @@ function Layout() {
 }
 
 function LoadingRoute() {
-  return <div className="p-6 text-sm text-muted-foreground">Loading API Security...</div>;
+  return <div className="p-6 text-sm text-muted-foreground">Loading module...</div>;
 }
 
 function App() {
@@ -69,6 +81,18 @@ function App() {
           <Route path="/api-security/assessments/:assessmentId/business-flows" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowList /></Suspense>} />
           <Route path="/api-security/business-flows/:flowId" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowDetails /></Suspense>} />
           <Route path="/api-security/business-flows/:flowId/edit" element={<Suspense fallback={<LoadingRoute />}><BusinessFlowEditor /></Suspense>} />
+          <Route path="/soc" element={<Suspense fallback={<LoadingRoute />}><SocOverview /></Suspense>} />
+          <Route path="/soc/sources" element={<Suspense fallback={<LoadingRoute />}><LogSources /></Suspense>} />
+          <Route path="/soc/imports" element={<Suspense fallback={<LoadingRoute />}><LogImports /></Suspense>} />
+          <Route path="/soc/events" element={<Suspense fallback={<LoadingRoute />}><EventExplorer /></Suspense>} />
+          <Route path="/soc/events/:eventId" element={<Suspense fallback={<LoadingRoute />}><EventDetails /></Suspense>} />
+          <Route path="/soc/rules" element={<Suspense fallback={<LoadingRoute />}><DetectionRules /></Suspense>} />
+          <Route path="/soc/alerts" element={<Suspense fallback={<LoadingRoute />}><AlertList /></Suspense>} />
+          <Route path="/soc/alerts/:alertId" element={<Suspense fallback={<LoadingRoute />}><AlertDetails /></Suspense>} />
+          <Route path="/soc/simulator" element={<Suspense fallback={<LoadingRoute />}><LogSimulator /></Suspense>} />
+          <Route path="/soc/blocklist" element={<Suspense fallback={<LoadingRoute />}><LocalBlocklist /></Suspense>} />
+          <Route path="/soc/reports" element={<Suspense fallback={<LoadingRoute />}><SocReports /></Suspense>} />
+          <Route path="/soc/reports/:reportId" element={<Suspense fallback={<LoadingRoute />}><SocReportDetails /></Suspense>} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />

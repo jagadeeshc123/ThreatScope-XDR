@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app import schemas, models
 from app.database import get_db
 
@@ -25,6 +26,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     api_unresolved_authorization_review_count = db.query(models.AuthorizationReview).filter(models.AuthorizationReview.analyst_decision.in_(["open", "needs_testing"])).count()
     api_business_flow_count = db.query(models.ApiBusinessFlow).count()
     api_high_risk_flow_indicator_count = db.query(models.ApiBusinessFlowRisk).filter(models.ApiBusinessFlowRisk.severity == "high", models.ApiBusinessFlowRisk.status == "open").count()
+    now = datetime.now(timezone.utc)
+    soc_total_events = db.query(models.SocEvent).count()
+    soc_open_alerts = db.query(models.SocAlert).filter(models.SocAlert.status.in_(["open", "investigating"])).count()
+    soc_high_critical_alerts = db.query(models.SocAlert).filter(models.SocAlert.severity.in_(["high", "critical"])).count()
+    soc_active_rules = db.query(models.SocDetectionRule).filter(models.SocDetectionRule.enabled == True).count()
+    soc_active_blocklist_entries = db.query(models.SocBlocklistEntry).filter(models.SocBlocklistEntry.status == "active", or_(models.SocBlocklistEntry.expires_at.is_(None), models.SocBlocklistEntry.expires_at > now)).count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -74,6 +81,11 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         api_unresolved_authorization_review_count=api_unresolved_authorization_review_count,
         api_business_flow_count=api_business_flow_count,
         api_high_risk_flow_indicator_count=api_high_risk_flow_indicator_count,
+        soc_total_events=soc_total_events,
+        soc_open_alerts=soc_open_alerts,
+        soc_high_critical_alerts=soc_high_critical_alerts,
+        soc_active_rules=soc_active_rules,
+        soc_active_blocklist_entries=soc_active_blocklist_entries,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

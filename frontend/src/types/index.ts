@@ -116,6 +116,11 @@ export interface DashboardSummary {
   api_unresolved_authorization_review_count: number;
   api_business_flow_count: number;
   api_high_risk_flow_indicator_count: number;
+  soc_total_events: number;
+  soc_open_alerts: number;
+  soc_high_critical_alerts: number;
+  soc_active_rules: number;
+  soc_active_blocklist_entries: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -174,7 +179,34 @@ export interface SearchResults {
   authorization_reviews: AuthorizationReview[];
   api_business_flows: ApiBusinessFlow[];
   api_business_flow_risks: ApiBusinessFlowRisk[];
+  soc_events: Array<Pick<SocEvent, 'id' | 'event_type' | 'severity' | 'event_time' | 'source_ip' | 'username'> & { snippet: string }>;
+  soc_alerts: Array<Pick<SocAlert, 'id' | 'title' | 'severity' | 'status'> & { snippet: string }>;
+  soc_rules: Array<Pick<SocDetectionRule, 'id' | 'rule_code' | 'name' | 'severity' | 'enabled'>>;
+  soc_reports: Array<Pick<SocReport, 'id' | 'title' | 'created_at'>>;
+  soc_blocklist_entries: Array<Pick<SocBlocklistEntry, 'id' | 'indicator_type' | 'indicator_value' | 'status' | 'reason'>>;
 }
+
+export type SocSeverity = 'info' | 'low' | 'medium' | 'high' | 'critical';
+export type SocConfidence = 'low' | 'medium' | 'high';
+export type SocEventType = 'authentication' | 'authorization' | 'web_request' | 'api_request' | 'administrative_action' | 'security_control' | 'system' | 'unknown';
+export type SocOutcome = 'success' | 'failure' | 'denied' | 'blocked' | 'unknown';
+export type SocAlertStatus = 'open' | 'investigating' | 'contained' | 'resolved' | 'false_positive';
+export type SocIndicatorType = 'ip' | 'domain' | 'username';
+
+export interface SocLogSource { id: number; name: string; description: string | null; source_type: 'simulator' | 'jsonl' | 'csv' | 'access_log' | 'auth_log' | 'key_value'; parser_type: string; enabled: boolean; event_count: number; last_ingested_at: string | null; created_at: string; updated_at: string; }
+export interface SocLogImport { id: number; source_id: number; filename: string | null; file_hash: string | null; total_lines: number; accepted_events: number; rejected_events: number; status: 'pending' | 'processing' | 'completed' | 'failed'; error_summary: string | null; created_at: string; completed_at: string | null; }
+export interface SocEvent { id: number; source_id: number; import_id: number | null; event_time: string; received_at: string; event_type: SocEventType; action: string | null; outcome: SocOutcome | null; severity: SocSeverity; source_ip: string | null; destination_ip: string | null; username: string | null; http_method: string | null; request_path: string | null; status_code: number | null; user_agent: string | null; message: string | null; normalized_json: Record<string, unknown>; raw_event_hash: string; raw_preview_redacted: string | null; created_at: string; }
+export interface SocPage<T> { items: T[]; total: number; page: number; page_size: number; }
+export interface SocDetectionRule { id: number; rule_code: string; name: string; description: string; rule_type: string; enabled: boolean; severity: SocSeverity; confidence: SocConfidence; window_seconds: number; threshold: number; group_by: string; conditions_json: Record<string, unknown>; remediation: string; is_default: boolean; created_at: string; updated_at: string; }
+export interface SocAlert { id: number; rule_id: number; rule_code: string; rule_name: string; title: string; description: string; severity: SocSeverity; confidence: SocConfidence; status: SocAlertStatus; first_seen: string; last_seen: string; event_count: number; correlation_key: string; source_ip: string | null; username: string | null; evidence_summary: string; fingerprint: string; analyst_notes: string | null; created_at: string; updated_at: string; }
+export interface SocAlertDetail extends SocAlert { events: SocEvent[]; enrichments: SocThreatIntelResult[]; blocklist_entries: Array<{ id: number; indicator_type: string; indicator_value: string; status: string; reason: string }>; }
+export interface SocThreatIntelResult { id: number; alert_id: number | null; indicator_type: SocIndicatorType; indicator_value: string; reputation: 'unknown' | 'benign' | 'suspicious' | 'malicious'; confidence: SocConfidence; tags_json: string[]; source_name: 'local_mock_intelligence'; explanation: string; created_at: string; disclaimer: string; }
+export interface SocBlocklistEntry { id: number; indicator_type: SocIndicatorType; indicator_value: string; reason: string; source_alert_id: number | null; status: 'active' | 'expired' | 'removed'; expires_at: string | null; created_at: string; updated_at: string; disclaimer: string; }
+export interface SocReport { id: number; title: string; report_type: string; html_content: string; summary_json: Record<string, unknown>; created_at: string; }
+export interface SocActivity { id: number; action: string; message: string; entity_type: string; entity_id: number | null; created_at: string; }
+export interface SocOverview { total_events: number; events_last_24_hours: number; open_alerts: number; high_alerts: number; critical_alerts: number; total_sources: number; enabled_sources: number; active_rules: number; active_blocklist_entries: number; events_by_type: Record<string, number>; alerts_by_severity: Record<string, number>; alerts_by_status: Record<string, number>; top_source_ips: Array<{ value: string; count: number }>; top_usernames: Array<{ value: string; count: number }>; recent_alerts: SocAlert[]; recent_imports: SocLogImport[]; recent_activity: SocActivity[]; }
+export interface SocSimulatorResult { events_created: number; events_skipped_as_duplicates: number; source_id: number; start_time: string; end_time: string; disclaimer: string; }
+export interface SocDetectionRunResult { rules_processed: number; events_processed: number; alerts_created: number; alerts_updated: number; duplicate_alerts_skipped: number; disclaimer: string; }
 
 export type ApiSourceType = 'openapi' | 'postman' | 'manual';
 export type ApiAssessmentStatus = 'draft' | 'processing' | 'completed' | 'failed';

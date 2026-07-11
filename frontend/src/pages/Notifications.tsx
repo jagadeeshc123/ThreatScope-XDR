@@ -63,6 +63,10 @@ export function Notifications() {
     if (notification.entity_type === 'scan' && notification.entity_id) navigate(`/scans?highlight=${notification.entity_id}`);
     if (notification.entity_type === 'report' && notification.entity_id) navigate(`/reports?reportId=${notification.entity_id}`);
     if (notification.entity_type === 'target' && notification.entity_id) navigate(`/targets?highlight=${notification.entity_id}`);
+    if (notification.entity_type === 'soc_alert' && notification.entity_id) navigate(`/soc/alerts/${notification.entity_id}`);
+    if (notification.entity_type === 'soc_report' && notification.entity_id) navigate(`/soc/reports/${notification.entity_id}`);
+    if (notification.entity_type === 'soc_import') navigate('/soc/imports');
+    if (notification.entity_type === 'soc_blocklist') navigate('/soc/blocklist');
   };
 
   const getIcon = (type: string) => {

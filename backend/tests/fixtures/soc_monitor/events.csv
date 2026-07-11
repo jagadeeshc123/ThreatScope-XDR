@@ -1,0 +1,3 @@
+timestamp,event_type,source_ip,username,outcome,message
+2026-01-01T10:00:00Z,authentication,192.0.2.11,demo-bob,failure,Fake login failure
+2026-01-01T10:00:10Z,authorization,198.51.100.21,demo-bob,denied,Fake access denied

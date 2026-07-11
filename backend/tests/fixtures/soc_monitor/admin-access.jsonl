@@ -1,0 +1,2 @@
+{"timestamp":"2026-01-01T10:00:00Z","event_type":"authentication","source_ip":"192.0.2.90","username":"demo-admin","outcome":"failure"}
+{"timestamp":"2026-01-01T10:02:00Z","event_type":"administrative_action","source_ip":"192.0.2.90","username":"demo-admin","path":"/admin/settings","status_code":200}

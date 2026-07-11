@@ -1,0 +1,2 @@
+{"timestamp":"2026-01-01T10:00:00Z","event_type":"authentication","source_ip":"192.0.2.66","username":"demo-alice","outcome":"failure"}
+{"timestamp":"2026-01-01T10:00:30Z","event_type":"authentication","source_ip":"192.0.2.66","username":"demo-bob","outcome":"failure"}

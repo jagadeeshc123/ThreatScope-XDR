@@ -172,6 +172,11 @@ class DashboardSummary(BaseModel):
     api_unresolved_authorization_review_count: int = 0
     api_business_flow_count: int = 0
     api_high_risk_flow_indicator_count: int = 0
+    soc_total_events: int = 0
+    soc_open_alerts: int = 0
+    soc_high_critical_alerts: int = 0
+    soc_active_rules: int = 0
+    soc_active_blocklist_entries: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -264,3 +269,8 @@ class SearchResults(BaseModel):
     authorization_reviews: List[dict] = []
     api_business_flows: List[dict] = []
     api_business_flow_risks: List[dict] = []
+    soc_events: List[dict] = []
+    soc_alerts: List[dict] = []
+    soc_rules: List[dict] = []
+    soc_reports: List[dict] = []
+    soc_blocklist_entries: List[dict] = []
