@@ -63,9 +63,12 @@ export function Topbar() {
 
   useEffect(() => {
     const normalized = query.trim();
-    if (!normalized) return;
+    const currentQuery = new URLSearchParams(location.search).get('q') || '';
+    if (!normalized) {
+      if (location.pathname === '/search' && currentQuery) navigate('/search', { replace: true });
+      return;
+    }
     const timer = window.setTimeout(() => {
-      const currentQuery = new URLSearchParams(location.search).get('q') || '';
       if (location.pathname !== '/search' || currentQuery !== normalized) navigate(`/search?q=${encodeURIComponent(normalized)}`);
     }, 400);
     return () => window.clearTimeout(timer);

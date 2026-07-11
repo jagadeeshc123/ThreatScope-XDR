@@ -11,6 +11,7 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Generate a report from Scan Details; verify the report notification appears in the bell and Notifications page.
 - [ ] Open a report by clicking its card, refresh its `?reportId=<id>` URL, open it in a new tab, and download its HTML.
 - [ ] Search by target name, scan status, finding title/severity, URL, and report title; verify debounce and destination links.
+- [ ] Clear the topbar search field while on `/search`; verify the old query and results are removed without adding a stale history entry.
 - [ ] Update profile name and initials; verify the topbar avatar updates immediately and persists after refresh.
 - [ ] Change every scanner default and report branding field, save, refresh, and confirm persistence.
 - [ ] Reset settings only after accepting the confirmation and verify backend defaults return.

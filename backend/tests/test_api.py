@@ -207,6 +207,9 @@ class VulnScopeApiTests(unittest.TestCase):
         self.assertEqual(len(results.json()["scans"]), 1)
         self.assertEqual(len(results.json()["findings"]), 1)
         self.assertEqual(len(results.json()["reports"]), 1)
+        short_query = self.client.get("/api/search/", params={"q": "S"})
+        self.assertEqual(short_query.status_code, 200)
+        self.assertEqual(short_query.json()["targets"], [])
 
     def test_settings_get_patch_and_reset(self):
         current = self.client.get("/api/settings/")
