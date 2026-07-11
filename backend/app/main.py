@@ -59,6 +59,7 @@ def read_root():
 from app.routers import targets, scans, dashboard, reports, notifications, profile, settings, search, policies
 from app.modules.api_security.router import router as api_security_router
 from app.modules.soc_monitor.router import router as soc_monitor_router
+from app.modules.document_threats.router import router as document_threats_router
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"])
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(policies.router, prefix="/api/policies", tags=["Policies"])
@@ -70,3 +71,4 @@ app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
 app.include_router(api_security_router, prefix="/api/api-security", tags=["API Security"])
 app.include_router(soc_monitor_router, prefix="/api/soc", tags=["SOC Monitor"])
+app.include_router(document_threats_router, prefix="/api/document-threats", tags=["Document Threats"])

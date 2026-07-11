@@ -177,6 +177,10 @@ class DashboardSummary(BaseModel):
     soc_high_critical_alerts: int = 0
     soc_active_rules: int = 0
     soc_active_blocklist_entries: int = 0
+    document_total_analyses: int = 0
+    document_suspicious_high_risk: int = 0
+    document_high_critical_findings: int = 0
+    document_active_content: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -274,3 +278,7 @@ class SearchResults(BaseModel):
     soc_rules: List[dict] = []
     soc_reports: List[dict] = []
     soc_blocklist_entries: List[dict] = []
+    document_analyses: List[dict] = []
+    document_findings: List[dict] = []
+    document_indicators: List[dict] = []
+    document_reports: List[dict] = []

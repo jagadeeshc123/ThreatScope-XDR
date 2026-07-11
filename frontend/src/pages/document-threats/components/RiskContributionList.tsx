@@ -1,0 +1,1 @@
+export function RiskContributionList({items}:{items:Array<{rule_code:string;title:string;contribution:number}>}){return <div className="space-y-2">{items.map(i=><div key={i.rule_code} className="flex justify-between border-b border-border pb-2 text-sm"><span>{i.rule_code} · {i.title}</span><b>+{i.contribution}</b></div>)}</div>}

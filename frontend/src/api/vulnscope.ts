@@ -34,6 +34,7 @@ import type {
   Target,
   UserProfile,
   SocAlert, SocAlertDetail, SocBlocklistEntry, SocDetectionRule, SocDetectionRunResult, SocEvent, SocLogImport, SocLogSource, SocOverview, SocPage, SocReport, SocSimulatorResult, SocThreatIntelResult,
+  DocumentAnalysis, DocumentAnalysisDetail, DocumentAnalysisPage, DocumentEmbeddedArtifact, DocumentFinding, DocumentIndicator, DocumentOverview, DocumentReport,
 } from '../types';
 import { apiClient } from './client';
 
@@ -307,4 +308,17 @@ export const vulnscopeApi = {
   createSocReport: () => data<SocReport>(apiClient.post('/soc/reports', { report_type: 'soc_summary' })).then(result => { dispatch(VULNSCOPE_EVENTS.notificationsUpdated); return result; }),
   getSocReport: (id: number) => data<SocReport>(apiClient.get(`/soc/reports/${id}`)),
   downloadSocReport: (id: number) => data<Blob>(apiClient.get(`/soc/reports/${id}/download`, { responseType: 'blob' })),
+
+  getDocumentOverview: () => data<DocumentOverview>(apiClient.get('/document-threats/overview')),
+  uploadDocumentAnalysis: (file: File) => { const form=new FormData(); form.append('file',file); return data<DocumentAnalysis>(apiClient.post('/document-threats/analyses',form,{headers:{'Content-Type':'multipart/form-data'}})).then(result=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return result;}); },
+  listDocumentAnalyses: (params: Record<string,string|number|undefined>={}) => data<DocumentAnalysisPage>(apiClient.get('/document-threats/analyses',{params})),
+  getDocumentAnalysis: (id:number) => data<DocumentAnalysisDetail>(apiClient.get(`/document-threats/analyses/${id}`)),
+  deleteDocumentAnalysis: (id:number) => data<{ok:boolean}>(apiClient.delete(`/document-threats/analyses/${id}`)),
+  listDocumentFindings: (id:number,params:Record<string,string|undefined>={}) => data<DocumentFinding[]>(apiClient.get(`/document-threats/analyses/${id}/findings`,{params})),
+  listDocumentIndicators: (id:number,indicatorType?:string) => data<DocumentIndicator[]>(apiClient.get(`/document-threats/analyses/${id}/indicators`,{params:indicatorType?{indicator_type:indicatorType}:{}})),
+  listDocumentArtifacts: (id:number) => data<DocumentEmbeddedArtifact[]>(apiClient.get(`/document-threats/analyses/${id}/embedded-artifacts`)),
+  createDocumentReport: (id:number) => data<DocumentReport>(apiClient.post(`/document-threats/analyses/${id}/reports`)).then(result=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return result;}),
+  listDocumentReports: () => data<DocumentReport[]>(apiClient.get('/document-threats/reports')),
+  getDocumentReport: (id:number) => data<DocumentReport>(apiClient.get(`/document-threats/reports/${id}`)),
+  downloadDocumentReport: (id:number) => data<Blob>(apiClient.get(`/document-threats/reports/${id}/download`,{responseType:'blob'})),
 };

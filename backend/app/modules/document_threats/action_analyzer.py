@@ -1,0 +1,2 @@
+MARKERS = {"has_javascript":[b"/JavaScript",b"/JS"],"has_open_action":[b"/OpenAction"],"has_additional_actions":[b"/AA"],"has_launch_action":[b"/Launch"],"has_acroform":[b"/AcroForm"],"has_xfa":[b"/XFA"],"has_remote_action":[b"/GoToR"],"has_submit_form":[b"/SubmitForm",b"/ImportData"],"has_rich_media":[b"/RichMedia",b"/Movie",b"/Sound"],"has_signature":[b"/Sig"]}
+def analyze_actions(data: bytes): return {key:any(marker in data for marker in markers) for key,markers in MARKERS.items()}

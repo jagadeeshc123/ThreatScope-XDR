@@ -32,6 +32,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     soc_high_critical_alerts = db.query(models.SocAlert).filter(models.SocAlert.severity.in_(["high", "critical"])).count()
     soc_active_rules = db.query(models.SocDetectionRule).filter(models.SocDetectionRule.enabled == True).count()
     soc_active_blocklist_entries = db.query(models.SocBlocklistEntry).filter(models.SocBlocklistEntry.status == "active", or_(models.SocBlocklistEntry.expires_at.is_(None), models.SocBlocklistEntry.expires_at > now)).count()
+    document_total_analyses = db.query(models.DocumentAnalysis).count()
+    document_suspicious_high_risk = db.query(models.DocumentAnalysis).filter(models.DocumentAnalysis.classification.in_(["suspicious", "high_risk"])).count()
+    document_high_critical_findings = db.query(models.DocumentFinding).filter(models.DocumentFinding.severity.in_(["high", "critical"])).count()
+    document_active_content = db.query(models.DocumentAnalysis).filter(or_(models.DocumentAnalysis.has_javascript == True, models.DocumentAnalysis.has_open_action == True, models.DocumentAnalysis.has_additional_actions == True, models.DocumentAnalysis.has_launch_action == True, models.DocumentAnalysis.has_xfa == True)).count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -86,6 +90,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         soc_high_critical_alerts=soc_high_critical_alerts,
         soc_active_rules=soc_active_rules,
         soc_active_blocklist_entries=soc_active_blocklist_entries,
+        document_total_analyses=document_total_analyses,
+        document_suspicious_high_risk=document_suspicious_high_risk,
+        document_high_critical_findings=document_high_critical_findings,
+        document_active_content=document_active_content,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

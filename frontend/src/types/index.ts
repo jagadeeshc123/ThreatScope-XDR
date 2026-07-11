@@ -121,6 +121,10 @@ export interface DashboardSummary {
   soc_high_critical_alerts: number;
   soc_active_rules: number;
   soc_active_blocklist_entries: number;
+  document_total_analyses: number;
+  document_suspicious_high_risk: number;
+  document_high_critical_findings: number;
+  document_active_content: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -184,7 +188,21 @@ export interface SearchResults {
   soc_rules: Array<Pick<SocDetectionRule, 'id' | 'rule_code' | 'name' | 'severity' | 'enabled'>>;
   soc_reports: Array<Pick<SocReport, 'id' | 'title' | 'created_at'>>;
   soc_blocklist_entries: Array<Pick<SocBlocklistEntry, 'id' | 'indicator_type' | 'indicator_value' | 'status' | 'reason'>>;
+  document_analyses: Array<Pick<DocumentAnalysis, 'id' | 'filename_sanitized' | 'file_hash' | 'classification' | 'risk_score' | 'created_at'>>;
+  document_findings: Array<Pick<DocumentFinding, 'id' | 'analysis_id' | 'rule_code' | 'title' | 'severity'> & { snippet: string }>;
+  document_indicators: Array<Pick<DocumentIndicator, 'id' | 'analysis_id' | 'indicator_type' | 'display_value_redacted'> & { snippet: string }>;
+  document_reports: Array<Pick<DocumentReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
 }
+
+export type DocumentClassification = 'low_observed_risk' | 'needs_review' | 'suspicious' | 'high_risk' | 'unknown';
+export interface DocumentAnalysis { id:number; filename_sanitized:string; file_hash:string; file_size:number; mime_type:string; pdf_version:string|null; page_count:number|null; analysis_status:'pending'|'processing'|'completed'|'limited'|'failed'; is_encrypted:boolean; encryption_limited_analysis:boolean; has_javascript:boolean; has_open_action:boolean; has_additional_actions:boolean; has_launch_action:boolean; has_acroform:boolean; has_xfa:boolean; has_embedded_files:boolean; has_external_uris:boolean; external_uri_count:number; embedded_file_count:number; annotation_count:number; metadata_json_redacted:Record<string,unknown>; feature_summary_json:Record<string,unknown>; extracted_text_character_count:number; risk_score:number; classification:DocumentClassification; confidence:'low'|'medium'|'high'; methodology:string; error_summary:string|null; created_at:string; completed_at:string|null; duplicate_existing:boolean; }
+export interface DocumentFinding { id:number; analysis_id:number; rule_code:string; title:string; category:string; severity:SocSeverity; confidence:SocConfidence; description:string; evidence_summary:string; technical_impact:string; possible_business_impact:string; remediation:string; manual_validation_required:boolean; fingerprint:string; created_at:string; }
+export interface DocumentIndicator { id:number; analysis_id:number; indicator_type:'url'|'domain'|'ip'|'email'|'filename'|'file_hash'|'action'|'script_reference'; normalized_value:string; display_value_redacted:string; context:string; severity:SocSeverity; confidence:SocConfidence; source_object:string|null; created_at:string; }
+export interface DocumentEmbeddedArtifact { id:number; analysis_id:number; filename_sanitized:string; extension:string|null; declared_mime_type:string|null; file_size:number|null; sha256:string|null; artifact_type:string; executable_like:boolean; archive_like:boolean; script_like:boolean; office_macro_like:boolean; risk_label:string; evidence_summary:string; created_at:string; }
+export interface DocumentAnalysisDetail extends DocumentAnalysis { findings:DocumentFinding[]; indicators:DocumentIndicator[]; embedded_artifacts:DocumentEmbeddedArtifact[]; }
+export interface DocumentAnalysisPage { items:DocumentAnalysis[]; total:number; page:number; page_size:number; }
+export interface DocumentReport { id:number; analysis_id:number|null; title:string; html_content:string; summary_json:Record<string,unknown>; created_at:string; }
+export interface DocumentOverview { total_analyses:number; analyses_last_24_hours:number; completed_analyses:number; failed_or_limited_analyses:number; suspicious_analyses:number; high_risk_analyses:number; total_findings:number; high_critical_findings:number; documents_with_javascript:number; documents_with_automatic_actions:number; documents_with_embedded_artifacts:number; documents_with_external_links:number; findings_by_severity:Record<string,number>; analyses_by_classification:Record<string,number>; recent_analyses:DocumentAnalysis[]; top_finding_categories:Array<{category:string;count:number}>; recent_activity:Array<{id:number;action:string;message:string;created_at:string}>; }
 
 export type SocSeverity = 'info' | 'low' | 'medium' | 'high' | 'critical';
 export type SocConfidence = 'low' | 'medium' | 'high';

@@ -30,7 +30,7 @@ export function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query]);
 
-  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length + results.api_roles.length + results.authorization_reviews.length + results.api_business_flows.length + results.api_business_flow_risks.length + results.soc_events.length + results.soc_alerts.length + results.soc_rules.length + results.soc_reports.length + results.soc_blocklist_entries.length : 0;
+  const totalResults = results ? results.targets.length + results.scans.length + results.findings.length + results.reports.length + results.api_assessments.length + results.api_endpoints.length + results.api_findings.length + results.jwt_analyses.length + results.api_reports.length + results.api_roles.length + results.authorization_reviews.length + results.api_business_flows.length + results.api_business_flow_risks.length + results.soc_events.length + results.soc_alerts.length + results.soc_rules.length + results.soc_reports.length + results.soc_blocklist_entries.length + results.document_analyses.length + results.document_findings.length + results.document_indicators.length + results.document_reports.length : 0;
 
   return (
     <PageShell className="max-w-5xl">
@@ -95,6 +95,10 @@ export function SearchResultsPage() {
           <ResultGroup title="Simulated Blocklist" icon={<Shield className="h-5 w-5 text-amber-300" />} count={results.soc_blocklist_entries.length}>
             {results.soc_blocklist_entries.map(entry => <ResultLink key={entry.id} to="/soc/blocklist" title={`${entry.indicator_type}: ${entry.indicator_value}`} detail={`${entry.status} · ${entry.reason}`} />)}
           </ResultGroup>
+          <ResultGroup title="Document Analyses" icon={<FileText className="h-5 w-5 text-cyan-300" />} count={results.document_analyses.length}>{results.document_analyses.map(item=><ResultLink key={item.id} to={`/document-threats/analyses/${item.id}`} title={item.filename_sanitized} detail={`${item.classification.replaceAll('_',' ')} · risk ${item.risk_score}/100 · ${item.file_hash.slice(0,16)}…`}/>)}</ResultGroup>
+          <ResultGroup title="Document Findings" icon={<ShieldAlert className="h-5 w-5 text-orange-300" />} count={results.document_findings.length}>{results.document_findings.map(item=><ResultLink key={item.id} to={`/document-threats/analyses/${item.analysis_id}`} title={`${item.rule_code} · ${item.title}`} detail={`${item.severity} · ${item.snippet}`}/>)}</ResultGroup>
+          <ResultGroup title="Document Indicators" icon={<Search className="h-5 w-5 text-indigo-300" />} count={results.document_indicators.length}>{results.document_indicators.map(item=><ResultLink key={item.id} to={`/document-threats/analyses/${item.analysis_id}`} title={`${item.indicator_type}: ${item.display_value_redacted}`} detail={item.snippet}/>)}</ResultGroup>
+          <ResultGroup title="Document Reports" icon={<FileText className="h-5 w-5 text-fuchsia-300" />} count={results.document_reports.length}>{results.document_reports.map(item=><ResultLink key={item.id} to={`/document-threats/reports/${item.id}`} title={item.title} detail={`Generated ${new Date(item.created_at).toLocaleString()}`}/>)}</ResultGroup>
         </div>
       )}
     </PageShell>

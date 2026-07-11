@@ -1,0 +1,1 @@
+import type{DocumentClassification}from'../../../types';export function DocumentClassificationBadge({value}:{value:DocumentClassification}){return <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase">{value.replaceAll('_',' ')}</span>}

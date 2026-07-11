@@ -67,6 +67,8 @@ export function Notifications() {
     if (notification.entity_type === 'soc_report' && notification.entity_id) navigate(`/soc/reports/${notification.entity_id}`);
     if (notification.entity_type === 'soc_import') navigate('/soc/imports');
     if (notification.entity_type === 'soc_blocklist') navigate('/soc/blocklist');
+    if (notification.entity_type === 'document_analysis' && notification.entity_id) navigate(`/document-threats/analyses/${notification.entity_id}`);
+    if (notification.entity_type === 'document_report' && notification.entity_id) navigate(`/document-threats/reports/${notification.entity_id}`);
   };
 
   const getIcon = (type: string) => {

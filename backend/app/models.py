@@ -205,3 +205,10 @@ from app.modules.soc_monitor.models import (  # noqa: E402,F401
     SocReport,
     SocThreatIntelResult,
 )
+from app.modules.document_threats.models import (  # noqa: E402,F401
+    DocumentAnalysis,
+    DocumentEmbeddedArtifact,
+    DocumentFinding,
+    DocumentIndicator,
+    DocumentReport,
+)

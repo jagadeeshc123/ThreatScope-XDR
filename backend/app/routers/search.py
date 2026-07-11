@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[])
         
     query = f"%{q}%"
     
@@ -99,6 +99,10 @@ def search(q: str = "", db: Session = Depends(get_db)):
     soc_rules = db.query(models.SocDetectionRule).filter(or_(models.SocDetectionRule.rule_code.ilike(query), models.SocDetectionRule.name.ilike(query), models.SocDetectionRule.description.ilike(query))).limit(10).all()
     soc_reports = db.query(models.SocReport).filter(models.SocReport.title.ilike(query)).limit(10).all()
     soc_blocklist_entries = db.query(models.SocBlocklistEntry).filter(or_(models.SocBlocklistEntry.indicator_value.ilike(query), models.SocBlocklistEntry.reason.ilike(query))).limit(10).all()
+    document_analyses = db.query(models.DocumentAnalysis).filter(or_(models.DocumentAnalysis.filename_sanitized.ilike(query), models.DocumentAnalysis.file_hash.ilike(query), models.DocumentAnalysis.classification.ilike(query))).limit(10).all()
+    document_findings = db.query(models.DocumentFinding).filter(or_(models.DocumentFinding.rule_code.ilike(query), models.DocumentFinding.title.ilike(query), models.DocumentFinding.category.ilike(query), models.DocumentFinding.evidence_summary.ilike(query))).limit(15).all()
+    document_indicators = db.query(models.DocumentIndicator).filter(or_(models.DocumentIndicator.display_value_redacted.ilike(query), models.DocumentIndicator.context.ilike(query))).limit(15).all()
+    document_reports = db.query(models.DocumentReport).filter(models.DocumentReport.title.ilike(query)).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -134,4 +138,8 @@ def search(q: str = "", db: Session = Depends(get_db)):
         soc_rules=[{"id": item.id, "rule_code": item.rule_code, "name": item.name, "severity": item.severity, "enabled": item.enabled} for item in soc_rules],
         soc_reports=[{"id": item.id, "title": item.title, "created_at": item.created_at} for item in soc_reports],
         soc_blocklist_entries=[{"id": item.id, "indicator_type": item.indicator_type, "indicator_value": item.indicator_value, "status": item.status, "reason": item.reason[:240]} for item in soc_blocklist_entries],
+        document_analyses=[{"id": item.id, "filename_sanitized": item.filename_sanitized, "file_hash": item.file_hash, "classification": item.classification, "risk_score": item.risk_score, "created_at": item.created_at} for item in document_analyses],
+        document_findings=[{"id": item.id, "analysis_id": item.analysis_id, "rule_code": item.rule_code, "title": item.title, "severity": item.severity, "snippet": item.evidence_summary[:240]} for item in document_findings],
+        document_indicators=[{"id": item.id, "analysis_id": item.analysis_id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "snippet": item.context[:240]} for item in document_indicators],
+        document_reports=[{"id": item.id, "analysis_id": item.analysis_id, "title": item.title, "created_at": item.created_at} for item in document_reports],
     )

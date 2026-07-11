@@ -1,0 +1,1 @@
+export function DocumentRiskBadge({score}:{score:number}){return <span className={`rounded-full px-3 py-1 text-sm font-bold ${score>=70?'bg-red-500/20 text-red-300':score>=45?'bg-orange-500/20 text-orange-300':score>=20?'bg-amber-500/20 text-amber-300':'bg-emerald-500/20 text-emerald-300'}`}>{score}/100</span>}

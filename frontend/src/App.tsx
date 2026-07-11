@@ -40,6 +40,12 @@ const LogSimulator = lazy(() => import('./pages/soc-monitor/LogSimulator').then(
 const LocalBlocklist = lazy(() => import('./pages/soc-monitor/LocalBlocklist').then(module => ({ default: module.LocalBlocklist })));
 const SocReports = lazy(() => import('./pages/soc-monitor/SocReports').then(module => ({ default: module.SocReports })));
 const SocReportDetails = lazy(() => import('./pages/soc-monitor/SocReportDetails').then(module => ({ default: module.SocReportDetails })));
+const DocumentThreatOverview = lazy(() => import('./pages/document-threats/DocumentThreatOverview').then(module => ({ default: module.DocumentThreatOverview })));
+const AnalyzeDocument = lazy(() => import('./pages/document-threats/AnalyzeDocument').then(module => ({ default: module.AnalyzeDocument })));
+const DocumentAnalysisList = lazy(() => import('./pages/document-threats/DocumentAnalysisList').then(module => ({ default: module.DocumentAnalysisList })));
+const DocumentAnalysisDetails = lazy(() => import('./pages/document-threats/DocumentAnalysisDetails').then(module => ({ default: module.DocumentAnalysisDetails })));
+const DocumentReports = lazy(() => import('./pages/document-threats/DocumentReports').then(module => ({ default: module.DocumentReports })));
+const DocumentReportDetails = lazy(() => import('./pages/document-threats/DocumentReportDetails').then(module => ({ default: module.DocumentReportDetails })));
 
 function Layout() {
   return (
@@ -93,6 +99,12 @@ function App() {
           <Route path="/soc/blocklist" element={<Suspense fallback={<LoadingRoute />}><LocalBlocklist /></Suspense>} />
           <Route path="/soc/reports" element={<Suspense fallback={<LoadingRoute />}><SocReports /></Suspense>} />
           <Route path="/soc/reports/:reportId" element={<Suspense fallback={<LoadingRoute />}><SocReportDetails /></Suspense>} />
+          <Route path="/document-threats" element={<Suspense fallback={<LoadingRoute />}><DocumentThreatOverview /></Suspense>} />
+          <Route path="/document-threats/analyze" element={<Suspense fallback={<LoadingRoute />}><AnalyzeDocument /></Suspense>} />
+          <Route path="/document-threats/analyses" element={<Suspense fallback={<LoadingRoute />}><DocumentAnalysisList /></Suspense>} />
+          <Route path="/document-threats/analyses/:analysisId" element={<Suspense fallback={<LoadingRoute />}><DocumentAnalysisDetails /></Suspense>} />
+          <Route path="/document-threats/reports" element={<Suspense fallback={<LoadingRoute />}><DocumentReports /></Suspense>} />
+          <Route path="/document-threats/reports/:reportId" element={<Suspense fallback={<LoadingRoute />}><DocumentReportDetails /></Suspense>} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />

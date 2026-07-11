@@ -132,6 +132,12 @@ export function Dashboard() {
         <StatCard label="Active SOC Rules" value={summary.soc_active_rules} detail="Local correlation rules" icon={<ShieldCheck className="h-5 w-5" />} tone="good" />
         <StatCard label="Simulated Blocklist" value={summary.soc_active_blocklist_entries} detail="Application-only entries" icon={<Shield className="h-5 w-5" />} tone="default" />
       </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Document Analyses" value={summary.document_total_analyses} detail="Static PDF inspections" icon={<FileText className="h-5 w-5" />} tone="info" />
+        <StatCard label="Suspicious / High Risk" value={summary.document_suspicious_high_risk} detail="Manual review queue" icon={<ShieldAlert className="h-5 w-5" />} tone="danger" />
+        <StatCard label="Document High Findings" value={summary.document_high_critical_findings} detail="High/critical indicators" icon={<AlertTriangle className="h-5 w-5" />} tone="warn" />
+        <StatCard label="Active-Content PDFs" value={summary.document_active_content} detail="Static feature indicators" icon={<Shield className="h-5 w-5" />} tone="warn" />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-5">
         <SectionCard className="xl:col-span-3" title="Scan Trend" subtitle="Risk and posture movement across recent scan records." icon={<Radar className="h-5 w-5" />}>
