@@ -28,6 +28,9 @@ def add_item(db,package,payload):
     module=payload.get("source_module");record_type=payload.get("source_record_type");record_id=payload.get("source_record_id")
     allowed={"web_exposure","api_security","soc_monitor","document_threat","phishing_defense","unified_correlation","incident_case","governance"}
     if module not in allowed or not isinstance(record_id,int):raise HTTPException(422,"Unsupported evidence source")
+    if payload.get("evidence_strength","moderate") not in {"weak","moderate","strong"}:raise HTTPException(422,"Unsupported evidence strength")
+    if payload.get("risk_id") is not None and not db.query(models.GovernanceRisk).filter_by(id=payload["risk_id"]).first():raise HTTPException(404,"Governance risk not found")
+    if payload.get("control_id") is not None and not db.query(models.GovernanceControl).filter_by(id=payload["control_id"]).first():raise HTTPException(404,"Control not found")
     source=resolve(db,module,record_type,record_id);fingerprint=hashlib.sha256(f"{package.id}:{module}:{record_type}:{record_id}".encode()).hexdigest();existing=db.query(models.GovernanceEvidenceItem).filter_by(package_id=package.id,evidence_fingerprint=fingerprint).first()
     if existing:return existing,False
     item=models.GovernanceEvidenceItem(package_id=package.id,risk_id=payload.get("risk_id") or source.get("risk_id"),control_id=payload.get("control_id"),source_module=module,source_record_type=record_type,source_record_id=record_id,source_internal_route=internal_route(source.get("route")),title_snapshot=redact(source["title"],500),evidence_snapshot=redact(source["evidence"],1500),evidence_fingerprint=fingerprint,evidence_strength=payload.get("evidence_strength","moderate"),observed_at=source.get("observed_at") or datetime.now(timezone.utc));db.add(item);db.flush();package.item_count=len(package.items);return item,True

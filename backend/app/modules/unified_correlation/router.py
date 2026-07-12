@@ -8,6 +8,17 @@ from app.database import get_db
 from . import service,report_service
 from .redaction import redact
 router=APIRouter()
+SEVERITIES={"info","low","medium","high","critical"};CONFIDENCES={"low","medium","high"};CASE_STATUSES={"new","triage","investigating","awaiting_review","contained_simulated","resolved","closed"};CASE_PRIORITIES={"P1","P2","P3","P4"};CASE_TYPES={"analyst_created","multi_module_correlation","source_investigation","incident"};ACTION_STATUSES={"open","in_progress","completed","cancelled"};ACTION_PRIORITIES={"low","medium","high","critical"}
+def choice(value,allowed,label):
+ if value not in allowed:raise HTTPException(422,f"Unsupported {label}")
+ return value
+def strict_bool(value,label):
+ if not isinstance(value,bool):raise HTTPException(422,f"{label} must be a boolean")
+ return value
+def parsed_date(value,label):
+ if value in {None,""}:return None
+ try:return datetime.fromisoformat(str(value).replace("Z","+00:00"))
+ except ValueError:raise HTTPException(422,f"{label} must be a valid ISO timestamp")
 def dump(x):
  d={k:v for k,v in x.__dict__.items() if not k.startswith("_")}
  for k in list(d):
@@ -52,7 +63,7 @@ def rules(db:Session=Depends(get_db)):service.seed(db);db.commit();return [dump(
 def update_rule(rule_id:int,payload:dict,db:Session=Depends(get_db)):
  x=db.query(models.CorrelationRule).filter_by(id=rule_id).first()
  if not x:raise HTTPException(404,"Correlation rule not found")
- if "enabled" in payload:x.enabled=bool(payload["enabled"])
+ if "enabled" in payload:x.enabled=strict_bool(payload["enabled"],"enabled")
  db.commit();db.refresh(x);return dump(x)
 @router.delete("/rules/{rule_id}")
 def delete_rule(rule_id:int,db:Session=Depends(get_db)):
@@ -82,7 +93,7 @@ def match(match_id:int,db:Session=Depends(get_db)):
 def update_match(match_id:int,payload:dict,db:Session=Depends(get_db)):
  x=db.query(models.CorrelationMatch).filter_by(id=match_id).first()
  if not x:raise HTTPException(404,"Match not found")
- if payload.get("status") in {"new","reviewed","linked_to_case","dismissed"}:x.status=payload["status"]
+ if "status" in payload:x.status=choice(payload["status"],{"new","reviewed","linked_to_case","dismissed"},"match status")
  if "analyst_notes" in payload:x.analyst_notes=redact(payload["analyst_notes"],4000)
  service.activity(db,"match_updated",f"Correlation match {x.id} updated.",x.id);db.commit();db.refresh(x);return dump(x)
 @router.post("/matches/{match_id}/create-case")
@@ -90,7 +101,17 @@ def update_match(match_id:int,payload:dict,db:Session=Depends(get_db)):
 def from_match(match_id:int,db:Session=Depends(get_db)):return dump(service.from_match(db,match_id))
 @router.post("/cases")
 def create_case(payload:dict,db:Session=Depends(get_db)):
- key="CASE-"+hashlib.sha256(f"{datetime.now(timezone.utc).isoformat()}:{payload.get('title')}".encode()).hexdigest()[:12];c=models.IncidentCase(case_key=key,title=redact(payload.get("title","Analyst-created case"),240),summary=redact(payload.get("summary",""),2000),case_type=payload.get("case_type","analyst_created"),severity=payload.get("severity","medium"),priority=payload.get("priority","P3"),confidence=payload.get("confidence","medium"),risk_score=float(payload.get("risk_score",40)),status="new",assignee_name=redact(payload.get("assignee_name"),200),tags_json=json.dumps(payload.get("tags",[])));db.add(c);db.flush();service.timeline(db,c,"case_created","Analyst-created incident case.");service.activity(db,"case_created",f"Incident case {key} created.",c.id);service.notify(db,"Incident Case Created",c.title,"info","incident_case",c.id);db.commit();db.refresh(c);return dump(c)
+ c=build_case(db,payload);db.commit();db.refresh(c);return dump(c)
+def build_case(db,payload):
+ title=redact(payload.get("title","Analyst-created case"),240)
+ if not title or not title.strip():raise HTTPException(422,"Case title is required")
+ case_type=choice(payload.get("case_type","analyst_created"),CASE_TYPES,"case type");severity=choice(payload.get("severity","medium"),SEVERITIES,"case severity");priority=choice(payload.get("priority","P3"),CASE_PRIORITIES,"case priority");confidence=choice(payload.get("confidence","medium"),CONFIDENCES,"case confidence")
+ try:risk_score=float(payload.get("risk_score",40))
+ except (TypeError,ValueError):raise HTTPException(422,"Risk score must be a number from 0 to 100")
+ if not 0<=risk_score<=100:raise HTTPException(422,"Risk score must be between 0 and 100")
+ tags=payload.get("tags",[])
+ if not isinstance(tags,list):raise HTTPException(422,"Tags must be a list")
+ key="CASE-"+hashlib.sha256(f"{datetime.now(timezone.utc).isoformat()}:{title}".encode()).hexdigest()[:12];c=models.IncidentCase(case_key=key,title=title,summary=redact(payload.get("summary",""),2000),case_type=case_type,severity=severity,priority=priority,confidence=confidence,risk_score=risk_score,status="new",assignee_name=redact(payload.get("assignee_name"),200),tags_json=json.dumps(tags));db.add(c);db.flush();service.timeline(db,c,"case_created","Analyst-created incident case.");service.activity(db,"case_created",f"Incident case {key} created.",c.id);service.notify(db,"Incident Case Created",c.title,"info","incident_case",c.id);return c
 def add_observation_evidence(db,c,payload):
  allowed={"web_exposure","api_security","soc_monitor","document_threat","phishing_defense"};module=payload.get("source_module")
  if module not in allowed:raise HTTPException(422,"Unsupported source module")
@@ -101,7 +122,10 @@ def add_observation_evidence(db,c,payload):
  x=models.IncidentEvidence(case_id=c.id,source_module=o.source_module,source_record_type=o.source_record_type,source_record_id=o.source_record_id,source_internal_route=o.source_internal_route,title_snapshot=o.title_snapshot,evidence_snapshot=o.evidence_snapshot,severity=o.severity,confidence=o.confidence,entity_id=o.entity_id,evidence_fingerprint=fp);db.add(x);db.flush();c.evidence_count+=1;c.source_module_count=len({e.source_module for e in c.evidence}|{o.source_module});service.timeline(db,c,"evidence_added",f"Safe snapshot added from {o.source_module}.");service.activity(db,"evidence_added",f"Evidence added to {c.case_key}.",c.id);return x
 @router.post("/cases/from-source")
 def from_source(payload:dict,db:Session=Depends(get_db)):
- c_payload={"title":payload.get("title","Source investigation"),"summary":payload.get("summary","Created from an allowlisted local source observation."),"case_type":payload.get("case_type","analyst_created")};c_data=create_case(c_payload,db);c=service.case(db,c_data["id"]);add_observation_evidence(db,c,payload);db.commit();db.refresh(c);return dump(c)
+ c_payload={"title":payload.get("title","Source investigation"),"summary":payload.get("summary","Created from an allowlisted local source observation."),"case_type":payload.get("case_type","source_investigation")};c=build_case(db,c_payload)
+ try:add_observation_evidence(db,c,payload)
+ except Exception:db.rollback();raise
+ db.commit();db.refresh(c);return dump(c)
 @router.get("/cases")
 def cases(page:int=Query(1,ge=1),page_size:int=Query(100,ge=1,le=200),status:str|None=None,severity:str|None=None,priority:str|None=None,confidence:str|None=None,case_type:str|None=None,assignee:str|None=None,entity_id:int|None=None,source_module:str|None=None,date_from:datetime|None=None,date_to:datetime|None=None,q:str|None=Query(None,max_length=200),db:Session=Depends(get_db)):
  query=db.query(models.IncidentCase)
@@ -124,6 +148,9 @@ def get_case(case_id:int,db:Session=Depends(get_db)):
 @router.patch("/cases/{case_id}")
 def update_case(case_id:int,payload:dict,db:Session=Depends(get_db)):
  c=service.case(db,case_id)
+ for field,allowed,label in (("status",CASE_STATUSES,"case status"),("severity",SEVERITIES,"case severity"),("priority",CASE_PRIORITIES,"case priority"),("confidence",CONFIDENCES,"case confidence")):
+  if field in payload:choice(payload[field],allowed,label)
+ if "title" in payload and not (redact(payload["title"],240) or "").strip():raise HTTPException(422,"Case title is required")
  if payload.get("status") in {"resolved","closed"} and not payload.get("resolution_summary",c.resolution_summary):raise HTTPException(422,"Resolution summary is required")
  for k in ("title","summary","status","severity","priority","confidence","assignee_name","resolution_summary"):
   if k in payload:
@@ -142,15 +169,24 @@ def evidence(case_id:int,db:Session=Depends(get_db)):return [dump(x) for x in se
 @router.post("/cases/{case_id}/evidence")
 def add_evidence(case_id:int,payload:dict,db:Session=Depends(get_db)):c=service.case(db,case_id);x=add_observation_evidence(db,c,payload);db.commit();db.refresh(x);return dump(x)
 @router.delete("/cases/{case_id}/evidence/{evidence_id}")
-def delete_evidence(case_id:int,evidence_id:int,db:Session=Depends(get_db)):c=service.case(db,case_id);x=db.query(models.IncidentEvidence).filter_by(id=evidence_id,case_id=case_id).first();db.delete(x);c.evidence_count=max(0,c.evidence_count-1);service.timeline(db,c,"evidence_added","Case evidence snapshot removed; source record preserved.");service.activity(db,"evidence_removed",f"Evidence removed from {c.case_key}; source preserved.",c.id);db.commit();return {"ok":True}
+def delete_evidence(case_id:int,evidence_id:int,db:Session=Depends(get_db)):
+ c=service.case(db,case_id);x=db.query(models.IncidentEvidence).filter_by(id=evidence_id,case_id=case_id).first()
+ if not x:raise HTTPException(404,"Case evidence not found")
+ db.delete(x);c.evidence_count=max(0,c.evidence_count-1);service.timeline(db,c,"evidence_removed","Case evidence snapshot removed; source record preserved.");service.activity(db,"evidence_removed",f"Evidence removed from {c.case_key}; source preserved.",c.id);db.commit();return {"ok":True}
 @router.get("/cases/{case_id}/notes")
 def notes(case_id:int,db:Session=Depends(get_db)):return [dump(x) for x in service.case(db,case_id).notes]
 @router.post("/cases/{case_id}/notes")
 def add_note(case_id:int,payload:dict,db:Session=Depends(get_db)):c=service.case(db,case_id);x=models.IncidentNote(case_id=c.id,note_text=redact(payload.get("note_text"),5000),author_label=redact(payload.get("author_label","Local analyst"),100));db.add(x);db.flush();service.timeline(db,c,"note_added","Redacted analyst note added.");db.commit();db.refresh(x);return dump(x)
 @router.patch("/cases/{case_id}/notes/{note_id}")
-def edit_note(case_id:int,note_id:int,payload:dict,db:Session=Depends(get_db)):service.case(db,case_id);x=db.query(models.IncidentNote).filter_by(id=note_id,case_id=case_id).first();x.note_text=redact(payload.get("note_text"),5000);db.commit();return dump(x)
+def edit_note(case_id:int,note_id:int,payload:dict,db:Session=Depends(get_db)):
+ service.case(db,case_id);x=db.query(models.IncidentNote).filter_by(id=note_id,case_id=case_id).first()
+ if not x:raise HTTPException(404,"Case note not found")
+ x.note_text=redact(payload.get("note_text"),5000);db.commit();return dump(x)
 @router.delete("/cases/{case_id}/notes/{note_id}")
-def delete_note(case_id:int,note_id:int,db:Session=Depends(get_db)):service.case(db,case_id);x=db.query(models.IncidentNote).filter_by(id=note_id,case_id=case_id).first();db.delete(x);db.commit();return {"ok":True}
+def delete_note(case_id:int,note_id:int,db:Session=Depends(get_db)):
+ service.case(db,case_id);x=db.query(models.IncidentNote).filter_by(id=note_id,case_id=case_id).first()
+ if not x:raise HTTPException(404,"Case note not found")
+ db.delete(x);db.commit();return {"ok":True}
 @router.get("/cases/{case_id}/actions")
 def actions(case_id:int,db:Session=Depends(get_db)):return [dump(x) for x in service.case(db,case_id).actions]
 @router.post("/actions/check-overdue")
@@ -167,11 +203,27 @@ def check_overdue(db:Session=Depends(get_db)):
   except Exception as exc:errors.append(redact(exc,200))
  db.commit();return {"actions_examined":len(items),"overdue_actions_found":found,"notifications_created":created,"notifications_reused":reused,"errors":errors,"checked_at":checked}
 @router.post("/cases/{case_id}/actions")
-def add_action(case_id:int,payload:dict,db:Session=Depends(get_db)):c=service.case(db,case_id);due=payload.get("due_at");x=models.IncidentActionItem(case_id=c.id,title=redact(payload.get("title"),240),description=redact(payload.get("description"),2000),priority=payload.get("priority","medium"),assignee_name=redact(payload.get("assignee_name"),200),due_at=datetime.fromisoformat(due.replace("Z","+00:00")) if due else None);db.add(x);db.flush();service.timeline(db,c,"action_item_added","Analyst workflow action item added; no execution occurs.");db.commit();db.refresh(x);return dump(x)
+def add_action(case_id:int,payload:dict,db:Session=Depends(get_db)):
+ c=service.case(db,case_id);title=redact(payload.get("title"),240)
+ if not title or not title.strip():raise HTTPException(422,"Action title is required")
+ x=models.IncidentActionItem(case_id=c.id,title=title,description=redact(payload.get("description"),2000),priority=choice(payload.get("priority","medium"),ACTION_PRIORITIES,"action priority"),assignee_name=redact(payload.get("assignee_name"),200),due_at=parsed_date(payload.get("due_at"),"due_at"));db.add(x);db.flush();service.timeline(db,c,"action_item_added","Analyst workflow action item added; no execution occurs.");db.commit();db.refresh(x);return dump(x)
 @router.patch("/cases/{case_id}/actions/{action_id}")
-def update_action(case_id:int,action_id:int,payload:dict,db:Session=Depends(get_db)):c=service.case(db,case_id);x=db.query(models.IncidentActionItem).filter_by(id=action_id,case_id=case_id).first();[setattr(x,k,redact(v,2000) if k in {"title","description","assignee_name"} else datetime.fromisoformat(v.replace("Z","+00:00")) if k=="due_at" and v else v) for k,v in payload.items() if k in {"title","description","status","priority","assignee_name","due_at"}];x.completed_at=datetime.now(timezone.utc) if x.status=="completed" else None;service.timeline(db,c,"action_item_updated",f"Action item {x.id} updated; no automated execution occurred.");service.activity(db,"action_item_updated",f"Workflow task {x.id} updated.",c.id);db.commit();return dump(x)
+def update_action(case_id:int,action_id:int,payload:dict,db:Session=Depends(get_db)):
+ c=service.case(db,case_id);x=db.query(models.IncidentActionItem).filter_by(id=action_id,case_id=case_id).first()
+ if not x:raise HTTPException(404,"Case action item not found")
+ if "status" in payload:choice(payload["status"],ACTION_STATUSES,"action status")
+ if "priority" in payload:choice(payload["priority"],ACTION_PRIORITIES,"action priority")
+ if "title" in payload and not (redact(payload["title"],240) or "").strip():raise HTTPException(422,"Action title is required")
+ for k,v in payload.items():
+  if k in {"title","description","assignee_name"}:setattr(x,k,redact(v,2000))
+  elif k=="due_at":x.due_at=parsed_date(v,"due_at")
+  elif k in {"status","priority"}:setattr(x,k,v)
+ x.completed_at=datetime.now(timezone.utc) if x.status=="completed" else None;service.timeline(db,c,"action_item_updated",f"Action item {x.id} updated; no automated execution occurred.");service.activity(db,"action_item_updated",f"Workflow task {x.id} updated.",c.id);db.commit();return dump(x)
 @router.delete("/cases/{case_id}/actions/{action_id}")
-def delete_action(case_id:int,action_id:int,db:Session=Depends(get_db)):service.case(db,case_id);x=db.query(models.IncidentActionItem).filter_by(id=action_id,case_id=case_id).first();db.delete(x);db.commit();return {"ok":True}
+def delete_action(case_id:int,action_id:int,db:Session=Depends(get_db)):
+ service.case(db,case_id);x=db.query(models.IncidentActionItem).filter_by(id=action_id,case_id=case_id).first()
+ if not x:raise HTTPException(404,"Case action item not found")
+ db.delete(x);db.commit();return {"ok":True}
 @router.get("/cases/{case_id}/timeline")
 def timeline(case_id:int,db:Session=Depends(get_db)):return [dump(x) for x in service.case(db,case_id).timeline]
 @router.post("/cases/{case_id}/reports")
@@ -184,4 +236,7 @@ def report(report_id:int,db:Session=Depends(get_db)):
  if not x:raise HTTPException(404,"Report not found")
  return dump(x)
 @router.get("/reports/{report_id}/download")
-def download(report_id:int,db:Session=Depends(get_db)):x=db.query(models.IncidentReport).filter_by(id=report_id).first();return Response(x.html_content,media_type="text/html",headers={"Content-Disposition":f"attachment; filename=incident-report-{x.id}.html"})
+def download(report_id:int,db:Session=Depends(get_db)):
+ x=db.query(models.IncidentReport).filter_by(id=report_id).first()
+ if not x:raise HTTPException(404,"Report not found")
+ return Response(x.html_content,media_type="text/html",headers={"Content-Disposition":f"attachment; filename=incident-report-{x.id}.html"})

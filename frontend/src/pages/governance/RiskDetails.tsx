@@ -13,10 +13,10 @@ import { TreatmentPlanPanel } from "./components/TreatmentPlanPanel";
 import { RiskExceptionPanel } from "./components/RiskExceptionPanel";
 import { GovernanceDisclaimer } from "./components/GovernanceDisclaimer";
 export function RiskDetails() {
-  const { id } = useParams(),
+  const { riskId } = useParams(),
     [risk, setRisk] = useState<GovernanceRisk | null>(null),
     [error, setError] = useState("");
-  const reload = () => vulnscopeApi.getGovernanceRisk(Number(id)).then(setRisk);
+  const reload = () => vulnscopeApi.getGovernanceRisk(Number(riskId)).then(setRisk);
   const update = async (kind: "owner" | "status" | "strategy" | "score") => {
     const payload: Record<string, unknown> = {};
     if (kind === "owner") payload.owner_name = window.prompt("Risk owner", risk?.owner_name || "") || "";
@@ -33,16 +33,16 @@ export function RiskDetails() {
       payload.residual_impact = Number(window.prompt("Residual impact 1-5", String(risk?.residual_impact || 3)));
       payload.adjustment_rationale = window.prompt("Required scoring rationale") || "";
     }
-    await vulnscopeApi.updateGovernanceRisk(Number(id), payload); await reload();
+    await vulnscopeApi.updateGovernanceRisk(Number(riskId), payload); await reload();
   };
-  const addTreatment = async () => { const title=window.prompt("Treatment title"); if(!title)return; await vulnscopeApi.createGovernanceTreatment(Number(id),{title,description:"Analyst workflow plan; no remediation is executed.",strategy:"mitigate"});await reload(); };
-  const addException = async () => { const justification=window.prompt("Exception justification"); if(!justification)return; await vulnscopeApi.requestGovernanceException(Number(id),{justification});await reload(); };
+  const addTreatment = async () => { const title=window.prompt("Treatment title"); if(!title)return; await vulnscopeApi.createGovernanceTreatment(Number(riskId),{title,description:"Analyst workflow plan; no remediation is executed.",strategy:"mitigate"});await reload(); };
+  const addException = async () => { const justification=window.prompt("Exception justification"); if(!justification)return; await vulnscopeApi.requestGovernanceException(Number(riskId),{justification});await reload(); };
   useEffect(() => {
     void vulnscopeApi
-      .getGovernanceRisk(Number(id))
+      .getGovernanceRisk(Number(riskId))
       .then(setRisk)
       .catch(() => setError("Risk not found."));
-  }, [id]);
+  }, [riskId]);
   if (error)
     return (
       <PageShell>

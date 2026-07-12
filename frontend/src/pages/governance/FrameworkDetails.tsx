@@ -7,11 +7,12 @@ import { FrameworkBadge } from "./components/FrameworkBadge";
 import { ControlCoverageBadge } from "./components/ControlCoverageBadge";
 export function FrameworkDetails() {
   const { frameworkId } = useParams(),
-    [data, setData] = useState<GovernanceFramework | null>(null);
+    [data, setData] = useState<GovernanceFramework | null>(null),[error,setError]=useState(false);
   const report = async () => { const created=await vulnscopeApi.createFrameworkCoverageReport(Number(frameworkId));window.location.assign(`/governance/reports/${created.id}`); };
   useEffect(() => {
-    void vulnscopeApi.getGovernanceFramework(Number(frameworkId)).then(setData);
+    void vulnscopeApi.getGovernanceFramework(Number(frameworkId)).then(setData).catch(()=>setError(true));
   }, [frameworkId]);
+  if(error)return <PageShell><p className="text-destructive">Framework not found.</p></PageShell>;
   if (!data) return <PageShell>Loading framework…</PageShell>;
   return (
     <PageShell>

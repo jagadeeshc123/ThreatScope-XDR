@@ -10,6 +10,11 @@ RANK={"info":0,"low":1,"medium":2,"high":3,"critical":4}
 DEFAULTS={"critical":(5,5),"high":(4,4),"medium":(3,3),"low":(2,2),"info":(1,1)}
 
 
+def utc(value):
+    if value is None:return None
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
 def synchronize(db,source_module=None,minimum_source_severity="info",since=None,maximum_records_per_module=500,include_existing_closed_source_records=False):
     started=time.perf_counter();stats={"source_records_examined":0,"candidates_generated":0,"risks_created":0,"risks_updated":0,"risks_reused":0,"sources_created":0,"sources_reused":0,"records_skipped":0,"safe_errors":[],"per_module_counts":{}}
     for adapter_name,adapter in ADAPTERS.items():
@@ -20,7 +25,7 @@ def synchronize(db,source_module=None,minimum_source_severity="info",since=None,
             if source_module and row["source_module"]!=source_module:continue
             stats["source_records_examined"]+=1;stats["per_module_counts"][row["source_module"]]=stats["per_module_counts"].get(row["source_module"],0)+1
             try:
-                if RANK.get(row["severity"],1)<RANK.get(minimum_source_severity,0) or (since and row["observed_at"]<since):stats["records_skipped"]+=1;continue
+                if RANK.get(row["severity"],1)<RANK.get(minimum_source_severity,0) or (since and utc(row["observed_at"])<utc(since)):stats["records_skipped"]+=1;continue
                 stats["candidates_generated"]+=1;risk_key="SYNC-"+hashlib.sha256(f"{row['source_module']}:{row['source_record_type']}:{row['source_record_id']}".encode()).hexdigest()[:20];risk=db.query(models.GovernanceRisk).filter_by(risk_key=risk_key).first();is_new=not risk
                 if not risk:
                     likelihood,impact=DEFAULTS.get(row["severity"],(3,3));values=calculate(likelihood,impact,assessed=False);risk=models.GovernanceRisk(risk_key=risk_key,title=redact(row["title"],300),description=redact(row["evidence"],4000),origin="incident_case" if row["source_module"]=="incident_case" else "correlation_match" if row["source_record_type"]=="correlation_match" else "synchronized_candidate",category=row["category"],confidence=row["confidence"],**values);db.add(risk);db.flush();stats["risks_created"]+=1

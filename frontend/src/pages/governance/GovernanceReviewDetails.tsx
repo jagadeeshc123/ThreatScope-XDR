@@ -6,12 +6,13 @@ import { PageHeader, PageShell, SectionCard } from "../../components/ui";
 import { ReviewSnapshotPanel } from "./components/ReviewSnapshotPanel";
 export function GovernanceReviewDetails() {
   const { reviewId } = useParams(),
-    [data, setData] = useState<GovernanceReview | null>(null);
+    [data, setData] = useState<GovernanceReview | null>(null),[error,setError]=useState(false);
   const reload=()=>vulnscopeApi.getGovernanceReview(Number(reviewId)).then(setData);
   const advance=async(status:string)=>{if(status==='completed'){const conclusions=window.prompt('Required review conclusions');if(!conclusions)return;await vulnscopeApi.completeGovernanceReview(Number(reviewId),conclusions)}else await vulnscopeApi.updateGovernanceReview(Number(reviewId),{status});await reload()};
   useEffect(() => {
-    void vulnscopeApi.getGovernanceReview(Number(reviewId)).then(setData);
+    void vulnscopeApi.getGovernanceReview(Number(reviewId)).then(setData).catch(()=>setError(true));
   }, [reviewId]);
+  if(error)return <PageShell><p className="text-destructive">Governance review not found.</p></PageShell>;
   if (!data) return <PageShell>Loading governance review…</PageShell>;
   return (
     <PageShell>
