@@ -40,6 +40,11 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     phishing_suspicious_high_risk = db.query(models.PhishingAnalysis).filter(models.PhishingAnalysis.classification.in_(["suspicious", "high_risk"])).count()
     phishing_high_critical_findings = db.query(models.PhishingFinding).filter(models.PhishingFinding.severity.in_(["high", "critical"])).count()
     phishing_active_watchlist_entries = db.query(models.PhishingWatchlistEntry).filter(models.PhishingWatchlistEntry.status == "active").count()
+    active_correlation_matches = db.query(models.CorrelationMatch).filter(models.CorrelationMatch.status != "dismissed").count()
+    open_incident_cases = db.query(models.IncidentCase).filter(models.IncidentCase.status.in_(["new","triage","investigating","awaiting_review","contained_simulated"])).count()
+    p1_incident_cases = db.query(models.IncidentCase).filter(models.IncidentCase.priority == "P1").count()
+    high_critical_incident_cases = db.query(models.IncidentCase).filter(models.IncidentCase.severity.in_(["high","critical"])).count()
+    multi_module_entities = db.query(models.UnifiedEntity).filter(models.UnifiedEntity.source_module_count > 1).count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -102,6 +107,11 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         phishing_suspicious_high_risk=phishing_suspicious_high_risk,
         phishing_high_critical_findings=phishing_high_critical_findings,
         phishing_active_watchlist_entries=phishing_active_watchlist_entries,
+        active_correlation_matches=active_correlation_matches,
+        open_incident_cases=open_incident_cases,
+        p1_incident_cases=p1_incident_cases,
+        high_critical_incident_cases=high_critical_incident_cases,
+        multi_module_entities=multi_module_entities,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

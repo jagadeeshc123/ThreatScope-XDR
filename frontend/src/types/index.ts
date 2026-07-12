@@ -129,6 +129,7 @@ export interface DashboardSummary {
   phishing_suspicious_high_risk: number;
   phishing_high_critical_findings: number;
   phishing_active_watchlist_entries: number;
+  active_correlation_matches:number;open_incident_cases:number;p1_incident_cases:number;high_critical_incident_cases:number;multi_module_entities:number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -201,7 +202,18 @@ export interface SearchResults {
   phishing_indicators: Array<Pick<PhishingIndicator, 'id' | 'analysis_id' | 'indicator_type' | 'display_value_redacted'> & { snippet: string }>;
   phishing_watchlist_entries: Array<Pick<PhishingWatchlistEntry, 'id' | 'indicator_type' | 'display_value_redacted' | 'status' | 'reason'>>;
   phishing_reports: Array<Pick<PhishingReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
+  unified_entities:UnifiedEntity[];correlation_matches:CorrelationMatch[];incident_cases:IncidentCase[];incident_evidence:IncidentEvidence[];incident_reports:IncidentReport[];
 }
+export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}
+export interface EntityObservation{id:number;entity_id:number;source_module:string;source_record_type:string;source_record_id:number;source_internal_route:string|null;title_snapshot:string;evidence_snapshot:string;severity:string;confidence:string;observed_at:string}
+export interface CorrelationMatch{id:number;rule_code:string;primary_entity_id:number;title:string;explanation:string;snippet?:string;source_modules:string[];observation_ids:number[];match_score:number;severity:string;confidence:string;status:string;analyst_notes:string|null;updated_at:string}
+export interface IncidentEvidence{id:number;case_id:number;source_module:string;title_snapshot:string;evidence_snapshot:string;severity:string;confidence:string;source_internal_route:string|null}
+export interface IncidentTimelineEvent{id:number;case_id:number;event_type:string;summary:string;old_value:string|null;new_value:string|null;actor_label:string;created_at:string}
+export interface IncidentNote{id:number;case_id:number;note_text:string;author_label:string;created_at:string;updated_at:string}
+export interface IncidentActionItem{id:number;case_id:number;title:string;description:string|null;status:string;priority:string;assignee_name:string|null;due_at:string|null;created_at:string;updated_at:string}
+export interface IncidentReport{id:number;case_id:number;title:string;html_content:string;summary:Record<string,unknown>;created_at:string}
+export interface IncidentCase{id:number;case_key:string;title:string;summary:string;case_type:string;severity:string;priority:string;confidence:string;risk_score:number;status:string;source_module_count:number;evidence_count:number;primary_entity_id:number|null;assignee_name:string|null;tags:string[];resolution_summary:string|null;created_at:string;updated_at:string;closed_at:string|null;evidence?:IncidentEvidence[];timeline?:IncidentTimelineEvent[];notes?:IncidentNote[];actions?:IncidentActionItem[];reports?:IncidentReport[]}
+export interface CorrelationOverview{total_entities:number;multi_module_entities:number;high_risk_entities:number;critical_risk_entities:number;active_matches:number;new_matches:number;open_cases:number;p1_cases:number;high_critical_cases:number;cases_awaiting_review:number;resolved_cases:number;active_action_items:number;entities_by_type:Record<string,number>;observations_by_module:Record<string,number>;matches_by_rule:Record<string,number>;cases_by_status:Record<string,number>;recent_matches:CorrelationMatch[];recent_cases:IncidentCase[]}
 
 export type PhishingClassification='low_observed_risk'|'needs_review'|'suspicious'|'high_risk'|'unknown';
 export interface PhishingFinding {id:number;analysis_id:number;rule_code:string;title:string;category:string;severity:SocSeverity;confidence:SocConfidence;description:string;evidence_summary:string;technical_impact:string;possible_business_impact:string;remediation:string;manual_validation_required:boolean;fingerprint:string;created_at:string}

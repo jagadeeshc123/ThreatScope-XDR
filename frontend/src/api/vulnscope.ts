@@ -36,6 +36,7 @@ import type {
   SocAlert, SocAlertDetail, SocBlocklistEntry, SocDetectionRule, SocDetectionRunResult, SocEvent, SocLogImport, SocLogSource, SocOverview, SocPage, SocReport, SocSimulatorResult, SocThreatIntelResult,
   DocumentAnalysis, DocumentAnalysisDetail, DocumentAnalysisPage, DocumentEmbeddedArtifact, DocumentFinding, DocumentIndicator, DocumentOverview, DocumentReport,
   PhishingAnalysis, PhishingAnalysisDetail, PhishingAnalysisPage, PhishingFinding, PhishingIndicator, PhishingAttachmentMetadata, PhishingOverview, PhishingWatchlistEntry, PhishingReport, PhishingModelInfo,
+  UnifiedEntity,CorrelationMatch,IncidentCase,IncidentNote,IncidentActionItem,IncidentReport,CorrelationOverview,
 } from '../types';
 import { apiClient } from './client';
 
@@ -343,4 +344,25 @@ export const vulnscopeApi = {
   listPhishingReports:()=>data<PhishingReport[]>(apiClient.get('/phishing-defense/reports')),
   getPhishingReport:(id:number)=>data<PhishingReport>(apiClient.get(`/phishing-defense/reports/${id}`)),
   downloadPhishingReport:(id:number)=>data<Blob>(apiClient.get(`/phishing-defense/reports/${id}/download`,{responseType:'blob'})),
+  getCorrelationOverview:()=>data<CorrelationOverview>(apiClient.get('/correlation/overview')),
+  syncCorrelationEntities:(params:Record<string,string|number|undefined>={})=>data<Record<string,unknown>>(apiClient.post('/correlation/entities/sync',null,{params})).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  listUnifiedEntities:(params:Record<string,string|number|undefined>={})=>data<{items:UnifiedEntity[];total:number;page:number;page_size:number}>(apiClient.get('/correlation/entities',{params})),
+  getUnifiedEntity:(id:number)=>data<UnifiedEntity>(apiClient.get(`/correlation/entities/${id}`)),
+  runCorrelation:()=>data<Record<string,unknown>>(apiClient.post('/correlation/matches/run')).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  checkOverdueActions:()=>data<{actions_examined:number;overdue_actions_found:number;notifications_created:number;notifications_reused:number;errors:string[];checked_at:string}>(apiClient.post('/correlation/actions/check-overdue')).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  listCorrelationMatches:(params:Record<string,string|undefined>={})=>data<CorrelationMatch[]>(apiClient.get('/correlation/matches',{params})),
+  getCorrelationMatch:(id:number)=>data<CorrelationMatch>(apiClient.get(`/correlation/matches/${id}`)),
+  updateCorrelationMatch:(id:number,payload:{status?:string;analyst_notes?:string})=>data<CorrelationMatch>(apiClient.patch(`/correlation/matches/${id}`,payload)),
+  createCaseFromMatch:(id:number)=>data<IncidentCase>(apiClient.post(`/correlation/matches/${id}/create-case`)).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  listIncidentCases:(params:Record<string,string|undefined>={})=>data<IncidentCase[]>(apiClient.get('/correlation/cases',{params})),
+  getIncidentCase:(id:number)=>data<IncidentCase>(apiClient.get(`/correlation/cases/${id}`)),
+  createIncidentCase:(payload:Record<string,unknown>)=>data<IncidentCase>(apiClient.post('/correlation/cases',payload)),
+  updateIncidentCase:(id:number,payload:Record<string,unknown>)=>data<IncidentCase>(apiClient.patch(`/correlation/cases/${id}`,payload)),
+  deleteIncidentCase:(id:number)=>data<{ok:boolean}>(apiClient.delete(`/correlation/cases/${id}`)),
+  addIncidentNote:(id:number,note_text:string)=>data<IncidentNote>(apiClient.post(`/correlation/cases/${id}/notes`,{note_text,author_label:'Local analyst'})),
+  addIncidentAction:(id:number,payload:Record<string,unknown>)=>data<IncidentActionItem>(apiClient.post(`/correlation/cases/${id}/actions`,payload)),
+  createIncidentReport:(id:number)=>data<IncidentReport>(apiClient.post(`/correlation/cases/${id}/reports`)),
+  listIncidentReports:()=>data<IncidentReport[]>(apiClient.get('/correlation/reports')),
+  getIncidentReport:(id:number)=>data<IncidentReport>(apiClient.get(`/correlation/reports/${id}`)),
+  downloadIncidentReport:(id:number)=>data<Blob>(apiClient.get(`/correlation/reports/${id}/download`,{responseType:'blob'})),
 };

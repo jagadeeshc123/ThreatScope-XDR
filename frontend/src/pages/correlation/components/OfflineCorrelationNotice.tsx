@@ -1,0 +1,1 @@
+export function OfflineCorrelationNotice(){return <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100"><b>Local offline correlation only</b> — no indicators or external services are contacted, and no real containment occurs.</div>}

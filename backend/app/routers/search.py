@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[], unified_entities=[], correlation_matches=[], incident_cases=[], incident_evidence=[], incident_reports=[])
         
     query = f"%{q}%"
     
@@ -108,6 +108,11 @@ def search(q: str = "", db: Session = Depends(get_db)):
     phishing_indicators = db.query(models.PhishingIndicator).filter(or_(models.PhishingIndicator.display_value_redacted.ilike(query), models.PhishingIndicator.context.ilike(query))).limit(15).all()
     phishing_watchlist_entries = db.query(models.PhishingWatchlistEntry).filter(or_(models.PhishingWatchlistEntry.display_value_redacted.ilike(query), models.PhishingWatchlistEntry.reason.ilike(query))).limit(10).all()
     phishing_reports = db.query(models.PhishingReport).filter(models.PhishingReport.title.ilike(query)).limit(10).all()
+    unified_entities=db.query(models.UnifiedEntity).filter(or_(models.UnifiedEntity.display_value_redacted.ilike(query),models.UnifiedEntity.value_hash.ilike(query))).limit(10).all()
+    correlation_matches=db.query(models.CorrelationMatch).filter(or_(models.CorrelationMatch.title.ilike(query),models.CorrelationMatch.explanation.ilike(query),models.CorrelationMatch.rule_code.ilike(query))).limit(10).all()
+    incident_cases=db.query(models.IncidentCase).filter(or_(models.IncidentCase.title.ilike(query),models.IncidentCase.summary.ilike(query),models.IncidentCase.case_key.ilike(query))).limit(10).all()
+    incident_evidence=db.query(models.IncidentEvidence).filter(or_(models.IncidentEvidence.title_snapshot.ilike(query),models.IncidentEvidence.evidence_snapshot.ilike(query))).limit(10).all()
+    incident_reports=db.query(models.IncidentReport).filter(models.IncidentReport.title.ilike(query)).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -152,4 +157,9 @@ def search(q: str = "", db: Session = Depends(get_db)):
         phishing_indicators=[{"id": item.id, "analysis_id": item.analysis_id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "snippet": item.context[:240]} for item in phishing_indicators],
         phishing_watchlist_entries=[{"id": item.id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "status": item.status, "reason": item.reason[:240]} for item in phishing_watchlist_entries],
         phishing_reports=[{"id": item.id, "analysis_id": item.analysis_id, "title": item.title, "created_at": item.created_at} for item in phishing_reports],
+        unified_entities=[{"id":x.id,"entity_type":x.entity_type,"display_value_redacted":x.display_value_redacted,"value_hash":x.value_hash,"severity":x.severity,"risk_score":x.risk_score} for x in unified_entities],
+        correlation_matches=[{"id":x.id,"rule_code":x.rule_code,"title":x.title,"severity":x.severity,"status":x.status,"snippet":x.explanation[:240]} for x in correlation_matches],
+        incident_cases=[{"id":x.id,"case_key":x.case_key,"title":x.title,"status":x.status,"priority":x.priority,"severity":x.severity} for x in incident_cases],
+        incident_evidence=[{"id":x.id,"case_id":x.case_id,"title_snapshot":x.title_snapshot,"snippet":x.evidence_snapshot[:240]} for x in incident_evidence],
+        incident_reports=[{"id":x.id,"case_id":x.case_id,"title":x.title,"created_at":x.created_at} for x in incident_reports],
     )

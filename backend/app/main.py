@@ -61,6 +61,7 @@ from app.modules.api_security.router import router as api_security_router
 from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.document_threats.router import router as document_threats_router
 from app.modules.phishing_defense.router import router as phishing_defense_router
+from app.modules.unified_correlation.router import router as correlation_router
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"])
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(policies.router, prefix="/api/policies", tags=["Policies"])
@@ -74,3 +75,4 @@ app.include_router(api_security_router, prefix="/api/api-security", tags=["API S
 app.include_router(soc_monitor_router, prefix="/api/soc", tags=["SOC Monitor"])
 app.include_router(document_threats_router, prefix="/api/document-threats", tags=["Document Threats"])
 app.include_router(phishing_defense_router, prefix="/api/phishing-defense", tags=["Phishing Defense"])
+app.include_router(correlation_router, prefix="/api/correlation", tags=["Correlation & Cases"])

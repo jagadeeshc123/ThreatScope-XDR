@@ -1,0 +1,1 @@
+export function RiskContributionList({score,sources}:{score:number;sources:string[]}){return <ul className="list-disc pl-5 text-sm"><li>Risk score: {score}/100</li><li>Independent modules: {sources.length}</li><li>Local evidence only; analyst validation required.</li></ul>}

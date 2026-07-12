@@ -220,3 +220,8 @@ from app.modules.phishing_defense.models import (  # noqa: E402,F401
     PhishingReport,
     PhishingWatchlistEntry,
 )
+from app.modules.unified_correlation.models import (  # noqa: E402,F401
+    UnifiedEntity, EntityObservation, CorrelationRule, CorrelationMatch,
+    IncidentCase, IncidentEvidence, IncidentTimelineEvent, IncidentNote,
+    IncidentActionItem, IncidentReport,
+)

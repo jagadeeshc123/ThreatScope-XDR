@@ -1,0 +1,1 @@
+export function EntityRiskBadge({score}:{score:number}){return <span className={`rounded px-2 py-1 text-xs ${score>=60?'bg-red-500/10 text-red-300':'bg-emerald-500/10 text-emerald-300'}`}>{score}/100</span>}

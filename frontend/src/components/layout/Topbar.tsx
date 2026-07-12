@@ -95,6 +95,9 @@ export function Topbar() {
     if (notification.entity_type === 'phishing_analysis' && notification.entity_id) return `/phishing-defense/analyses/${notification.entity_id}`;
     if (notification.entity_type === 'phishing_report' && notification.entity_id) return `/phishing-defense/reports/${notification.entity_id}`;
     if (notification.entity_type === 'phishing_watchlist') return '/phishing-defense/watchlist';
+    if (notification.entity_type === 'correlation_match' && notification.entity_id) return `/correlation/matches/${notification.entity_id}`;
+    if (notification.entity_type === 'incident_case' && notification.entity_id) return `/correlation/cases/${notification.entity_id}`;
+    if (notification.entity_type === 'incident_report' && notification.entity_id) return `/correlation/reports/${notification.entity_id}`;
     return '/notifications';
   };
 

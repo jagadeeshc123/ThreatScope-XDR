@@ -185,6 +185,11 @@ class DashboardSummary(BaseModel):
     phishing_suspicious_high_risk: int = 0
     phishing_high_critical_findings: int = 0
     phishing_active_watchlist_entries: int = 0
+    active_correlation_matches: int = 0
+    open_incident_cases: int = 0
+    p1_incident_cases: int = 0
+    high_critical_incident_cases: int = 0
+    multi_module_entities: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -291,3 +296,8 @@ class SearchResults(BaseModel):
     phishing_indicators: List[dict] = []
     phishing_watchlist_entries: List[dict] = []
     phishing_reports: List[dict] = []
+    unified_entities: List[dict] = []
+    correlation_matches: List[dict] = []
+    incident_cases: List[dict] = []
+    incident_evidence: List[dict] = []
+    incident_reports: List[dict] = []

@@ -144,6 +144,7 @@ export function Dashboard() {
         <StatCard label="Phishing High Findings" value={summary.phishing_high_critical_findings} detail="High/critical static findings" icon={<AlertTriangle className="h-5 w-5" />} tone="warn" />
         <StatCard label="Phishing Watchlist" value={summary.phishing_active_watchlist_entries} detail="Application-only entries" icon={<Shield className="h-5 w-5" />} tone="default" />
       </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"><StatCard label="Active Correlations" value={summary.active_correlation_matches} detail="Local explainable matches" icon={<Network className="h-5 w-5"/>} tone="info"/><StatCard label="Open Cases" value={summary.open_incident_cases} detail="Analyst workflow" icon={<ShieldAlert className="h-5 w-5"/>} tone="warn"/><StatCard label="P1 Cases" value={summary.p1_incident_cases} detail="Highest priority" icon={<AlertTriangle className="h-5 w-5"/>} tone="danger"/><StatCard label="High / Critical Cases" value={summary.high_critical_incident_cases} detail="Evidence-based risk" icon={<Shield className="h-5 w-5"/>} tone="danger"/><StatCard label="Multi-Module Entities" value={summary.multi_module_entities} detail="Shared local indicators" icon={<Network className="h-5 w-5"/>} tone="good"/></div>
 
       <div className="grid gap-6 xl:grid-cols-5">
         <SectionCard className="xl:col-span-3" title="Scan Trend" subtitle="Risk and posture movement across recent scan records." icon={<Radar className="h-5 w-5" />}>

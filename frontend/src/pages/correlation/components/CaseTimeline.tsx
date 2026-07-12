@@ -1,0 +1,1 @@
+import type{IncidentTimelineEvent}from'../../../types';export function CaseTimeline({items=[]}:{items?:IncidentTimelineEvent[]}){return <ol className="space-y-2">{items.map(x=><li key={x.id} className="border-l border-primary pl-3"><b>{x.event_type.replaceAll('_',' ')}</b>: {x.summary}</li>)}</ol>}
