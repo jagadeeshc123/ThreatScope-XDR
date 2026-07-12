@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[])
         
     query = f"%{q}%"
     
@@ -103,6 +103,11 @@ def search(q: str = "", db: Session = Depends(get_db)):
     document_findings = db.query(models.DocumentFinding).filter(or_(models.DocumentFinding.rule_code.ilike(query), models.DocumentFinding.title.ilike(query), models.DocumentFinding.category.ilike(query), models.DocumentFinding.evidence_summary.ilike(query))).limit(15).all()
     document_indicators = db.query(models.DocumentIndicator).filter(or_(models.DocumentIndicator.display_value_redacted.ilike(query), models.DocumentIndicator.context.ilike(query))).limit(15).all()
     document_reports = db.query(models.DocumentReport).filter(models.DocumentReport.title.ilike(query)).limit(10).all()
+    phishing_analyses = db.query(models.PhishingAnalysis).filter(or_(models.PhishingAnalysis.subject_redacted.ilike(query), models.PhishingAnalysis.sender_address_redacted.ilike(query), models.PhishingAnalysis.source_hash.ilike(query), models.PhishingAnalysis.classification.ilike(query))).limit(10).all()
+    phishing_findings = db.query(models.PhishingFinding).filter(or_(models.PhishingFinding.rule_code.ilike(query), models.PhishingFinding.title.ilike(query), models.PhishingFinding.category.ilike(query), models.PhishingFinding.evidence_summary.ilike(query))).limit(15).all()
+    phishing_indicators = db.query(models.PhishingIndicator).filter(or_(models.PhishingIndicator.display_value_redacted.ilike(query), models.PhishingIndicator.context.ilike(query))).limit(15).all()
+    phishing_watchlist_entries = db.query(models.PhishingWatchlistEntry).filter(or_(models.PhishingWatchlistEntry.display_value_redacted.ilike(query), models.PhishingWatchlistEntry.reason.ilike(query))).limit(10).all()
+    phishing_reports = db.query(models.PhishingReport).filter(models.PhishingReport.title.ilike(query)).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -142,4 +147,9 @@ def search(q: str = "", db: Session = Depends(get_db)):
         document_findings=[{"id": item.id, "analysis_id": item.analysis_id, "rule_code": item.rule_code, "title": item.title, "severity": item.severity, "snippet": item.evidence_summary[:240]} for item in document_findings],
         document_indicators=[{"id": item.id, "analysis_id": item.analysis_id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "snippet": item.context[:240]} for item in document_indicators],
         document_reports=[{"id": item.id, "analysis_id": item.analysis_id, "title": item.title, "created_at": item.created_at} for item in document_reports],
+        phishing_analyses=[{"id": item.id, "subject_redacted": item.subject_redacted, "sender_address_redacted": item.sender_address_redacted, "source_hash": item.source_hash, "classification": item.classification, "final_risk_score": item.final_risk_score, "created_at": item.created_at} for item in phishing_analyses],
+        phishing_findings=[{"id": item.id, "analysis_id": item.analysis_id, "rule_code": item.rule_code, "title": item.title, "severity": item.severity, "snippet": item.evidence_summary[:240]} for item in phishing_findings],
+        phishing_indicators=[{"id": item.id, "analysis_id": item.analysis_id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "snippet": item.context[:240]} for item in phishing_indicators],
+        phishing_watchlist_entries=[{"id": item.id, "indicator_type": item.indicator_type, "display_value_redacted": item.display_value_redacted, "status": item.status, "reason": item.reason[:240]} for item in phishing_watchlist_entries],
+        phishing_reports=[{"id": item.id, "analysis_id": item.analysis_id, "title": item.title, "created_at": item.created_at} for item in phishing_reports],
     )

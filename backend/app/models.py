@@ -212,3 +212,11 @@ from app.modules.document_threats.models import (  # noqa: E402,F401
     DocumentIndicator,
     DocumentReport,
 )
+from app.modules.phishing_defense.models import (  # noqa: E402,F401
+    PhishingAnalysis,
+    PhishingAttachmentMetadata,
+    PhishingFinding,
+    PhishingIndicator,
+    PhishingReport,
+    PhishingWatchlistEntry,
+)

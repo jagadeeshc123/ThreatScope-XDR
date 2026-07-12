@@ -46,6 +46,14 @@ const DocumentAnalysisList = lazy(() => import('./pages/document-threats/Documen
 const DocumentAnalysisDetails = lazy(() => import('./pages/document-threats/DocumentAnalysisDetails').then(module => ({ default: module.DocumentAnalysisDetails })));
 const DocumentReports = lazy(() => import('./pages/document-threats/DocumentReports').then(module => ({ default: module.DocumentReports })));
 const DocumentReportDetails = lazy(() => import('./pages/document-threats/DocumentReportDetails').then(module => ({ default: module.DocumentReportDetails })));
+const PhishingOverview = lazy(() => import('./pages/phishing-defense/PhishingOverview').then(m => ({default:m.PhishingOverview})));
+const AnalyzePhishing = lazy(() => import('./pages/phishing-defense/AnalyzePhishing').then(m => ({default:m.AnalyzePhishing})));
+const PhishingAnalysisList = lazy(() => import('./pages/phishing-defense/PhishingAnalysisList').then(m => ({default:m.PhishingAnalysisList})));
+const PhishingAnalysisDetails = lazy(() => import('./pages/phishing-defense/PhishingAnalysisDetails').then(m => ({default:m.PhishingAnalysisDetails})));
+const PhishingWatchlist = lazy(() => import('./pages/phishing-defense/PhishingWatchlist').then(m => ({default:m.PhishingWatchlist})));
+const PhishingModelInfo = lazy(() => import('./pages/phishing-defense/PhishingModelInfo').then(m => ({default:m.PhishingModelInfo})));
+const PhishingReports = lazy(() => import('./pages/phishing-defense/PhishingReports').then(m => ({default:m.PhishingReports})));
+const PhishingReportDetails = lazy(() => import('./pages/phishing-defense/PhishingReportDetails').then(m => ({default:m.PhishingReportDetails})));
 
 function Layout() {
   return (
@@ -105,6 +113,14 @@ function App() {
           <Route path="/document-threats/analyses/:analysisId" element={<Suspense fallback={<LoadingRoute />}><DocumentAnalysisDetails /></Suspense>} />
           <Route path="/document-threats/reports" element={<Suspense fallback={<LoadingRoute />}><DocumentReports /></Suspense>} />
           <Route path="/document-threats/reports/:reportId" element={<Suspense fallback={<LoadingRoute />}><DocumentReportDetails /></Suspense>} />
+          <Route path="/phishing-defense" element={<Suspense fallback={<LoadingRoute />}><PhishingOverview /></Suspense>} />
+          <Route path="/phishing-defense/analyze" element={<Suspense fallback={<LoadingRoute />}><AnalyzePhishing /></Suspense>} />
+          <Route path="/phishing-defense/analyses" element={<Suspense fallback={<LoadingRoute />}><PhishingAnalysisList /></Suspense>} />
+          <Route path="/phishing-defense/analyses/:analysisId" element={<Suspense fallback={<LoadingRoute />}><PhishingAnalysisDetails /></Suspense>} />
+          <Route path="/phishing-defense/watchlist" element={<Suspense fallback={<LoadingRoute />}><PhishingWatchlist /></Suspense>} />
+          <Route path="/phishing-defense/model" element={<Suspense fallback={<LoadingRoute />}><PhishingModelInfo /></Suspense>} />
+          <Route path="/phishing-defense/reports" element={<Suspense fallback={<LoadingRoute />}><PhishingReports /></Suspense>} />
+          <Route path="/phishing-defense/reports/:reportId" element={<Suspense fallback={<LoadingRoute />}><PhishingReportDetails /></Suspense>} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />

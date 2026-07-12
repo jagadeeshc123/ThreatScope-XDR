@@ -1,0 +1,1 @@
+export function LocalWatchlistNotice(){return <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">Local application watchlist only — no real email provider, browser, firewall, DNS service, or network control is changed.</div>}

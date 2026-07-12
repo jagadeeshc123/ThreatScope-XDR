@@ -1,0 +1,1 @@
+export function PhishingRiskBadge({score}:{score:number}){const tone=score>=70?'bg-red-500/15 text-red-300':score>=45?'bg-orange-500/15 text-orange-300':score>=20?'bg-amber-500/15 text-amber-300':'bg-emerald-500/15 text-emerald-300';return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>{score}/100</span>}

@@ -138,6 +138,12 @@ export function Dashboard() {
         <StatCard label="Document High Findings" value={summary.document_high_critical_findings} detail="High/critical indicators" icon={<AlertTriangle className="h-5 w-5" />} tone="warn" />
         <StatCard label="Active-Content PDFs" value={summary.document_active_content} detail="Static feature indicators" icon={<Shield className="h-5 w-5" />} tone="warn" />
       </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Phishing Analyses" value={summary.phishing_total_analyses} detail="Offline message and URL review" icon={<FileText className="h-5 w-5" />} tone="info" />
+        <StatCard label="Phishing Review Queue" value={summary.phishing_suspicious_high_risk} detail="Suspicious / high-risk indicators" icon={<ShieldAlert className="h-5 w-5" />} tone="danger" />
+        <StatCard label="Phishing High Findings" value={summary.phishing_high_critical_findings} detail="High/critical static findings" icon={<AlertTriangle className="h-5 w-5" />} tone="warn" />
+        <StatCard label="Phishing Watchlist" value={summary.phishing_active_watchlist_entries} detail="Application-only entries" icon={<Shield className="h-5 w-5" />} tone="default" />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-5">
         <SectionCard className="xl:col-span-3" title="Scan Trend" subtitle="Risk and posture movement across recent scan records." icon={<Radar className="h-5 w-5" />}>

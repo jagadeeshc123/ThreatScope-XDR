@@ -1,0 +1,1 @@
+import type{PhishingAttachmentMetadata}from'../../../types';export function AttachmentMetadataTable({items}:{items:PhishingAttachmentMetadata[]}){return <div className="space-y-2">{items.map(x=><div key={x.id} className="rounded border border-border p-3"><b>{x.filename_sanitized}</b><p className="text-xs text-muted-foreground">{x.evidence_summary}</p></div>)}</div>}

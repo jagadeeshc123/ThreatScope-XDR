@@ -181,6 +181,10 @@ class DashboardSummary(BaseModel):
     document_suspicious_high_risk: int = 0
     document_high_critical_findings: int = 0
     document_active_content: int = 0
+    phishing_total_analyses: int = 0
+    phishing_suspicious_high_risk: int = 0
+    phishing_high_critical_findings: int = 0
+    phishing_active_watchlist_entries: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -282,3 +286,8 @@ class SearchResults(BaseModel):
     document_findings: List[dict] = []
     document_indicators: List[dict] = []
     document_reports: List[dict] = []
+    phishing_analyses: List[dict] = []
+    phishing_findings: List[dict] = []
+    phishing_indicators: List[dict] = []
+    phishing_watchlist_entries: List[dict] = []
+    phishing_reports: List[dict] = []

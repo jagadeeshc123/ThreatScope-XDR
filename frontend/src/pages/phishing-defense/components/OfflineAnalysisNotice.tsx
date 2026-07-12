@@ -1,0 +1,1 @@
+export function OfflineAnalysisNotice(){return <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100"><b>Offline analysis only</b> — submitted links, domains, attachments, and senders are never contacted.</div>}

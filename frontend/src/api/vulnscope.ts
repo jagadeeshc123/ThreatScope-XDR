@@ -35,6 +35,7 @@ import type {
   UserProfile,
   SocAlert, SocAlertDetail, SocBlocklistEntry, SocDetectionRule, SocDetectionRunResult, SocEvent, SocLogImport, SocLogSource, SocOverview, SocPage, SocReport, SocSimulatorResult, SocThreatIntelResult,
   DocumentAnalysis, DocumentAnalysisDetail, DocumentAnalysisPage, DocumentEmbeddedArtifact, DocumentFinding, DocumentIndicator, DocumentOverview, DocumentReport,
+  PhishingAnalysis, PhishingAnalysisDetail, PhishingAnalysisPage, PhishingFinding, PhishingIndicator, PhishingAttachmentMetadata, PhishingOverview, PhishingWatchlistEntry, PhishingReport, PhishingModelInfo,
 } from '../types';
 import { apiClient } from './client';
 
@@ -321,4 +322,25 @@ export const vulnscopeApi = {
   listDocumentReports: () => data<DocumentReport[]>(apiClient.get('/document-threats/reports')),
   getDocumentReport: (id:number) => data<DocumentReport>(apiClient.get(`/document-threats/reports/${id}`)),
   downloadDocumentReport: (id:number) => data<Blob>(apiClient.get(`/document-threats/reports/${id}/download`,{responseType:'blob'})),
+
+  getPhishingOverview:()=>data<PhishingOverview>(apiClient.get('/phishing-defense/overview')),
+  analyzePhishingEmail:(payload:{subject:string;sender:string;reply_to?:string;headers?:string;body_text:string;body_html?:string})=>data<PhishingAnalysis>(apiClient.post('/phishing-defense/analyses/email-text',payload)).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  analyzePhishingUrl:(url:string)=>data<PhishingAnalysis>(apiClient.post('/phishing-defense/analyses/url',{url})).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  uploadPhishingEml:(file:File)=>{const form=new FormData();form.append('file',file);return data<PhishingAnalysis>(apiClient.post('/phishing-defense/analyses/eml',form,{headers:{'Content-Type':'multipart/form-data'}})).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r})},
+  listPhishingAnalyses:(params:Record<string,string|number|undefined>={})=>data<PhishingAnalysisPage>(apiClient.get('/phishing-defense/analyses',{params})),
+  getPhishingAnalysis:(id:number)=>data<PhishingAnalysisDetail>(apiClient.get(`/phishing-defense/analyses/${id}`)),
+  updatePhishingAnalysis:(id:number,payload:Partial<Pick<PhishingAnalysis,'analyst_disposition'|'analyst_notes'>>)=>data<PhishingAnalysis>(apiClient.patch(`/phishing-defense/analyses/${id}`,payload)).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  deletePhishingAnalysis:(id:number)=>data<{ok:boolean}>(apiClient.delete(`/phishing-defense/analyses/${id}`)),
+  listPhishingFindings:(id:number)=>data<PhishingFinding[]>(apiClient.get(`/phishing-defense/analyses/${id}/findings`)),
+  listPhishingIndicators:(id:number)=>data<PhishingIndicator[]>(apiClient.get(`/phishing-defense/analyses/${id}/indicators`)),
+  listPhishingAttachments:(id:number)=>data<PhishingAttachmentMetadata[]>(apiClient.get(`/phishing-defense/analyses/${id}/attachments`)),
+  getPhishingModelInfo:()=>data<PhishingModelInfo>(apiClient.get('/phishing-defense/model-info')),
+  listPhishingWatchlist:()=>data<PhishingWatchlistEntry[]>(apiClient.get('/phishing-defense/watchlist')),
+  createPhishingWatchlist:(payload:{indicator_type:string;normalized_value:string;reason:string;source_analysis_id?:number})=>data<PhishingWatchlistEntry>(apiClient.post('/phishing-defense/watchlist',payload)).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  updatePhishingWatchlist:(id:number,payload:Partial<Pick<PhishingWatchlistEntry,'reason'|'status'|'expires_at'>>)=>data<PhishingWatchlistEntry>(apiClient.patch(`/phishing-defense/watchlist/${id}`,payload)),
+  deletePhishingWatchlist:(id:number)=>data<{ok:boolean;disclaimer:string}>(apiClient.delete(`/phishing-defense/watchlist/${id}`)),
+  createPhishingReport:(id:number)=>data<PhishingReport>(apiClient.post(`/phishing-defense/analyses/${id}/reports`)).then(r=>{dispatch(VULNSCOPE_EVENTS.notificationsUpdated);return r}),
+  listPhishingReports:()=>data<PhishingReport[]>(apiClient.get('/phishing-defense/reports')),
+  getPhishingReport:(id:number)=>data<PhishingReport>(apiClient.get(`/phishing-defense/reports/${id}`)),
+  downloadPhishingReport:(id:number)=>data<Blob>(apiClient.get(`/phishing-defense/reports/${id}/download`,{responseType:'blob'})),
 };

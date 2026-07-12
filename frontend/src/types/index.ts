@@ -125,6 +125,10 @@ export interface DashboardSummary {
   document_suspicious_high_risk: number;
   document_high_critical_findings: number;
   document_active_content: number;
+  phishing_total_analyses: number;
+  phishing_suspicious_high_risk: number;
+  phishing_high_critical_findings: number;
+  phishing_active_watchlist_entries: number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -192,7 +196,24 @@ export interface SearchResults {
   document_findings: Array<Pick<DocumentFinding, 'id' | 'analysis_id' | 'rule_code' | 'title' | 'severity'> & { snippet: string }>;
   document_indicators: Array<Pick<DocumentIndicator, 'id' | 'analysis_id' | 'indicator_type' | 'display_value_redacted'> & { snippet: string }>;
   document_reports: Array<Pick<DocumentReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
+  phishing_analyses: Array<Pick<PhishingAnalysis, 'id' | 'subject_redacted' | 'sender_address_redacted' | 'source_hash' | 'classification' | 'final_risk_score' | 'created_at'>>;
+  phishing_findings: Array<Pick<PhishingFinding, 'id' | 'analysis_id' | 'rule_code' | 'title' | 'severity'> & { snippet: string }>;
+  phishing_indicators: Array<Pick<PhishingIndicator, 'id' | 'analysis_id' | 'indicator_type' | 'display_value_redacted'> & { snippet: string }>;
+  phishing_watchlist_entries: Array<Pick<PhishingWatchlistEntry, 'id' | 'indicator_type' | 'display_value_redacted' | 'status' | 'reason'>>;
+  phishing_reports: Array<Pick<PhishingReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
 }
+
+export type PhishingClassification='low_observed_risk'|'needs_review'|'suspicious'|'high_risk'|'unknown';
+export interface PhishingFinding {id:number;analysis_id:number;rule_code:string;title:string;category:string;severity:SocSeverity;confidence:SocConfidence;description:string;evidence_summary:string;technical_impact:string;possible_business_impact:string;remediation:string;manual_validation_required:boolean;fingerprint:string;created_at:string}
+export interface PhishingIndicator {id:number;analysis_id:number;indicator_type:string;normalized_value:string;display_value_redacted:string;context:string;severity:SocSeverity;confidence:SocConfidence;source_location:string|null;created_at:string}
+export interface PhishingAttachmentMetadata {id:number;analysis_id:number;filename_sanitized:string;extension:string|null;declared_mime_type:string|null;file_size:number|null;sha256:string|null;executable_like:boolean;script_like:boolean;archive_like:boolean;macro_capable:boolean;double_extension:boolean;risk_label:string;evidence_summary:string;created_at:string}
+export interface PhishingReport {id:number;analysis_id:number|null;title:string;html_content:string;summary_json:Record<string,unknown>;created_at:string}
+export interface PhishingAnalysis {id:number;source_type:'pasted_email'|'eml_file'|'standalone_url';source_hash:string;filename_sanitized:string|null;subject_redacted:string|null;sender_display_redacted:string|null;sender_address_redacted:string|null;reply_to_redacted:string|null;return_path_redacted:string|null;recipient_count:number;url_count:number;attachment_count:number;html_present:boolean;authentication_results_present:boolean;header_summary_json:Record<string,unknown>;feature_summary_json:Record<string,unknown>;bounded_text_character_count:number;model_probability:number|null;model_label:string|null;heuristic_score:number;final_risk_score:number;classification:PhishingClassification;confidence:SocConfidence;analyst_disposition:'unreviewed'|'legitimate'|'suspicious'|'phishing'|'false_positive';analyst_notes:string|null;analysis_status:string;methodology:string;error_summary:string|null;created_at:string;completed_at:string|null;duplicate_existing:boolean}
+export interface PhishingAnalysisDetail extends PhishingAnalysis {findings:PhishingFinding[];indicators:PhishingIndicator[];attachments:PhishingAttachmentMetadata[];reports:PhishingReport[]}
+export interface PhishingAnalysisPage {items:PhishingAnalysis[];total:number;page:number;page_size:number}
+export interface PhishingWatchlistEntry {id:number;indicator_type:string;normalized_value:string;display_value_redacted:string;reason:string;source_analysis_id:number|null;status:'active'|'expired'|'removed';expires_at:string|null;created_at:string;updated_at:string}
+export interface PhishingOverview {total_analyses:number;analyses_last_24_hours:number;completed_analyses:number;failed_analyses:number;suspicious_analyses:number;high_risk_analyses:number;total_findings:number;high_critical_findings:number;analyses_with_sender_mismatch:number;analyses_with_suspicious_urls:number;analyses_with_risky_attachments:number;active_watchlist_entries:number;analyses_by_classification:Record<string,number>;findings_by_severity:Record<string,number>;top_finding_categories:Array<{category:string;count:number}>;recent_analyses:PhishingAnalysis[];recent_activities:Array<{id:number;action:string;message:string;created_at:string}>}
+export interface PhishingModelInfo {model_type:string;classifier_type:string;tfidf_configuration:string;training_dataset_size:number;class_counts:Record<string,number>;feature_count:number;model_version:string;initialization_timestamp:string;evaluation_method:string;demonstration_metrics:null;limitations:string}
 
 export type DocumentClassification = 'low_observed_risk' | 'needs_review' | 'suspicious' | 'high_risk' | 'unknown';
 export interface DocumentAnalysis { id:number; filename_sanitized:string; file_hash:string; file_size:number; mime_type:string; pdf_version:string|null; page_count:number|null; analysis_status:'pending'|'processing'|'completed'|'limited'|'failed'; is_encrypted:boolean; encryption_limited_analysis:boolean; has_javascript:boolean; has_open_action:boolean; has_additional_actions:boolean; has_launch_action:boolean; has_acroform:boolean; has_xfa:boolean; has_embedded_files:boolean; has_external_uris:boolean; external_uri_count:number; embedded_file_count:number; annotation_count:number; metadata_json_redacted:Record<string,unknown>; feature_summary_json:Record<string,unknown>; extracted_text_character_count:number; risk_score:number; classification:DocumentClassification; confidence:'low'|'medium'|'high'; methodology:string; error_summary:string|null; created_at:string; completed_at:string|null; duplicate_existing:boolean; }

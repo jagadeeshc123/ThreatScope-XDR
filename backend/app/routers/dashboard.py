@@ -36,6 +36,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     document_suspicious_high_risk = db.query(models.DocumentAnalysis).filter(models.DocumentAnalysis.classification.in_(["suspicious", "high_risk"])).count()
     document_high_critical_findings = db.query(models.DocumentFinding).filter(models.DocumentFinding.severity.in_(["high", "critical"])).count()
     document_active_content = db.query(models.DocumentAnalysis).filter(or_(models.DocumentAnalysis.has_javascript == True, models.DocumentAnalysis.has_open_action == True, models.DocumentAnalysis.has_additional_actions == True, models.DocumentAnalysis.has_launch_action == True, models.DocumentAnalysis.has_xfa == True)).count()
+    phishing_total_analyses = db.query(models.PhishingAnalysis).count()
+    phishing_suspicious_high_risk = db.query(models.PhishingAnalysis).filter(models.PhishingAnalysis.classification.in_(["suspicious", "high_risk"])).count()
+    phishing_high_critical_findings = db.query(models.PhishingFinding).filter(models.PhishingFinding.severity.in_(["high", "critical"])).count()
+    phishing_active_watchlist_entries = db.query(models.PhishingWatchlistEntry).filter(models.PhishingWatchlistEntry.status == "active").count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -94,6 +98,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         document_suspicious_high_risk=document_suspicious_high_risk,
         document_high_critical_findings=document_high_critical_findings,
         document_active_content=document_active_content,
+        phishing_total_analyses=phishing_total_analyses,
+        phishing_suspicious_high_risk=phishing_suspicious_high_risk,
+        phishing_high_critical_findings=phishing_high_critical_findings,
+        phishing_active_watchlist_entries=phishing_active_watchlist_entries,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

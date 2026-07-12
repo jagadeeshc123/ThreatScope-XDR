@@ -92,6 +92,9 @@ export function Topbar() {
     if (notification.entity_type === 'soc_blocklist') return '/soc/blocklist';
     if (notification.entity_type === 'document_analysis' && notification.entity_id) return `/document-threats/analyses/${notification.entity_id}`;
     if (notification.entity_type === 'document_report' && notification.entity_id) return `/document-threats/reports/${notification.entity_id}`;
+    if (notification.entity_type === 'phishing_analysis' && notification.entity_id) return `/phishing-defense/analyses/${notification.entity_id}`;
+    if (notification.entity_type === 'phishing_report' && notification.entity_id) return `/phishing-defense/reports/${notification.entity_id}`;
+    if (notification.entity_type === 'phishing_watchlist') return '/phishing-defense/watchlist';
     return '/notifications';
   };
 

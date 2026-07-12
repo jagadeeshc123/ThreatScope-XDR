@@ -1,0 +1,21 @@
+From: Example Support <support@example.com>
+Reply-To: review@example.net
+Return-Path: <bounce@example.org>
+To: Analyst <analyst@example.org>
+Subject: URGENT synthetic account review
+Message-ID: <demo-2@example.com>
+Authentication-Results: mx.example; spf=fail; dkim=fail; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="safe-boundary"
+
+--safe-boundary
+Content-Type: text/html; charset=utf-8
+
+<p>Verify your account immediately.</p><a href="https://192.0.2.20/login?token=FAKE_TEST_SECRET">https://example.com/login</a>
+--safe-boundary
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="invoice.pdf.exe"
+Content-Transfer-Encoding: base64
+
+aW5lcnQtdGVzdC1ieXRlcw==
+--safe-boundary--

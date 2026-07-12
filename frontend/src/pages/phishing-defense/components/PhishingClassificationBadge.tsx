@@ -1,0 +1,1 @@
+export function PhishingClassificationBadge({value}:{value:string}){return <span className="rounded-full border border-border px-2.5 py-1 text-xs font-medium capitalize">{value.replaceAll('_',' ')}</span>}
