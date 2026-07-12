@@ -98,6 +98,11 @@ export function Topbar() {
     if (notification.entity_type === 'correlation_match' && notification.entity_id) return `/correlation/matches/${notification.entity_id}`;
     if (notification.entity_type === 'incident_case' && notification.entity_id) return `/correlation/cases/${notification.entity_id}`;
     if (notification.entity_type === 'incident_report' && notification.entity_id) return `/correlation/reports/${notification.entity_id}`;
+    if (notification.entity_type === 'governance_risk' && notification.entity_id) return `/governance/risks/${notification.entity_id}`;
+    if (notification.entity_type === 'governance_mapping') return '/governance/mappings';
+    if (notification.entity_type === 'governance_exception') return '/governance/exceptions';
+    if (notification.entity_type === 'governance_review' && notification.entity_id) return `/governance/reviews/${notification.entity_id}`;
+    if (notification.entity_type === 'governance_report' && notification.entity_id) return `/governance/reports/${notification.entity_id}`;
     return '/notifications';
   };
 

@@ -190,6 +190,12 @@ class DashboardSummary(BaseModel):
     p1_incident_cases: int = 0
     high_critical_incident_cases: int = 0
     multi_module_entities: int = 0
+    governance_open_risks: int = 0
+    governance_high_critical_risks: int = 0
+    governance_risks_exceeding_appetite: int = 0
+    governance_control_gaps: int = 0
+    governance_mappings_awaiting_review: int = 0
+    governance_active_exceptions: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -301,3 +307,12 @@ class SearchResults(BaseModel):
     incident_cases: List[dict] = []
     incident_evidence: List[dict] = []
     incident_reports: List[dict] = []
+    governance_risks: List[dict] = []
+    governance_frameworks: List[dict] = []
+    governance_controls: List[dict] = []
+    governance_mappings: List[dict] = []
+    governance_treatments: List[dict] = []
+    governance_exceptions: List[dict] = []
+    governance_evidence_packages: List[dict] = []
+    governance_reviews: List[dict] = []
+    governance_reports: List[dict] = []

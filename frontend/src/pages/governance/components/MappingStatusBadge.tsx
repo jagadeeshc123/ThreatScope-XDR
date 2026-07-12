@@ -1,0 +1,1 @@
+export function MappingStatusBadge({value}:{value:string}){return <span className={`rounded-full px-2 py-1 text-xs capitalize ${value==='candidate'?'bg-amber-500/15 text-amber-200':'bg-primary/15 text-primary'}`}>{value.replaceAll('_',' ')}</span>}

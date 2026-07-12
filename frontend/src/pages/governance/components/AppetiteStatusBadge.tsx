@@ -1,0 +1,1 @@
+export function AppetiteStatusBadge({value}:{value:string}){const danger=value==='exceeds_appetite';return <span className={`rounded-full border px-2 py-1 text-xs capitalize ${danger?'border-red-400/40 text-red-200':'border-border text-muted-foreground'}`}>{value.replaceAll('_',' ')}</span>}

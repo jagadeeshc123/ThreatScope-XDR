@@ -1,0 +1,1 @@
+export function GovernanceDisclaimer(){return <div className="rounded-lg border border-blue-400/30 bg-blue-500/10 p-4 text-sm leading-6 text-blue-100"><strong>Governance scope:</strong> ThreatScope XDR provides local evidence organization and framework mapping. It does not perform certification, legal assessment, regulatory approval, or an external compliance audit.</div>}

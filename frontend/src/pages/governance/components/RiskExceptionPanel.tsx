@@ -1,0 +1,1 @@
+import type{RiskException}from'../../../types';export function RiskExceptionPanel({items=[]}:{items?:RiskException[]}){return <div className="space-y-2">{items.map(x=><div key={x.id} className="rounded border p-3"><b>{x.exception_key}</b> · {x.status}<p className="text-sm text-muted-foreground">{x.justification}</p></div>)||<p>No exceptions.</p>}</div>}

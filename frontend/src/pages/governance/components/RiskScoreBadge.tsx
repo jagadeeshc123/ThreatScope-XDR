@@ -1,0 +1,1 @@
+export function RiskScoreBadge({score,label='Residual'}:{score:number;label?:string}){const c=score>=70?'bg-red-500/20 text-red-200':score>=40?'bg-orange-500/20 text-orange-200':score>=20?'bg-amber-500/20 text-amber-100':'bg-emerald-500/20 text-emerald-200';return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${c}`}>{label}: {score}/100</span>}

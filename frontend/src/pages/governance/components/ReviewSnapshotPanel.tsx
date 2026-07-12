@@ -1,0 +1,1 @@
+export function ReviewSnapshotPanel({snapshot}:{snapshot:Record<string,unknown>|null}){return <pre className="overflow-auto whitespace-pre-wrap rounded bg-muted p-3 text-xs">{snapshot?JSON.stringify(snapshot,null,2):'Snapshot is captured when the review is explicitly completed.'}</pre>}

@@ -45,6 +45,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     p1_incident_cases = db.query(models.IncidentCase).filter(models.IncidentCase.priority == "P1").count()
     high_critical_incident_cases = db.query(models.IncidentCase).filter(models.IncidentCase.severity.in_(["high","critical"])).count()
     multi_module_entities = db.query(models.UnifiedEntity).filter(models.UnifiedEntity.source_module_count > 1).count()
+    governance_open_risks=db.query(models.GovernanceRisk).filter(models.GovernanceRisk.status!="closed").count()
+    governance_high_critical_risks=db.query(models.GovernanceRisk).filter(models.GovernanceRisk.status!="closed",models.GovernanceRisk.severity.in_(["high","critical"])).count()
+    governance_risks_exceeding_appetite=db.query(models.GovernanceRisk).filter(models.GovernanceRisk.status!="closed",models.GovernanceRisk.appetite_status=="exceeds_appetite").count()
+    governance_control_gaps=db.query(models.GovernanceControlMapping).filter_by(mapping_status="candidate").count()
+    governance_mappings_awaiting_review=db.query(models.GovernanceControlMapping).filter_by(mapping_status="candidate").count()
+    governance_active_exceptions=db.query(models.RiskException).filter_by(status="approved").count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -112,6 +118,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         p1_incident_cases=p1_incident_cases,
         high_critical_incident_cases=high_critical_incident_cases,
         multi_module_entities=multi_module_entities,
+        governance_open_risks=governance_open_risks,
+        governance_high_critical_risks=governance_high_critical_risks,
+        governance_risks_exceeding_appetite=governance_risks_exceeding_appetite,
+        governance_control_gaps=governance_control_gaps,
+        governance_mappings_awaiting_review=governance_mappings_awaiting_review,
+        governance_active_exceptions=governance_active_exceptions,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets

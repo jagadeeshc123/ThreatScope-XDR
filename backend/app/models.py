@@ -225,3 +225,9 @@ from app.modules.unified_correlation.models import (  # noqa: E402,F401
     IncidentCase, IncidentEvidence, IncidentTimelineEvent, IncidentNote,
     IncidentActionItem, IncidentReport,
 )
+from app.modules.governance.models import (  # noqa: E402,F401
+    GovernanceFramework, GovernanceControl, GovernanceRisk, GovernanceRiskSource,
+    GovernanceControlMapping, RiskTreatmentPlan, RiskException,
+    GovernanceEvidencePackage, GovernanceEvidenceItem, GovernanceReview,
+    GovernanceSnapshot, GovernanceReport,
+)

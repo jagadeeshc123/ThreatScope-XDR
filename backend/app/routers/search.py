@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=schemas.SearchResults)
 def search(q: str = "", db: Session = Depends(get_db)):
     if not q or len(q) < 2:
-        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[], unified_entities=[], correlation_matches=[], incident_cases=[], incident_evidence=[], incident_reports=[])
+        return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[], unified_entities=[], correlation_matches=[], incident_cases=[], incident_evidence=[], incident_reports=[], governance_risks=[], governance_frameworks=[], governance_controls=[], governance_mappings=[], governance_treatments=[], governance_exceptions=[], governance_evidence_packages=[], governance_reviews=[], governance_reports=[])
         
     query = f"%{q}%"
     
@@ -113,6 +113,15 @@ def search(q: str = "", db: Session = Depends(get_db)):
     incident_cases=db.query(models.IncidentCase).filter(or_(models.IncidentCase.title.ilike(query),models.IncidentCase.summary.ilike(query),models.IncidentCase.case_key.ilike(query))).limit(10).all()
     incident_evidence=db.query(models.IncidentEvidence).filter(or_(models.IncidentEvidence.title_snapshot.ilike(query),models.IncidentEvidence.evidence_snapshot.ilike(query))).limit(10).all()
     incident_reports=db.query(models.IncidentReport).filter(models.IncidentReport.title.ilike(query)).limit(10).all()
+    governance_risks=db.query(models.GovernanceRisk).filter(or_(models.GovernanceRisk.risk_key.ilike(query),models.GovernanceRisk.title.ilike(query),models.GovernanceRisk.description.ilike(query),models.GovernanceRisk.owner_name.ilike(query))).limit(15).all()
+    governance_frameworks=db.query(models.GovernanceFramework).filter(or_(models.GovernanceFramework.name.ilike(query),models.GovernanceFramework.version.ilike(query),models.GovernanceFramework.framework_key.ilike(query))).limit(10).all()
+    governance_controls=db.query(models.GovernanceControl).filter(or_(models.GovernanceControl.control_key.ilike(query),models.GovernanceControl.title.ilike(query),models.GovernanceControl.summary.ilike(query))).limit(15).all()
+    governance_mappings=db.query(models.GovernanceControlMapping).filter(or_(models.GovernanceControlMapping.rationale.ilike(query),models.GovernanceControlMapping.analyst_notes.ilike(query))).limit(10).all()
+    governance_treatments=db.query(models.RiskTreatmentPlan).filter(or_(models.RiskTreatmentPlan.title.ilike(query),models.RiskTreatmentPlan.description.ilike(query),models.RiskTreatmentPlan.owner_name.ilike(query))).limit(10).all()
+    governance_exceptions=db.query(models.RiskException).filter(or_(models.RiskException.exception_key.ilike(query),models.RiskException.justification.ilike(query),models.RiskException.approver_name.ilike(query))).limit(10).all()
+    governance_evidence_packages=db.query(models.GovernanceEvidencePackage).filter(or_(models.GovernanceEvidencePackage.package_key.ilike(query),models.GovernanceEvidencePackage.title.ilike(query),models.GovernanceEvidencePackage.description.ilike(query))).limit(10).all()
+    governance_reviews=db.query(models.GovernanceReview).filter(or_(models.GovernanceReview.review_key.ilike(query),models.GovernanceReview.title.ilike(query),models.GovernanceReview.scope_summary.ilike(query))).limit(10).all()
+    governance_reports=db.query(models.GovernanceReport).filter(models.GovernanceReport.title.ilike(query)).limit(10).all()
     
     return schemas.SearchResults(
         targets=targets,
@@ -162,4 +171,13 @@ def search(q: str = "", db: Session = Depends(get_db)):
         incident_cases=[{"id":x.id,"case_key":x.case_key,"title":x.title,"status":x.status,"priority":x.priority,"severity":x.severity} for x in incident_cases],
         incident_evidence=[{"id":x.id,"case_id":x.case_id,"title_snapshot":x.title_snapshot,"snippet":x.evidence_snapshot[:240]} for x in incident_evidence],
         incident_reports=[{"id":x.id,"case_id":x.case_id,"title":x.title,"created_at":x.created_at} for x in incident_reports],
+        governance_risks=[{"id":x.id,"risk_key":x.risk_key,"title":x.title,"status":x.status,"severity":x.severity,"snippet":x.description[:240]} for x in governance_risks],
+        governance_frameworks=[{"id":x.id,"framework_key":x.framework_key,"name":x.name,"version":x.version,"enabled":x.enabled} for x in governance_frameworks],
+        governance_controls=[{"id":x.id,"framework_id":x.framework_id,"control_key":x.control_key,"title":x.title,"snippet":x.summary[:240]} for x in governance_controls],
+        governance_mappings=[{"id":x.id,"risk_id":x.risk_id,"control_id":x.control_id,"mapping_status":x.mapping_status,"confidence":x.confidence,"snippet":x.rationale[:240]} for x in governance_mappings],
+        governance_treatments=[{"id":x.id,"risk_id":x.risk_id,"title":x.title,"status":x.status,"strategy":x.strategy} for x in governance_treatments],
+        governance_exceptions=[{"id":x.id,"risk_id":x.risk_id,"exception_key":x.exception_key,"status":x.status,"justification":x.justification[:240]} for x in governance_exceptions],
+        governance_evidence_packages=[{"id":x.id,"package_key":x.package_key,"title":x.title,"status":x.status} for x in governance_evidence_packages],
+        governance_reviews=[{"id":x.id,"review_key":x.review_key,"title":x.title,"status":x.status,"review_type":x.review_type} for x in governance_reviews],
+        governance_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at} for x in governance_reports],
     )

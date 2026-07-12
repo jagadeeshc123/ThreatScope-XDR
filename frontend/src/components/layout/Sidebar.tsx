@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network, Radar, ChevronDown, FileSearch, MailWarning, GitMerge } from 'lucide-react';
+import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network, Radar, ChevronDown, FileSearch, MailWarning, GitMerge, Scale } from 'lucide-react';
 import clsx from 'clsx';
 
 export function Sidebar() {
@@ -25,7 +25,7 @@ export function Sidebar() {
           <span className="block text-xs text-sidebar-foreground/55">Security assessment</span>
         </div>
       </div>
-      <nav className="flex-1 space-y-1.5 px-3 py-5">
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-5">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
@@ -59,6 +59,7 @@ export function Sidebar() {
           <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">{[['Overview','/phishing-defense'],['Analyze','/phishing-defense/analyze'],['Analyses','/phishing-defense/analyses'],['Watchlist','/phishing-defense/watchlist'],['Model','/phishing-defense/model'],['Reports','/phishing-defense/reports']].map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===path||path!=='/phishing-defense'&&location.pathname.startsWith(`${path}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{name}</Link>)}</div>
         </details>
         <details className="group pt-1" open={location.pathname.startsWith('/correlation')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/correlation')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><GitMerge className="h-4 w-4"/><span className="flex-1">Correlation & Cases</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/correlation'],['Entities','/correlation/entities'],['Matches','/correlation/matches'],['Cases','/correlation/cases'],['Reports','/correlation/reports']].map(([n,p])=><Link key={p} to={p} className="block rounded px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">{n}</Link>)}</div></details>
+        <details className="group pt-1" open={location.pathname.startsWith('/governance')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/governance')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><Scale className="h-4 w-4"/><span className="flex-1">Governance & Reporting</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/governance'],['Risk Register','/governance/risks'],['Frameworks','/governance/frameworks'],['Mapping Review','/governance/mappings'],['Treatments','/governance/treatments'],['Exceptions','/governance/exceptions'],['Evidence Packages','/governance/evidence'],['Governance Reviews','/governance/reviews'],['Reports','/governance/reports']].map(([n,p])=><Link key={p} to={p} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===p||p!=='/governance'&&location.pathname.startsWith(`${p}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{n}</Link>)}</div></details>
       </nav>
       <div className="border-t border-border p-3">
         <Link to="/settings" className={clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors", location.pathname === '/settings' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
