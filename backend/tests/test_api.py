@@ -172,8 +172,8 @@ class VulnScopeApiTests(unittest.TestCase):
     def test_report_generation_view_download_and_notification(self):
         _, scan_id = self.seed_completed_scan()
         settings = self.client.patch("/api/settings/", json={
-            "report_company_name": "ThreatScope Test Lab",
-            "report_footer_text": "Authorized Test Footer",
+            "report_company_name": "ThreatScope Test Lab <script>alert(1)</script>",
+            "report_footer_text": "Authorized Test Footer <img src=x onerror=alert(1)>",
         })
         self.assertEqual(settings.status_code, 200)
         generated = self.client.post(f"/api/reports/generate/{scan_id}")
@@ -181,6 +181,9 @@ class VulnScopeApiTests(unittest.TestCase):
         report = generated.json()
         self.assertIn("ThreatScope Test Lab", report["html_content"])
         self.assertIn("Authorized Test Footer", report["html_content"])
+        self.assertNotIn("<script>alert(1)</script>", report["html_content"])
+        self.assertNotIn("<img src=x onerror=alert(1)>", report["html_content"])
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", report["html_content"])
         self.assertEqual(self.client.get(f"/api/reports/{report['id']}").status_code, 200)
         download = self.client.get(f"/api/reports/{report['id']}/download")
         self.assertEqual(download.status_code, 200)

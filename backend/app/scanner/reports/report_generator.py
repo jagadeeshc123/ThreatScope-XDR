@@ -1,4 +1,4 @@
-from jinja2 import Template
+from jinja2 import Environment
 from app import models
 
 REPORT_TEMPLATE = """
@@ -335,7 +335,7 @@ REPORT_TEMPLATE = """
 """
 
 def generate_report(db, scan: models.Scan) -> str:
-    template = Template(REPORT_TEMPLATE)
+    template = Environment(autoescape=True).from_string(REPORT_TEMPLATE)
     findings = scan.findings
     settings = db.query(models.AppSettings).first()
     
