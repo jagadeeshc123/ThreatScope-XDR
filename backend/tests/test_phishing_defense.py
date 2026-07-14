@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base,get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 from app.modules.phishing_defense.model_service import info,predict
 from app.modules.phishing_defense.url_analyzer import analyze_url
 
@@ -23,7 +24,7 @@ class PhishingDefenseTests(unittest.TestCase):
   app.dependency_overrides[get_db]=override;cls.client=TestClient(app)
  @classmethod
  def tearDownClass(cls):cls.client.close();app.dependency_overrides.clear();cls.engine.dispose()
- def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);self.client.get("/api/phishing-defense/overview")
+ def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory);self.client.get("/api/phishing-defense/overview")
  def email(self,**changes):
   payload={"subject":"Scheduled review","sender":"Team <team@example.com>","body_text":"Please attend the scheduled project review.","body_html":"","headers":"Message-ID: <safe@example.com>\nAuthentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass"};payload.update(changes);return self.client.post("/api/phishing-defense/analyses/email-text",json=payload)
 

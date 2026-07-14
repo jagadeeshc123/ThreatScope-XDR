@@ -1,0 +1,1 @@
+export function AuditIntegrityStatus({ valid }: { valid: boolean }) { return <div className={`rounded-lg border p-4 ${valid ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100' : 'border-red-500/40 bg-red-500/10 text-red-100'}`}>{valid ? 'Audit chain is valid' : 'Audit chain integrity failure detected'}</div>; }

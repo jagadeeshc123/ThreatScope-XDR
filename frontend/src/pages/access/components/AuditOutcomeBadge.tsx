@@ -1,0 +1,1 @@
+export function AuditOutcomeBadge({ outcome }: { outcome: string }) { return <span className={`rounded-full px-2 py-1 text-xs ${outcome === 'success' ? 'bg-emerald-500/15 text-emerald-200' : outcome === 'denied' ? 'bg-amber-500/15 text-amber-200' : 'bg-red-500/15 text-red-200'}`}>{outcome}</span>; }

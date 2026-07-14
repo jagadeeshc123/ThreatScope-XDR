@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base,get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 from app.modules.document_threats.redaction import redact,sanitize_url
 
 def pdf_bytes(markers=(),uri=None,attachment=None,metadata=None,encrypted=False,multiple_eof=False):
@@ -44,6 +45,7 @@ class DocumentThreatTests(unittest.TestCase):
     def setUp(self):
         Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine)
         with self.factory() as db:db.add(models.AppSettings());db.add(models.UserProfile(full_name="Doc Analyst",email="doc@example.test",organization="ThreatScope",role="Analyst",avatar_initials="DA"));db.commit()
+        authenticate_admin(self.client, self.factory)
     def upload(self,data,name="sample.pdf"):
         return self.client.post("/api/document-threats/analyses",files={"file":(name,data,"application/pdf")})
 

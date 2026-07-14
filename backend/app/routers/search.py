@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app import schemas, models
 from app.database import get_db
 from app.modules.api_security.service import endpoint_to_schema, jwt_to_schema, report_to_schema
+from app.modules.access_control.role_service import effective_permissions
 
 router = APIRouter()
 
 @router.get("/", response_model=schemas.SearchResults)
-def search(q: str = "", db: Session = Depends(get_db)):
+def search(request: Request, q: str = "", db: Session = Depends(get_db)):
+    permissions = effective_permissions(db, request.state.current_user)
     if not q or len(q) < 2:
         return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[], unified_entities=[], correlation_matches=[], incident_cases=[], incident_evidence=[], incident_reports=[], governance_risks=[], governance_frameworks=[], governance_controls=[], governance_mappings=[], governance_treatments=[], governance_exceptions=[], governance_evidence_packages=[], governance_reviews=[], governance_reports=[])
         
@@ -123,6 +125,14 @@ def search(q: str = "", db: Session = Depends(get_db)):
     governance_reviews=db.query(models.GovernanceReview).filter(or_(models.GovernanceReview.review_key.ilike(query),models.GovernanceReview.title.ilike(query),models.GovernanceReview.scope_summary.ilike(query))).limit(10).all()
     governance_reports=db.query(models.GovernanceReport).filter(models.GovernanceReport.title.ilike(query)).limit(10).all()
     
+    if "web:read" not in permissions: targets = scans = findings = reports = []
+    if "api:read" not in permissions: api_assessments = api_endpoints = api_findings = jwt_analyses = api_reports = api_roles = authorization_reviews = api_business_flows = api_business_flow_risks = []
+    if "soc:read" not in permissions: soc_events = soc_alerts = soc_rules = soc_reports = soc_blocklist_entries = []
+    if "document:read" not in permissions: document_analyses = document_findings = document_indicators = document_reports = []
+    if "phishing:read" not in permissions: phishing_analyses = phishing_findings = phishing_indicators = phishing_watchlist_entries = phishing_reports = []
+    if "correlation:read" not in permissions: unified_entities = correlation_matches = []
+    if "cases:read" not in permissions: incident_cases = incident_evidence = incident_reports = []
+    if "governance:read" not in permissions: governance_risks = governance_frameworks = governance_controls = governance_mappings = governance_treatments = governance_exceptions = governance_evidence_packages = governance_reviews = governance_reports = []
     return schemas.SearchResults(
         targets=targets,
         scans=scans,

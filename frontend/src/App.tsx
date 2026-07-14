@@ -15,6 +15,22 @@ import { Profile } from './pages/Profile';
 import { Notifications } from './pages/Notifications';
 import { Settings } from './pages/Settings';
 import { Toaster } from 'sonner';
+import { AuthProvider } from './auth/AuthProvider';
+import { ProtectedRoute } from './auth/ProtectedRoute';
+import { SessionExpiryGuard } from './auth/SessionExpiryGuard';
+import { LoginPage } from './pages/access/LoginPage';
+import { MfaChallengePage } from './pages/access/MfaChallengePage';
+import { ChangePasswordPage } from './pages/access/ChangePasswordPage';
+import { ProfileSecurityPage } from './pages/access/ProfileSecurityPage';
+import { ActiveSessionsPage } from './pages/access/ActiveSessionsPage';
+import { UserManagementPage } from './pages/access/UserManagementPage';
+import { UserDetailsPage } from './pages/access/UserDetailsPage';
+import { RoleManagementPage } from './pages/access/RoleManagementPage';
+import { RoleDetailsPage } from './pages/access/RoleDetailsPage';
+import { SecurityAuditPage } from './pages/access/SecurityAuditPage';
+import { SecurityAuditDetailsPage } from './pages/access/SecurityAuditDetailsPage';
+import { AuditIntegrityPage } from './pages/access/AuditIntegrityPage';
+import { ForbiddenPage } from './pages/access/ForbiddenPage';
 
 const ApiSecurityOverview = lazy(() => import('./pages/api-security/ApiSecurityOverview').then(module => ({ default: module.ApiSecurityOverview })));
 const NewApiAssessment = lazy(() => import('./pages/api-security/NewApiAssessment').then(module => ({ default: module.NewApiAssessment })));
@@ -77,9 +93,16 @@ function LoadingRoute() {
 
 function App() {
   return (
+    <AuthProvider>
     <Router>
+      <SessionExpiryGuard>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/mfa-challenge" element={<MfaChallengePage />} />
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route element={<ProtectedRoute />}>
+        <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/targets" element={<Targets />} />
@@ -129,12 +152,24 @@ function App() {
           <Route path="/policies" element={<Policies />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/security" element={<ProfileSecurityPage />} />
+          <Route path="/profile/sessions" element={<ActiveSessionsPage />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin/users" element={<UserManagementPage />} />
+          <Route path="/admin/users/:userId" element={<UserDetailsPage />} />
+          <Route path="/admin/roles" element={<RoleManagementPage />} />
+          <Route path="/admin/roles/:roleId" element={<RoleDetailsPage />} />
+          <Route path="/security-audit" element={<SecurityAuditPage />} />
+          <Route path="/security-audit/integrity" element={<AuditIntegrityPage />} />
+          <Route path="/security-audit/:eventId" element={<SecurityAuditDetailsPage />} />
+        </Route>
         </Route>
       </Routes>
       <Toaster theme="dark" position="bottom-right" />
+      </SessionExpiryGuard>
     </Router>
+    </AuthProvider>
   );
 }
 

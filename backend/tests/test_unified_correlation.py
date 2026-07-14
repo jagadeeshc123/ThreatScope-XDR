@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base,get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 from app.modules.unified_correlation.normalization import normalize
 from app.modules.unified_correlation import service
 FIX=Path(__file__).parent/"fixtures"/"api_security"
@@ -23,7 +24,7 @@ class UnifiedCorrelationTests(unittest.TestCase):
   app.dependency_overrides[get_db]=override;cls.client=TestClient(app)
  @classmethod
  def tearDownClass(cls):cls.client.close();app.dependency_overrides.clear();cls.engine.dispose()
- def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine)
+ def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory)
  def seed(self):
   with self.factory() as db:
    db.add(models.Target(name="Safe Target",base_url="https://example.com",domain="example.com",environment="test",authorization_confirmed=True));a=models.ApiAssessment(name="Safe API",description="local",source_type="openapi",status="completed",base_url="https://example.com",endpoint_count=0);db.add(a);db.commit()
@@ -49,8 +50,8 @@ class UnifiedCorrelationTests(unittest.TestCase):
    db.commit();return e.id
  def test_corr010_real_rolling_window_boundary_disable_and_rerun(self):
   base=datetime(2026,1,1,tzinfo=timezone.utc);eid=self.make_window_entity([(base,"web_exposure"),(base+timedelta(hours=24),"api_security"),(base+timedelta(hours=24),"api_security")]);first=self.client.post("/api/correlation/matches/run").json();matches=[m for m in self.client.get("/api/correlation/matches",params={"rule_code":"CORR-010"}).json() if m["primary_entity_id"]==eid];self.assertEqual(len(matches),1);self.assertIn("24 hours",matches[0]["explanation"]);self.assertIn("2 distinct source modules",matches[0]["explanation"]);self.assertEqual(len(matches[0]["observation_ids"]),3);self.assertEqual(self.client.post("/api/correlation/matches/run").json()["matches_created"],0)
-  Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);eid=self.make_window_entity([(base,"web_exposure"),(base+timedelta(hours=24,seconds=1),"api_security")]);self.client.post("/api/correlation/matches/run");self.assertFalse(any(m["rule_code"]=="CORR-010" for m in self.client.get("/api/correlation/matches").json()))
-  Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);self.make_window_entity([(base,"web_exposure"),(base+timedelta(hours=1),"web_exposure")]);self.client.post("/api/correlation/matches/run");self.assertFalse(any(m["rule_code"]=="CORR-010" for m in self.client.get("/api/correlation/matches").json()))
+  Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory);eid=self.make_window_entity([(base,"web_exposure"),(base+timedelta(hours=24,seconds=1),"api_security")]);self.client.post("/api/correlation/matches/run");self.assertFalse(any(m["rule_code"]=="CORR-010" for m in self.client.get("/api/correlation/matches").json()))
+  Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory);self.make_window_entity([(base,"web_exposure"),(base+timedelta(hours=1),"web_exposure")]);self.client.post("/api/correlation/matches/run");self.assertFalse(any(m["rule_code"]=="CORR-010" for m in self.client.get("/api/correlation/matches").json()))
   with self.factory() as db:service.seed(db);r=db.query(models.CorrelationRule).filter_by(code="CORR-010").one();r.enabled=False;db.commit()
   self.assertEqual(self.client.post("/api/correlation/matches/run").status_code,200);self.assertFalse(any(m["rule_code"]=="CORR-010" for m in self.client.get("/api/correlation/matches").json()))
  def test_overdue_action_lifecycle_notifications(self):

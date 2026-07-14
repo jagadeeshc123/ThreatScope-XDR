@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base, get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 
 
 class VulnScopeApiTests(unittest.TestCase):
@@ -50,6 +51,7 @@ class VulnScopeApiTests(unittest.TestCase):
                 avatar_initials="SA",
             ))
             db.commit()
+        authenticate_admin(self.client, self.session_factory)
 
     def create_target(self, name="Test Target"):
         response = self.client.post("/api/targets/", json={

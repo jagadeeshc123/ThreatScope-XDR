@@ -231,3 +231,8 @@ from app.modules.governance.models import (  # noqa: E402,F401
     GovernanceEvidencePackage, GovernanceEvidenceItem, GovernanceReview,
     GovernanceSnapshot, GovernanceReport,
 )
+from app.modules.access_control.models import (  # noqa: E402,F401
+    AccessPermission, AccessRole, AuthSession, LoginAttempt, MfaDevice,
+    MfaLoginChallenge, MfaRecoveryCode, RolePermissionAssignment,
+    SecurityAuditEvent, UserAccount, UserRoleAssignment,
+)

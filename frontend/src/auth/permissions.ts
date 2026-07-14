@@ -1,0 +1,15 @@
+export const routePermissions: Array<[string, string]> = [
+  ['/admin/users', 'users:read'], ['/admin/roles', 'roles:read'], ['/security-audit', 'audit:read'],
+  ['/dashboard', 'dashboard:view'], ['/targets', 'web:read'], ['/scans/new', 'web:run_scans'], ['/scans', 'web:read'], ['/reports', 'web:read'],
+  ['/api-security/new', 'api:manage_assessments'], ['/api-security/assessments/', 'api:read'], ['/api-security', 'api:read'],
+  ['/soc/simulator', 'soc:simulate'], ['/soc/imports', 'soc:import'], ['/soc/rules', 'soc:manage_rules'], ['/soc/blocklist', 'soc:manage_watchlist'], ['/soc', 'soc:read'],
+  ['/document-threats/analyze', 'document:analyze'], ['/document-threats', 'document:read'],
+  ['/phishing-defense/analyze', 'phishing:analyze'], ['/phishing-defense/watchlist', 'phishing:read'], ['/phishing-defense', 'phishing:read'],
+  ['/correlation/cases', 'cases:read'], ['/correlation', 'correlation:read'],
+  ['/governance', 'governance:read'], ['/search', 'search:use'], ['/notifications', 'notifications:read'],
+  ['/settings', 'system:manage'], ['/profile', 'profile:manage'],
+];
+
+export function permissionForPath(path: string): string | undefined {
+  return routePermissions.find(([prefix]) => path.startsWith(prefix))?.[1];
+}

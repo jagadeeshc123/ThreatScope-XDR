@@ -1,18 +1,20 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network, Radar, ChevronDown, FileSearch, MailWarning, GitMerge, Scale } from 'lucide-react';
+import { Shield, LayoutDashboard, Target, Activity, FileText, Settings, Network, Radar, ChevronDown, FileSearch, MailWarning, GitMerge, Scale, Users, KeyRound, ScrollText, User } from 'lucide-react';
 import clsx from 'clsx';
+import { useAuth } from '../../auth/useAuth';
 
 export function Sidebar() {
   const location = useLocation();
+  const { can } = useAuth();
 
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Targets', path: '/targets', icon: Target },
-    { name: 'Scans', path: '/scans', icon: Activity },
-    { name: 'API Security', path: '/api-security', icon: Network },
-    { name: 'Reports', path: '/reports', icon: FileText },
-    { name: 'Policies', path: '/policies', icon: Shield },
-  ];
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
+    { name: 'Targets', path: '/targets', icon: Target, permission: 'web:read' },
+    { name: 'Scans', path: '/scans', icon: Activity, permission: 'web:read' },
+    { name: 'API Security', path: '/api-security', icon: Network, permission: 'api:read' },
+    { name: 'Reports', path: '/reports', icon: FileText, permission: 'web:read' },
+    { name: 'Policies', path: '/policies', icon: Shield, permission: 'web:read' },
+  ].filter(item => can(item.permission));
 
   return (
     <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
@@ -44,28 +46,31 @@ export function Sidebar() {
             </Link>
           );
         })}
-        <details className="group pt-1" open={location.pathname.startsWith('/soc')}>
+        {can('soc:read') && <details className="group pt-1" open={location.pathname.startsWith('/soc')}>
           <summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium", location.pathname.startsWith('/soc') ? "bg-sidebar-primary/12 text-sidebar-primary" : "text-sidebar-foreground/72 hover:bg-sidebar-accent/70")}><Radar className="h-4 w-4"/><span className="flex-1">SOC Monitor</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180"/></summary>
           <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">
-            {[['Overview','/soc'],['Sources','/soc/sources'],['Events','/soc/events'],['Alerts','/soc/alerts'],['Rules','/soc/rules'],['Simulator','/soc/simulator'],['Blocklist','/soc/blocklist'],['Reports','/soc/reports']].map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs", location.pathname===path||path!=='/soc'&&location.pathname.startsWith(`${path}/`) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>{name}</Link>)}
+            {[['Overview','/soc','soc:read'],['Sources','/soc/sources','soc:read'],['Events','/soc/events','soc:read'],['Alerts','/soc/alerts','soc:read'],['Rules','/soc/rules','soc:manage_rules'],['Simulator','/soc/simulator','soc:simulate'],['Blocklist','/soc/blocklist','soc:manage_watchlist'],['Reports','/soc/reports','soc:read']].filter(([, , permission])=>can(permission)).map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs", location.pathname===path||path!=='/soc'&&location.pathname.startsWith(`${path}/`) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>{name}</Link>)}
           </div>
-        </details>
-        <details className="group pt-1" open={location.pathname.startsWith('/document-threats')}>
+        </details>}
+        {can('document:read') && <details className="group pt-1" open={location.pathname.startsWith('/document-threats')}>
           <summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium", location.pathname.startsWith('/document-threats') ? "bg-sidebar-primary/12 text-sidebar-primary" : "text-sidebar-foreground/72 hover:bg-sidebar-accent/70")}><FileSearch className="h-4 w-4"/><span className="flex-1">Document Threats</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180"/></summary>
-          <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">{[['Overview','/document-threats'],['Analyze PDF','/document-threats/analyze'],['Analyses','/document-threats/analyses'],['Reports','/document-threats/reports']].map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===path||path!=='/document-threats'&&location.pathname.startsWith(`${path}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{name}</Link>)}</div>
-        </details>
-        <details className="group pt-1" open={location.pathname.startsWith('/phishing-defense')}>
+          <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">{[['Overview','/document-threats','document:read'],['Analyze PDF','/document-threats/analyze','document:analyze'],['Analyses','/document-threats/analyses','document:read'],['Reports','/document-threats/reports','document:read']].filter(([, , permission])=>can(permission)).map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===path||path!=='/document-threats'&&location.pathname.startsWith(`${path}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{name}</Link>)}</div>
+        </details>}
+        {can('phishing:read') && <details className="group pt-1" open={location.pathname.startsWith('/phishing-defense')}>
           <summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/phishing-defense')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><MailWarning className="h-4 w-4"/><span className="flex-1">Phishing Defense</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180"/></summary>
-          <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">{[['Overview','/phishing-defense'],['Analyze','/phishing-defense/analyze'],['Analyses','/phishing-defense/analyses'],['Watchlist','/phishing-defense/watchlist'],['Model','/phishing-defense/model'],['Reports','/phishing-defense/reports']].map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===path||path!=='/phishing-defense'&&location.pathname.startsWith(`${path}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{name}</Link>)}</div>
-        </details>
-        <details className="group pt-1" open={location.pathname.startsWith('/correlation')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/correlation')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><GitMerge className="h-4 w-4"/><span className="flex-1">Correlation & Cases</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/correlation'],['Entities','/correlation/entities'],['Matches','/correlation/matches'],['Cases','/correlation/cases'],['Reports','/correlation/reports']].map(([n,p])=><Link key={p} to={p} className="block rounded px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">{n}</Link>)}</div></details>
-        <details className="group pt-1" open={location.pathname.startsWith('/governance')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/governance')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><Scale className="h-4 w-4"/><span className="flex-1">Governance & Reporting</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/governance'],['Risk Register','/governance/risks'],['Frameworks','/governance/frameworks'],['Mapping Review','/governance/mappings'],['Treatments','/governance/treatments'],['Exceptions','/governance/exceptions'],['Evidence Packages','/governance/evidence'],['Governance Reviews','/governance/reviews'],['Reports','/governance/reports']].map(([n,p])=><Link key={p} to={p} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===p||p!=='/governance'&&location.pathname.startsWith(`${p}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{n}</Link>)}</div></details>
+          <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">{[['Overview','/phishing-defense','phishing:read'],['Analyze','/phishing-defense/analyze','phishing:analyze'],['Analyses','/phishing-defense/analyses','phishing:read'],['Watchlist','/phishing-defense/watchlist','phishing:read'],['Model','/phishing-defense/model','phishing:read'],['Reports','/phishing-defense/reports','phishing:read']].filter(([, , permission])=>can(permission)).map(([name,path])=><Link key={path} to={path} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===path||path!=='/phishing-defense'&&location.pathname.startsWith(`${path}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{name}</Link>)}</div>
+        </details>}
+        {(can('correlation:read') || can('cases:read')) && <details className="group pt-1" open={location.pathname.startsWith('/correlation')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/correlation')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><GitMerge className="h-4 w-4"/><span className="flex-1">Correlation & Cases</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/correlation'],['Entities','/correlation/entities'],['Matches','/correlation/matches'],['Cases','/correlation/cases'],['Reports','/correlation/reports']].filter(([,p])=>p.includes('/cases')?can('cases:read'):can('correlation:read')).map(([n,p])=><Link key={p} to={p} className="block rounded px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">{n}</Link>)}</div></details>}
+        {can('governance:read') && <details className="group pt-1" open={location.pathname.startsWith('/governance')}><summary className={clsx("flex cursor-pointer list-none items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",location.pathname.startsWith('/governance')?'bg-sidebar-primary/12 text-sidebar-primary':'text-sidebar-foreground/72 hover:bg-sidebar-accent/70')}><Scale className="h-4 w-4"/><span className="flex-1">Governance & Reporting</span><ChevronDown className="h-4 w-4 group-open:rotate-180"/></summary><div className="ml-5 mt-1 space-y-0.5 border-l pl-2">{[['Overview','/governance'],['Risk Register','/governance/risks'],['Frameworks','/governance/frameworks'],['Mapping Review','/governance/mappings'],['Treatments','/governance/treatments'],['Exceptions','/governance/exceptions'],['Evidence Packages','/governance/evidence'],['Governance Reviews','/governance/reviews'],['Reports','/governance/reports']].map(([n,p])=><Link key={p} to={p} className={clsx("block rounded px-3 py-1.5 text-xs",location.pathname===p||p!=='/governance'&&location.pathname.startsWith(`${p}/`)?'bg-primary/10 text-primary':'text-muted-foreground hover:text-foreground')}>{n}</Link>)}</div></details>}
+        {can('users:read') && <Link to="/admin/users" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-sidebar-foreground/72 hover:bg-sidebar-accent"><Users className="h-4 w-4"/>Users</Link>}
+        {can('roles:read') && <Link to="/admin/roles" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-sidebar-foreground/72 hover:bg-sidebar-accent"><KeyRound className="h-4 w-4"/>Roles</Link>}
+        {can('audit:read') && <Link to="/security-audit" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-sidebar-foreground/72 hover:bg-sidebar-accent"><ScrollText className="h-4 w-4"/>Security Audit</Link>}
       </nav>
       <div className="border-t border-border p-3">
-        <Link to="/settings" className={clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors", location.pathname === '/settings' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
-        </Link>
+        <Link to="/profile/security" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><User className="h-4 w-4"/>Security</Link>
+        {can('system:manage') && <Link to="/settings" className={clsx("flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors", location.pathname === '/settings' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+          <Settings className="h-4 w-4" /><span>Settings</span>
+        </Link>}
       </div>
     </aside>
   );

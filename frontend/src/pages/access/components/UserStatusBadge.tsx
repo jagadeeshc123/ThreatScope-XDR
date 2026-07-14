@@ -1,0 +1,1 @@
+export function UserStatusBadge({ status }: { status: string }) { return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${status === 'active' ? 'bg-emerald-500/15 text-emerald-200' : status === 'disabled' ? 'bg-red-500/15 text-red-200' : 'bg-amber-500/15 text-amber-200'}`}>{status.replaceAll('_', ' ')}</span>; }

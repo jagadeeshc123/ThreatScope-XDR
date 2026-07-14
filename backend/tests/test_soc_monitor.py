@@ -16,6 +16,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base, get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 from app.modules.soc_monitor.detection_rules import seed_default_rules
 from app.modules.soc_monitor.normalization import normalize_event, normalize_event_type, normalize_outcome, parse_timestamp
 from app.modules.soc_monitor.parsers import parse_access_log, parse_auth_log, parse_csv, parse_jsonl, parse_key_value
@@ -47,6 +48,7 @@ class SocMonitorTests(unittest.TestCase):
         Base.metadata.drop_all(bind=self.engine); Base.metadata.create_all(bind=self.engine)
         with self.session_factory() as db:
             db.add(models.AppSettings()); db.add(models.UserProfile(full_name="SOC Analyst", email="soc@example.test", organization="ThreatScope", role="Analyst", avatar_initials="SA")); db.commit(); seed_default_rules(db)
+        authenticate_admin(self.client, self.session_factory)
 
     def create_source(self, source_type="jsonl", name="Test source"):
         response = self.client.post("/api/soc/sources", json={"name": name, "description": "Local test", "source_type": source_type, "parser_type": source_type, "enabled": True})

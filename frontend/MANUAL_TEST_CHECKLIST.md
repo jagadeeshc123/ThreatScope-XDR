@@ -17,3 +17,17 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Reset settings only after accepting the confirmation and verify backend defaults return.
 - [ ] Mark one notification read, mark all read, delete one after confirmation, and verify the unread badge updates.
 - [ ] Verify loading, empty, and backend-error states by temporarily stopping the backend and revisiting each converted page.
+# Secure access-control checks
+
+- Open `/login` directly and confirm no example or default credentials are shown.
+- Confirm failed login uses a generic message, successful login returns to the intended internal route, and duplicate submission is disabled.
+- Confirm `/mfa-challenge`, `/change-password`, and `/forbidden` refresh directly without console errors.
+- Verify the sidebar changes for Administrator, Security Analyst, Auditor, and Executive Viewer.
+- Verify hidden mutation actions are also rejected with HTTP 403 when called directly.
+- Enroll TOTP using only a local authenticator, acknowledge one-time recovery codes, and confirm a used code cannot be reused.
+- Revoke an active session and confirm its next request returns HTTP 401 immediately.
+- Change a role permission and confirm affected sessions are revoked.
+- Inspect user, role, session, and security-audit tables at narrow and wide viewport sizes.
+- Use keyboard Tab navigation on login, password, MFA, permission matrix, and audit filter controls; confirm visible focus.
+- Confirm browser storage contains no session token and network mutation requests use the HttpOnly cookie plus `X-CSRF-Token`.
+- Run audit integrity verification and confirm the limitations wording is visible.

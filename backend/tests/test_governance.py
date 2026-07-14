@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base,get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 from app.modules.governance.scoring import calculate
 
 
@@ -22,7 +23,7 @@ class GovernanceTests(unittest.TestCase):
   app.dependency_overrides[get_db]=override;cls.client=TestClient(app)
  @classmethod
  def tearDownClass(cls):cls.client.close();app.dependency_overrides.clear();cls.engine.dispose()
- def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine)
+ def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory)
  def seed_sources(self):
   now=datetime.now(timezone.utc)
   with self.factory() as db:

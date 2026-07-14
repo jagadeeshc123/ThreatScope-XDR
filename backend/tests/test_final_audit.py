@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base,get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 
 
 class FinalAuditRegressionTests(unittest.TestCase):
@@ -24,7 +25,7 @@ class FinalAuditRegressionTests(unittest.TestCase):
   app.dependency_overrides[get_db]=override;cls.client=TestClient(app)
  @classmethod
  def tearDownClass(cls):cls.client.close();app.dependency_overrides.clear();cls.engine.dispose()
- def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine)
+ def setUp(self):Base.metadata.drop_all(self.engine);Base.metadata.create_all(self.engine);authenticate_admin(self.client,self.factory)
  def risk(self):
   response=self.client.post("/api/governance/risks",json={"title":"Audit risk","description":"Bounded local evidence","category":"governance","likelihood":3,"impact":4})
   self.assertEqual(response.status_code,200,response.text);return response.json()

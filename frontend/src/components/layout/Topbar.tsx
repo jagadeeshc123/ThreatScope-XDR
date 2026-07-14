@@ -3,8 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { Notification, UserProfile } from '../../types';
 import { vulnscopeApi, VULNSCOPE_EVENTS } from '../../api/vulnscope';
+import { useAuth } from '../../auth/useAuth';
 
 export function Topbar() {
+  const { user, logout } = useAuth();
   const [query, setQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -140,15 +142,16 @@ export function Topbar() {
 
         <div className="relative" ref={profileRef}>
           <button onClick={() => setShowProfile(current => !current)} className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-sm font-semibold text-primary transition-colors hover:bg-primary/25" aria-label="Profile">
-            {profile?.avatar_initials || <User className="h-4 w-4" />}
+            {user?.display_name?.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase() || <User className="h-4 w-4" />}
           </button>
           {showProfile && (
             <div className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-xl shadow-black/30">
-              <div className="border-b border-border px-4 py-3"><p className="text-sm font-medium">{profile?.full_name || 'Profile unavailable'}</p><p className="truncate text-xs text-muted-foreground">{profile?.email}</p></div>
-              <Link to="/profile" onClick={() => setShowProfile(false)} className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-muted"><User className="mr-2 h-4 w-4 text-muted-foreground" />View Profile</Link>
-              <Link to="/settings" onClick={() => setShowProfile(false)} className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-muted"><Settings className="mr-2 h-4 w-4 text-muted-foreground" />Settings</Link>
+              <div className="border-b border-border px-4 py-3"><p className="text-sm font-medium">{user?.display_name || profile?.full_name || 'Profile unavailable'}</p><p className="truncate text-xs text-muted-foreground">{user?.email || user?.username}</p></div>
+              <Link to="/profile/security" onClick={() => setShowProfile(false)} className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-muted"><User className="mr-2 h-4 w-4 text-muted-foreground" />Profile security</Link>
+              <Link to="/profile/sessions" onClick={() => setShowProfile(false)} className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-muted"><Shield className="mr-2 h-4 w-4 text-muted-foreground" />Active sessions</Link>
+              {user?.permissions.includes('system:manage') && <Link to="/settings" onClick={() => setShowProfile(false)} className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-muted"><Settings className="mr-2 h-4 w-4 text-muted-foreground" />Settings</Link>}
               <div className="my-1 border-t border-border" />
-              <button disabled className="flex w-full items-center px-4 py-2 text-left text-sm text-muted-foreground opacity-60"><LogOut className="mr-2 h-4 w-4" />Local session</button>
+              <button onClick={() => void logout().then(() => navigate('/login', { replace: true }))} className="flex w-full items-center px-4 py-2 text-left text-sm text-red-200 hover:bg-muted"><LogOut className="mr-2 h-4 w-4" />Sign out</button>
             </div>
           )}
         </div>

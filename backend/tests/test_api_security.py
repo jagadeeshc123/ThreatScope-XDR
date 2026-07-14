@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base, get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "api_security"
@@ -54,6 +55,7 @@ class ApiSecurityTests(unittest.TestCase):
                 avatar_initials="SA",
             ))
             db.commit()
+        authenticate_admin(self.client, self.session_factory)
 
     def create_assessment(self, source_type="openapi"):
         response = self.client.post("/api/api-security/assessments", json={

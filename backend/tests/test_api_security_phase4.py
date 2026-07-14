@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app import models
 from app.database import Base, get_db
 from app.main import app
+from tests.access_helpers import authenticate_admin
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "api_security"
@@ -45,6 +46,7 @@ class ApiSecurityPhase4Tests(unittest.TestCase):
             db.add(models.AppSettings())
             db.add(models.UserProfile(full_name="Analyst", email="analyst@example.test", organization="ThreatScope", role="Security Analyst", avatar_initials="SA"))
             db.commit()
+        authenticate_admin(self.client, self.session_factory)
 
     def create_imported_assessment(self, name="Phase 4 Fixture"):
         assessment = self.client.post("/api/api-security/assessments", json={"name": name, "source_type": "openapi"}).json()

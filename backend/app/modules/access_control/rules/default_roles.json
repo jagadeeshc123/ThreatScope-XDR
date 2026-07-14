@@ -1,0 +1,39 @@
+{
+  "administrator": {
+    "name": "Administrator",
+    "description": "Full local platform administration and operations.",
+    "permissions": ["*"]
+  },
+  "security_analyst": {
+    "name": "Security Analyst",
+    "description": "Operational security analysis, cases, governance, and reporting.",
+    "permissions": [
+      "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
+      "web:read", "web:manage_targets", "web:run_scans", "web:delete", "web:generate_reports",
+      "api:read", "api:manage_assessments", "api:import", "api:analyze", "api:manage_authorization", "api:manage_business_flows", "api:delete", "api:generate_reports",
+      "soc:read", "soc:import", "soc:simulate", "soc:run_detection", "soc:manage_alerts", "soc:manage_rules", "soc:manage_watchlist", "soc:delete", "soc:generate_reports",
+      "document:read", "document:analyze", "document:delete", "document:generate_reports",
+      "phishing:read", "phishing:analyze", "phishing:manage_disposition", "phishing:manage_watchlist", "phishing:delete", "phishing:generate_reports",
+      "correlation:read", "correlation:synchronize", "correlation:run", "correlation:manage_matches",
+      "cases:read", "cases:create", "cases:manage", "cases:delete", "cases:generate_reports",
+      "governance:read", "governance:synchronize", "governance:manage_risks", "governance:manage_mappings", "governance:manage_treatments", "governance:manage_exceptions", "governance:manage_evidence", "governance:manage_reviews", "governance:generate_reports"
+    ]
+  },
+  "auditor": {
+    "name": "Auditor",
+    "description": "Read-only platform and audit access with integrity verification.",
+    "permissions": [
+      "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
+      "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read",
+      "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all"
+    ]
+  },
+  "executive_viewer": {
+    "name": "Executive Viewer",
+    "description": "High-level dashboards, incident summaries, and governance reporting.",
+    "permissions": [
+      "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
+      "correlation:read", "cases:read", "governance:read", "cases:generate_reports", "governance:generate_reports"
+    ]
+  }
+}

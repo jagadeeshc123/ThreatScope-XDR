@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from app import schemas, models
 from app.database import get_db
+from app.modules.access_control.role_service import effective_permissions
 
 router = APIRouter()
 
 @router.get("/summary", response_model=schemas.DashboardSummary)
-def get_dashboard_summary(db: Session = Depends(get_db)):
+def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
+    permissions = effective_permissions(db, request.state.current_user)
     total_targets = db.query(models.Target).count()
     total_scans = db.query(models.Scan).count()
     active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
@@ -80,6 +82,23 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         if target:
             highest_risk_targets.append(target)
     
+    if "web:read" not in permissions:
+        total_targets = total_scans = active_scans = total_findings = 0
+        avg_risk = avg_posture = 0; distribution = {key: 0 for key in distribution}; recent_scans = []; highest_risk_targets = []
+    if "api:read" not in permissions:
+        api_assessment_count = api_endpoint_count = api_unauthenticated_endpoint_count = api_high_risk_endpoint_count = api_finding_count = api_high_risk_finding_count = api_owasp_observed_category_count = api_matrix_total = api_matrix_reviewed = api_unresolved_authorization_review_count = api_business_flow_count = api_high_risk_flow_indicator_count = 0; api_authorization_matrix_coverage = 0
+    if "soc:read" not in permissions:
+        soc_total_events = soc_open_alerts = soc_high_critical_alerts = soc_active_rules = soc_active_blocklist_entries = 0
+    if "document:read" not in permissions:
+        document_total_analyses = document_suspicious_high_risk = document_high_critical_findings = document_active_content = 0
+    if "phishing:read" not in permissions:
+        phishing_total_analyses = phishing_suspicious_high_risk = phishing_high_critical_findings = phishing_active_watchlist_entries = 0
+    if "correlation:read" not in permissions:
+        active_correlation_matches = multi_module_entities = 0
+    if "cases:read" not in permissions:
+        open_incident_cases = p1_incident_cases = high_critical_incident_cases = 0
+    if "governance:read" not in permissions:
+        governance_open_risks = governance_high_critical_risks = governance_risks_exceeding_appetite = governance_control_gaps = governance_mappings_awaiting_review = governance_active_exceptions = 0
     return schemas.DashboardSummary(
         total_targets=total_targets,
         total_scans=total_scans,

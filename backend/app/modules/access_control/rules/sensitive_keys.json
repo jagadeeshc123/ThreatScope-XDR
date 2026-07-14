@@ -1,0 +1,4 @@
+[
+  "password", "password_hash", "temporary_password", "secret", "token", "token_hash",
+  "csrf", "cookie", "authorization", "otp", "totp", "recovery_code", "session"
+]

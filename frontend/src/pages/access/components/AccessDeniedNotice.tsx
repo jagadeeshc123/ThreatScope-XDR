@@ -1,0 +1,2 @@
+import { ShieldAlert } from 'lucide-react';
+export function AccessDeniedNotice() { return <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-center"><ShieldAlert className="mx-auto h-10 w-10 text-amber-300"/><h1 className="mt-3 text-xl font-semibold">Access denied</h1><p className="mt-2 text-sm text-muted-foreground">Your account does not have permission to view this area.</p></div>; }
