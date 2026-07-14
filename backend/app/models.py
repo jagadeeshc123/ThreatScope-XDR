@@ -236,3 +236,7 @@ from app.modules.access_control.models import (  # noqa: E402,F401
     MfaLoginChallenge, MfaRecoveryCode, RolePermissionAssignment,
     SecurityAuditEvent, UserAccount, UserRoleAssignment,
 )
+from app.modules.platform_operations.models import (  # noqa: E402,F401
+    BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact,
+    RestoreRecord, RetentionPolicy, RetentionRun,
+)

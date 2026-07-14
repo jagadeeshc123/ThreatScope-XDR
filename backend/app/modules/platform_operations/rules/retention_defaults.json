@@ -1,0 +1,10 @@
+[
+  {"policy_key":"successful_jobs","entity_type":"operational_jobs","retention_days":90,"minimum_keep_count":50},
+  {"policy_key":"deleted_backups","entity_type":"deleted_backups","retention_days":365,"minimum_keep_count":10},
+  {"policy_key":"deleted_exports","entity_type":"deleted_exports","retention_days":180,"minimum_keep_count":10},
+  {"policy_key":"login_attempts","entity_type":"login_attempts","retention_days":90,"minimum_keep_count":100},
+  {"policy_key":"revoked_sessions","entity_type":"revoked_sessions","retention_days":30,"minimum_keep_count":20},
+  {"policy_key":"used_mfa_challenges","entity_type":"used_mfa_challenges","retention_days":7,"minimum_keep_count":20},
+  {"policy_key":"read_notifications","entity_type":"read_notifications","retention_days":90,"minimum_keep_count":20},
+  {"policy_key":"old_activity","entity_type":"old_activity","retention_days":180,"minimum_keep_count":100}
+]

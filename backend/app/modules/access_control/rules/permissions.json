@@ -62,5 +62,16 @@
   ["audit:read", "Read security audit events", "Administration"],
   ["audit:verify", "Verify audit integrity", "Administration"],
   ["system:manage", "Manage system security settings", "Administration"],
-  ["reports:read_all", "Read reports across modules", "Reports"]
+  ["reports:read_all", "Read reports across modules", "Reports"],
+  ["operations:view", "View platform operations", "Operations"],
+  ["operations:diagnostics", "View safe operational diagnostics", "Operations"],
+  ["operations:backup", "Manage local database backups", "Operations"],
+  ["operations:restore", "Validate and stage database restores", "Operations"],
+  ["operations:export", "Create safe local exports", "Operations"],
+  ["operations:import", "Validate local import packages", "Operations"],
+  ["operations:retention", "Manage retention previews and apply", "Operations"],
+  ["operations:maintenance", "Manage operational jobs", "Operations"],
+  ["operations:demo_manage", "Manage the synthetic demo environment", "Operations"],
+  ["operations:release", "Build local release candidates", "Operations"],
+  ["operations:inventory", "View and generate software inventory", "Operations"]
 ]

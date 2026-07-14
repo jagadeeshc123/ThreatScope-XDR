@@ -134,6 +134,7 @@ export interface DashboardSummary {
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
+  operations: {readiness_status:string;degraded_check_count:number;latest_backup_at:string|null;failed_job_count:number;pending_restore_count:number;demo_mode:boolean;release_version:string}|null;
 }
 
 export interface Notification {
@@ -205,6 +206,7 @@ export interface SearchResults {
   phishing_reports: Array<Pick<PhishingReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
   unified_entities:UnifiedEntity[];correlation_matches:CorrelationMatch[];incident_cases:IncidentCase[];incident_evidence:IncidentEvidence[];incident_reports:IncidentReport[];
   governance_risks:GovernanceRisk[];governance_frameworks:GovernanceFramework[];governance_controls:GovernanceControl[];governance_mappings:GovernanceControlMapping[];governance_treatments:RiskTreatmentPlan[];governance_exceptions:RiskException[];governance_evidence_packages:GovernanceEvidencePackage[];governance_reviews:GovernanceReview[];governance_reports:GovernanceReport[];
+  operations:Array<{id:number;kind:string;title:string;status:string;internal_path:string}>;
 }
 export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}
 export interface EntityObservation{id:number;entity_id:number;source_module:string;source_record_type:string;source_record_id:number;source_internal_route:string|null;title_snapshot:string;evidence_snapshot:string;severity:string;confidence:string;observed_at:string}

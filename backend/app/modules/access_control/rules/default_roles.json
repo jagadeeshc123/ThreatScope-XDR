@@ -16,7 +16,8 @@
       "phishing:read", "phishing:analyze", "phishing:manage_disposition", "phishing:manage_watchlist", "phishing:delete", "phishing:generate_reports",
       "correlation:read", "correlation:synchronize", "correlation:run", "correlation:manage_matches",
       "cases:read", "cases:create", "cases:manage", "cases:delete", "cases:generate_reports",
-      "governance:read", "governance:synchronize", "governance:manage_risks", "governance:manage_mappings", "governance:manage_treatments", "governance:manage_exceptions", "governance:manage_evidence", "governance:manage_reviews", "governance:generate_reports"
+      "governance:read", "governance:synchronize", "governance:manage_risks", "governance:manage_mappings", "governance:manage_treatments", "governance:manage_exceptions", "governance:manage_evidence", "governance:manage_reviews", "governance:generate_reports",
+      "operations:view", "operations:diagnostics", "operations:export", "operations:inventory"
     ]
   },
   "auditor": {
@@ -25,7 +26,8 @@
     "permissions": [
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
       "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read",
-      "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all"
+      "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all",
+      "operations:view", "operations:diagnostics", "operations:inventory"
     ]
   },
   "executive_viewer": {

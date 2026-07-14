@@ -1,0 +1,1 @@
+export { SoftwareInventoryPage } from './OperationsUI';

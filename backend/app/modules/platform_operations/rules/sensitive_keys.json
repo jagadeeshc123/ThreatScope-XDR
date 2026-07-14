@@ -1,0 +1,1 @@
+["password","temporary_password","session_cookie","session_token","csrf_token","mfa_secret","totp","recovery_code","authorization","jwt","encryption_key","private_key","environment_secret"]

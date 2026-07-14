@@ -1,4 +1,11 @@
 export const routePermissions: Array<[string, string]> = [
+  ['/operations/backups', 'operations:backup'], ['/operations/restores', 'operations:restore'],
+  ['/operations/exports', 'operations:export'], ['/operations/retention', 'operations:retention'],
+  ['/operations/demo', 'operations:demo_manage'], ['/operations/releases', 'operations:release'],
+  ['/operations/inventory', 'operations:inventory'], ['/operations/configuration', 'operations:diagnostics'],
+  ['/operations/jobs', 'operations:maintenance'],
+  ['/operations/diagnostics', 'operations:diagnostics'], ['/operations/health', 'operations:diagnostics'],
+  ['/operations', 'operations:view'],
   ['/admin/users', 'users:read'], ['/admin/roles', 'roles:read'], ['/security-audit', 'audit:read'],
   ['/dashboard', 'dashboard:view'], ['/targets', 'web:read'], ['/scans/new', 'web:run_scans'], ['/scans', 'web:read'], ['/reports', 'web:read'],
   ['/api-security/new', 'api:manage_assessments'], ['/api-security/assessments/', 'api:read'], ['/api-security', 'api:read'],

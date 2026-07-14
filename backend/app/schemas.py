@@ -199,6 +199,7 @@ class DashboardSummary(BaseModel):
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
+    operations: Optional[dict] = None
 
 class NotificationBase(BaseModel):
     title: str
@@ -316,3 +317,4 @@ class SearchResults(BaseModel):
     governance_evidence_packages: List[dict] = []
     governance_reviews: List[dict] = []
     governance_reports: List[dict] = []
+    operations: List[dict] = []

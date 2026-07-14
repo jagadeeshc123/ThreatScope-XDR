@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { Notification, UserProfile } from '../../types';
 import { vulnscopeApi, VULNSCOPE_EVENTS } from '../../api/vulnscope';
 import { useAuth } from '../../auth/useAuth';
+import { apiClient } from '../../api/client';
 
 export function Topbar() {
   const { user, logout } = useAuth();
@@ -13,6 +14,7 @@ export function Topbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
   const [notificationsError, setNotificationsError] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,6 +59,8 @@ export function Topbar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [fetchNotifications, fetchProfile]);
+
+  useEffect(() => { if (user?.permissions.includes('operations:view')) void apiClient.get('/operations/demo/status').then(r => setDemoMode(Boolean(r.data.demo_mode))).catch(() => setDemoMode(false)); }, [user]);
 
   useEffect(() => {
     const currentQuery = new URLSearchParams(location.search).get('q') || '';
@@ -105,6 +109,11 @@ export function Topbar() {
     if (notification.entity_type === 'governance_exception') return '/governance/exceptions';
     if (notification.entity_type === 'governance_review' && notification.entity_id) return `/governance/reviews/${notification.entity_id}`;
     if (notification.entity_type === 'governance_report' && notification.entity_id) return `/governance/reports/${notification.entity_id}`;
+    if (notification.entity_type === 'operational_backup' && notification.entity_id) return `/operations/backups/${notification.entity_id}`;
+    if (notification.entity_type === 'operational_restore' && notification.entity_id) return `/operations/restores/${notification.entity_id}`;
+    if (notification.entity_type === 'operational_export' && notification.entity_id) return `/operations/exports/${notification.entity_id}`;
+    if (notification.entity_type === 'operational_release' && notification.entity_id) return `/operations/releases/${notification.entity_id}`;
+    if (notification.entity_type === 'operational_job') return '/operations/jobs';
     return '/notifications';
   };
 
@@ -119,6 +128,7 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {demoMode && <span className="hidden rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-xs text-amber-200 sm:inline">Demo Environment</span>}
         <div className="relative" ref={notifRef}>
           <button onClick={() => setShowNotifications(current => !current)} className="relative rounded-md p-2 transition-colors hover:bg-muted" aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}>
             <Bell className="h-5 w-5 text-muted-foreground" />

@@ -10,6 +10,7 @@ from app.modules.access_control.audit_middleware import SecurityMiddleware
 from app.modules.access_control.config import get_config
 from app.modules.access_control.dependencies import authorize_platform_request, get_current_user
 from app.modules.access_control.role_service import seed_roles_and_permissions
+from app.modules.platform_operations.configuration_service import get_operations_config
 
 
 Base.metadata.create_all(bind=engine)
@@ -47,6 +48,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.on_event("startup")
 def startup_event():
+    get_operations_config(create=True)
     db = SessionLocal()
     try:
         settings = db.query(models.AppSettings).first()
@@ -63,6 +65,8 @@ def startup_event():
             ))
         db.commit()
         seed_roles_and_permissions(db)
+        from app.modules.platform_operations.retention_service import seed_policies
+        seed_policies(db)
         from app.modules.soc_monitor.detection_rules import seed_default_rules
         seed_default_rules(db)
     finally:
@@ -90,12 +94,15 @@ from app.modules.phishing_defense.router import router as phishing_defense_route
 from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.unified_correlation.router import router as correlation_router
 from app.modules.access_control.router import admin_router, audit_router, router as auth_router
+from app.modules.platform_operations.router import health_router, router as operations_router
 
 
 protected = [Depends(authorize_platform_request)]
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Access Administration"])
 app.include_router(audit_router, prefix="/api/security-audit", tags=["Security Audit"])
+app.include_router(health_router, prefix="/api/health", tags=["Health"])
+app.include_router(operations_router, prefix="/api/operations", tags=["Platform Operations"])
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"], dependencies=protected)
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"], dependencies=protected)
 app.include_router(policies.router, prefix="/api/policies", tags=["Policies"], dependencies=protected)

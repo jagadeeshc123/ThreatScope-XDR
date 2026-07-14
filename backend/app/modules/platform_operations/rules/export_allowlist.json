@@ -1,0 +1,1 @@
+{"web_exposure":"web:read","api_security":"api:read","soc_summaries":"soc:read","document_threat_summaries":"document:read","phishing_summaries":"phishing:read","correlation":"correlation:read","incident_cases":"cases:read","governance":"governance:read","reports_metadata":"reports:read_all","security_audit_metadata":"audit:read"}

@@ -124,6 +124,15 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     governance_evidence_packages=db.query(models.GovernanceEvidencePackage).filter(or_(models.GovernanceEvidencePackage.package_key.ilike(query),models.GovernanceEvidencePackage.title.ilike(query),models.GovernanceEvidencePackage.description.ilike(query))).limit(10).all()
     governance_reviews=db.query(models.GovernanceReview).filter(or_(models.GovernanceReview.review_key.ilike(query),models.GovernanceReview.title.ilike(query),models.GovernanceReview.scope_summary.ilike(query))).limit(10).all()
     governance_reports=db.query(models.GovernanceReport).filter(models.GovernanceReport.title.ilike(query)).limit(10).all()
+    operations = []
+    if "operations:view" in permissions:
+        from app.modules.platform_operations.models import BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact, RestoreRecord, RetentionPolicy, RetentionRun
+        candidates = [(OperationalJob,OperationalJob.job_key,"job","/operations/jobs/","operations:maintenance"),(BackupRecord,BackupRecord.backup_key,"backup","/operations/backups/","operations:backup"),(RestoreRecord,RestoreRecord.restore_key,"restore","/operations/restores/","operations:restore"),(ExportPackage,ExportPackage.package_key,"export","/operations/exports/","operations:export"),(RetentionPolicy,RetentionPolicy.name,"retention policy","/operations/retention","operations:retention"),(RetentionRun,RetentionRun.run_key,"retention run","/operations/retention","operations:retention"),(ReleaseArtifact,ReleaseArtifact.release_key,"release","/operations/releases/","operations:release")]
+        for model,column,kind,prefix,required_permission in candidates:
+            if required_permission not in permissions: continue
+            for item in db.query(model).filter(column.ilike(query)).limit(5).all():
+                if getattr(item,"deleted_at",None) is not None: continue
+                operations.append({"id":item.id,"kind":kind,"title":str(getattr(item,column.key))[:160],"status":str(getattr(item,"status","configured"))[:40],"internal_path":f"{prefix}{item.id}" if prefix.endswith("/") else prefix})
     
     if "web:read" not in permissions: targets = scans = findings = reports = []
     if "api:read" not in permissions: api_assessments = api_endpoints = api_findings = jwt_analyses = api_reports = api_roles = authorization_reviews = api_business_flows = api_business_flow_risks = []
@@ -190,4 +199,5 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         governance_evidence_packages=[{"id":x.id,"package_key":x.package_key,"title":x.title,"status":x.status} for x in governance_evidence_packages],
         governance_reviews=[{"id":x.id,"review_key":x.review_key,"title":x.title,"status":x.status,"review_type":x.review_type} for x in governance_reviews],
         governance_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at} for x in governance_reports],
+        operations=operations,
     )

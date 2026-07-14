@@ -16,6 +16,10 @@ ENTITY_PERMISSIONS = {
     "correlation_match": "correlation:read", "incident_case": "cases:read", "incident_report": "cases:read",
     "governance_risk": "governance:read", "governance_mapping": "governance:read", "governance_exception": "governance:read", "governance_review": "governance:read", "governance_report": "governance:read",
     "user": "users:read", "security_audit": "audit:read",
+    "operational_backup": "operations:backup", "operational_restore": "operations:restore",
+    "operational_export": "operations:export", "operational_release": "operations:release",
+    "operational_job": "operations:maintenance", "operational_retention": "operations:retention",
+    "operational_demo": "operations:demo_manage", "operational_configuration": "operations:diagnostics",
 }
 
 def _visible(db, request, item):

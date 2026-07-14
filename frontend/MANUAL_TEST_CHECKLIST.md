@@ -31,3 +31,16 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - Use keyboard Tab navigation on login, password, MFA, permission matrix, and audit filter controls; confirm visible focus.
 - Confirm browser storage contains no session token and network mutation requests use the HttpOnly cookie plus `X-CSRF-Token`.
 - Run audit integrity verification and confirm the limitations wording is visible.
+
+# Phase 11 operations checks
+
+- [ ] As Administrator, refresh every `/operations` route directly; confirm loading, empty, error, narrow-table, keyboard-focus, and responsive behavior.
+- [ ] Confirm public liveness/readiness are minimal; detailed health, diagnostics, and configuration show no environment values, absolute paths, credentials, or traces.
+- [ ] Create, verify, download, and delete a backup; confirm the sensitivity warning and authorized backend download.
+- [ ] Validate a backup for restore, inspect warnings/counts, and verify the stage button requires password, MFA when enabled, and the exact phrase.
+- [ ] Create and verify a multi-module export; confirm no authentication data or original PDF/email/log content exists.
+- [ ] Preview retention, verify exact candidates, apply with confirmation, and confirm audit events and protected/current records remain.
+- [ ] Enable demo mode, confirm both Demo Environment badges, seed twice, reset, and verify a separately created analyst record remains.
+- [ ] Generate inventory and a marked local release candidate; inspect checksum, limitations, exclusions, and dirty-state warning.
+- [ ] Confirm Analyst sees diagnostics/export/inventory only, Auditor sees health/diagnostics/inventory only, and Executive Viewer sees no Operations menu.
+- [ ] Inspect browser console and network panel for route errors, external contacts, exposed paths/secrets, direct runtime links, or mutation requests without CSRF.

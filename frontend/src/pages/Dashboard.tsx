@@ -124,6 +124,7 @@ export function Dashboard() {
         <StatCard label="Business Flows" value={summary.api_business_flow_count} detail="Configured workflows" icon={<Network className="h-5 w-5" />} tone="info" />
         <StatCard label="High-Risk Flow Indicators" value={summary.api_high_risk_flow_indicator_count} detail="Open passive indicators" icon={<AlertTriangle className="h-5 w-5" />} tone="danger" />
       </div>
+      {summary.operations && <section className="rounded-lg border border-border bg-card p-4"><div className="flex items-center justify-between gap-4"><div><h2 className="font-semibold">Operational readiness</h2><p className="text-sm text-muted-foreground">{summary.operations.readiness_status} · {summary.operations.failed_job_count} failed jobs · {summary.operations.pending_restore_count} pending restores</p></div><Link to="/operations" className="shrink-0 text-sm text-primary hover:underline">Open Operations</Link></div></section>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="SOC Events" value={summary.soc_total_events} detail="Normalized local records" icon={<Radar className="h-5 w-5" />} tone="info" />

@@ -30,6 +30,9 @@ wheels/
 *.egg
 vulnscope.db
 *.sqlite3
+runtime/
+backend/runtime/
+backend/*.db-*
 add
 # Frontend/Node
 node_modules/
