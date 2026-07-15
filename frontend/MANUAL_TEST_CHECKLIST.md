@@ -44,3 +44,15 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Generate inventory and a marked local release candidate; inspect checksum, limitations, exclusions, and dirty-state warning.
 - [ ] Confirm Analyst sees diagnostics/export/inventory only, Auditor sees health/diagnostics/inventory only, and Executive Viewer sees no Operations menu.
 - [ ] Inspect browser console and network panel for route errors, external contacts, exposed paths/secrets, direct runtime links, or mutation requests without CSRF.
+
+# Session-expiry regression checks
+
+- [ ] Clear site cookies, open `/login`, and confirm no Session expired modal appears.
+- [ ] Submit invalid credentials and confirm only the generic login error appears.
+- [ ] Log in, revoke or expire the active session, then trigger a protected request; confirm one modal appears.
+- [ ] Click Return to login and confirm the login form remains usable with no modal overlay.
+- [ ] Log in again and confirm no stale modal returns; explicitly log out and confirm no expiry modal appears.
+- [ ] Refresh `/`, `/mfa-challenge`, and `/forbidden` directly and confirm no expiry modal appears.
+- [ ] Open `/change-password` anonymously and confirm it redirects to `/login` without an expiry modal.
+- [ ] While authenticated on `/change-password`, revoke the session and trigger a protected request; confirm one modal appears and the password form is no longer usable.
+- [ ] Check the console/network panel for repeated 401 requests or refresh loops.

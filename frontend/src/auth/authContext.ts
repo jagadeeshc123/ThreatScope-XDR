@@ -19,6 +19,7 @@ export interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   sessionExpired: boolean;
+  clearExpiredSession: () => void;
   login: (username: string, password: string) => Promise<{ requires_mfa: boolean; challenge_token?: string }>;
   completeMfa: (challengeToken: string, code: string, recoveryCode: boolean) => Promise<void>;
   logout: () => Promise<void>;

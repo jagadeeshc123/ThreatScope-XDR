@@ -11,6 +11,25 @@ export const apiClient = axios.create({
   },
 });
 
+export interface UnauthorizedContext {
+  requestUrl: string;
+}
+
+type UnauthorizedHandler = (context: UnauthorizedContext) => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+export function registerUnauthorizedHandler(handler: UnauthorizedHandler | null) {
+  unauthorizedHandler = handler;
+}
+
+function isAuthenticationLifecycleRequest(requestUrl: string) {
+  const normalized = requestUrl.split('?')[0];
+  return normalized === '/auth/login'
+    || normalized === '/auth/mfa/verify-login'
+    || normalized === '/auth/logout'
+    || normalized === '/auth/csrf';
+}
+
 apiClient.interceptors.request.use(async config => {
   const method = (config.method || 'get').toUpperCase();
   const mutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
@@ -33,7 +52,8 @@ apiClient.interceptors.response.use(response => response, async error => {
   }
   if (error.response?.status === 401) {
     clearCsrfToken();
-    window.dispatchEvent(new CustomEvent('threatscope:session-expired'));
+    const requestUrl = config?.url || '';
+    if (!isAuthenticationLifecycleRequest(requestUrl)) unauthorizedHandler?.({ requestUrl });
   }
   return Promise.reject(error);
 });
