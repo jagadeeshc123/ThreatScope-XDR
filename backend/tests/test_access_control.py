@@ -159,7 +159,7 @@ class AccessControlTests(unittest.TestCase):
 
     def test_totp_challenge_recovery_code_and_secret_protection(self):
         enroll = self.client.post("/api/auth/mfa/enroll", json={"current_password": TEST_ADMIN_PASSWORD, "label": "Test authenticator"})
-        self.assertEqual(enroll.status_code, 200, enroll.text); secret = enroll.json()["secret"]
+        self.assertEqual(enroll.status_code, 200, enroll.text); secret = enroll.json()["manual_setup_key"]
         confirm = self.client.post("/api/auth/mfa/confirm", json={"device_id": enroll.json()["device_id"], "code": pyotp.TOTP(secret).now()})
         self.assertEqual(confirm.status_code, 200, confirm.text); recovery = confirm.json()["recovery_codes"][0]
         with self.factory() as db:

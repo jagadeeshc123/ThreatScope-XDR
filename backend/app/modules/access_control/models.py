@@ -143,6 +143,9 @@ class MfaDevice(Base):
     enabled = Column(Boolean, nullable=False, default=False)
     confirmed_at = Column(DateTime)
     last_used_counter = Column(Integer)
+    last_used_at = Column(DateTime)
+    enrollment_expires_at = Column(DateTime)
+    failed_attempts = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, nullable=False, default=utcnow)
     disabled_at = Column(DateTime)
 

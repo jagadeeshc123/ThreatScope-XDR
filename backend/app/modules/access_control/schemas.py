@@ -91,17 +91,19 @@ class LogoutAllRequest(BaseModel):
 class MfaEnrollRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=128)
     label: str = Field(default="Authenticator", min_length=1, max_length=100)
+    restart: bool = False
 
 
 class MfaConfirmRequest(BaseModel):
-    device_id: int
-    code: str = Field(min_length=6, max_length=12)
+    device_id: int | None = None
+    code: str = Field(pattern=r"^\d{6}$")
 
 
 class MfaDisableRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=128)
     code: str = Field(min_length=4, max_length=64)
     recovery_code: bool = False
+    confirm_disable: bool = False
 
 
 class MfaRecoveryRegenerateRequest(BaseModel):

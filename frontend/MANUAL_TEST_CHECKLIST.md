@@ -57,6 +57,28 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] While authenticated on `/change-password`, revoke the session and trigger a protected request; confirm one modal appears and the password form is no longer usable.
 - [ ] Check the console/network panel for repeated 401 requests or refresh loops.
 
+# TOTP enrollment checks
+
+- [ ] Configure a private `THREATSCOPE_MFA_ENCRYPTION_KEY`, start the app, sign in, and open Dashboard.
+- [ ] Click Begin TOTP enrollment on Dashboard; confirm the shared Set up authenticator app dialog opens and the button cannot submit twice.
+- [ ] Enter an incorrect current password; confirm only a bounded local error appears and no Session expired modal opens.
+- [ ] Start setup; confirm a locally rendered QR code, manual setup key, Copy key action, issuer, account label, six-digit input, Verify and Enable MFA, and Cancel are visible.
+- [ ] Confirm no QR request is made to an external host and neither the setup key nor `otpauth` URI is written to browser storage or the console.
+- [ ] Close or cancel a pending setup; confirm Security shows Disabled. Start again, leave it pending, and confirm Dashboard and Security show Setup incomplete with Continue, Restart, and Cancel actions.
+- [ ] Paste whitespace and non-digits into the verification input; confirm it safely normalizes to at most six digits.
+- [ ] Submit an invalid six-digit code; confirm MFA remains disabled and only a bounded local error appears.
+- [ ] Enter a valid current authenticator code; confirm recovery codes appear once with Copy all and an in-memory text download.
+- [ ] Confirm Finish setup remains disabled until I have saved my recovery codes is checked.
+- [ ] Finish setup; confirm Dashboard immediately shows MFA Enabled and Security immediately shows method, enrollment time, last-used state, and remaining recovery-code count without a page reload.
+- [ ] Log out, sign in with username or email and password, and confirm the existing MFA challenge page appears before a protected session is established.
+- [ ] Submit an invalid TOTP, then a valid current TOTP; confirm the former fails generically and the latter opens protected content with no token in browser storage.
+- [ ] Sign in using one unused recovery code, then attempt the same code again and confirm replay is rejected.
+- [ ] Regenerate recovery codes using current password and a current TOTP; acknowledge the one-time replacement list and confirm all previous codes fail.
+- [ ] Disable MFA; confirm current password, current TOTP or unused recovery code, and the explicit destructive acknowledgement are all required.
+- [ ] After disable, confirm recovery codes and pending login challenges are invalid, other active sessions are revoked, the current session remains usable, and both UI entry points show Disabled.
+- [ ] Use keyboard-only navigation through both entry points, the setup dialog, recovery-code acknowledgement, regeneration, and disable confirmation; confirm visible focus at narrow and wide viewport sizes.
+- [ ] Inspect the network, console, security audit, and activity views; confirm no password, TOTP secret, `otpauth` URI, verification code, recovery code/hash, session token, CSRF token, or encryption key is exposed.
+
 # Phase 12 local-account checks
 
 - [ ] Clear site cookies and open `/`; confirm Sign In and Create Account are visible and no protected metrics or sidebar appears.

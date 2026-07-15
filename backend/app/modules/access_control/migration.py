@@ -15,6 +15,12 @@ USER_COLUMNS = {
     "is_demo_account": "BOOLEAN NOT NULL DEFAULT 0",
 }
 
+MFA_DEVICE_COLUMNS = {
+    "last_used_at": "DATETIME",
+    "enrollment_expires_at": "DATETIME",
+    "failed_attempts": "INTEGER NOT NULL DEFAULT 0",
+}
+
 
 def ensure_local_account_schema(engine) -> None:
     inspector = inspect(engine)
@@ -25,6 +31,10 @@ def ensure_local_account_schema(engine) -> None:
         for name, definition in USER_COLUMNS.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE user_accounts ADD COLUMN {name} {definition}"))
+        mfa_columns = {column["name"] for column in inspector.get_columns("mfa_devices")} if "mfa_devices" in inspector.get_table_names() else set()
+        for name, definition in MFA_DEVICE_COLUMNS.items():
+            if mfa_columns and name not in mfa_columns:
+                connection.execute(text(f"ALTER TABLE mfa_devices ADD COLUMN {name} {definition}"))
         notification_columns = {column["name"] for column in inspector.get_columns("notifications")} if "notifications" in inspector.get_table_names() else set()
         if "recipient_user_id" not in notification_columns and notification_columns:
             connection.execute(text("ALTER TABLE notifications ADD COLUMN recipient_user_id INTEGER"))

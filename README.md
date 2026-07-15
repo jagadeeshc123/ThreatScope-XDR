@@ -29,3 +29,7 @@ python scripts/manage_accounts.py create-admin
 ```
 
 No account or password is built in. See `docs/LOCAL_ACCOUNT_SETUP.md` for registration modes, approval, and safe CLI commands.
+
+## Authenticator-app MFA
+
+TOTP enrollment uses the existing encrypted MFA store and standard six-digit, 30-second authenticator codes. Configure a private `THREATSCOPE_MFA_ENCRYPTION_KEY` as described in `.env.example` before enrollment. The frontend renders the backend-generated `otpauth` URI locally with the small `qrcode.react` dependency; setup material is never sent to an external QR service or persisted in browser storage.

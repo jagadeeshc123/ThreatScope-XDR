@@ -6,6 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.modules.soc_monitor.models import SocActivity
 
 from . import mfa_service
 from .account_service import (
@@ -30,6 +31,7 @@ from .models import (
     AccessRole,
     AuthSession,
     MfaDevice,
+    MfaLoginChallenge,
     MfaRecoveryCode,
     RolePermissionAssignment,
     SecurityAuditEvent,
@@ -105,6 +107,18 @@ def _audit(db: Session, request: Request, event_type: str, action: str, outcome:
         user_agent_summary=summarize_user_agent(request.headers.get("user-agent")),
         **kwargs,
     )
+
+
+def _record_mfa_activity(db: Session, action: str, message: str, user_id: int) -> None:
+    db.add(SocActivity(action=action, message=message, entity_type="mfa", entity_id=user_id))
+    db.commit()
+
+
+def _require_mfa_eligible(user: UserAccount) -> None:
+    if user.status != "active" or user.must_change_password:
+        raise HTTPException(status_code=403, detail="This account is not eligible for MFA setup")
+    if user.locked_until and user.locked_until > utcnow():
+        raise HTTPException(status_code=403, detail="This account is not eligible for MFA setup")
 
 
 @router.post("/login")
@@ -254,54 +268,104 @@ def delete_session(session_id: int, request: Request, response: Response, db: Se
 @router.post("/mfa/enroll")
 def enroll_mfa(payload: MfaEnrollRequest, request: Request, db: Session = Depends(get_db), auth_session: AuthSession = Depends(require_authenticated_csrf)):
     user = auth_session.user
+    _require_mfa_eligible(user)
     if not verify_password(user.password_hash, payload.current_password):
+        _audit(db, request, "totp_enrollment_failed", "mfa_enroll", "denied", actor=user, status_code=400, reason_code="current_password")
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     if user.mfa_enabled:
         raise HTTPException(status_code=409, detail="MFA is already enabled")
     try:
-        device, secret, uri = mfa_service.begin_enrollment(db, user, payload.label)
+        device, secret, uri, operation = mfa_service.begin_enrollment(db, user, payload.label, payload.restart)
     except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {"device_id": device.id, "secret": secret, "provisioning_uri": uri, "warning": "The secret is shown only until enrollment is confirmed."}
+        _audit(db, request, "totp_enrollment_failed", "mfa_enroll", "failure", actor=user, status_code=503, reason_code="configuration")
+        raise HTTPException(status_code=503, detail="MFA setup is temporarily unavailable") from exc
+    event_type = {
+        "started": "totp_enrollment_started",
+        "restarted": "totp_enrollment_restarted",
+        "resumed": "totp_enrollment_resumed",
+    }[operation]
+    _audit(db, request, event_type, "mfa_enroll", "success", actor=user, status_code=200, resource_type="mfa_device", resource_id=device.id)
+    return {
+        "device_id": device.id,
+        "manual_setup_key": secret,
+        "provisioning_uri": uri,
+        "issuer": mfa_service.TOTP_ISSUER,
+        "account_label": mfa_service.account_label(user),
+        "expires_at": device.enrollment_expires_at,
+        "operation": operation,
+        "warning": "The setup key is available only while enrollment is pending.",
+    }
+
+
+@router.get("/mfa/status")
+def get_mfa_status(db: Session = Depends(get_db), auth_session: AuthSession = Depends(get_current_session)):
+    return mfa_service.mfa_status(db, auth_session.user)
 
 
 @router.post("/mfa/confirm")
 def confirm_mfa(payload: MfaConfirmRequest, request: Request, db: Session = Depends(get_db), auth_session: AuthSession = Depends(require_authenticated_csrf)):
     user = auth_session.user
-    device = db.query(MfaDevice).filter_by(id=payload.device_id, user_id=user.id, enabled=False).first()
-    if not device or not mfa_service.verify_totp(device, payload.code):
-        raise HTTPException(status_code=422, detail="MFA confirmation code is invalid")
-    device.enabled = True
-    device.confirmed_at = utcnow()
-    user.mfa_enabled = True
-    db.commit()
-    codes = mfa_service.generate_recovery_codes(db, user.id)
+    _require_mfa_eligible(user)
+    if user.mfa_enabled:
+        raise HTTPException(status_code=409, detail="MFA setup is already complete")
+    try:
+        device, codes = mfa_service.confirm_enrollment(db, user, payload.code, payload.device_id)
+    except mfa_service.EnrollmentExpiredError as exc:
+        _audit(db, request, "totp_enrollment_failed", "mfa_confirm", "denied", actor=user, status_code=409, reason_code="expired")
+        raise HTTPException(status_code=409, detail="MFA setup has expired. Start setup again") from exc
+    except mfa_service.EnrollmentRateLimitError as exc:
+        _audit(db, request, "totp_enrollment_failed", "mfa_confirm", "denied", actor=user, status_code=429, reason_code="attempt_limit")
+        raise HTTPException(status_code=429, detail="Too many attempts. Restart MFA setup") from exc
+    except mfa_service.InvalidEnrollmentCodeError as exc:
+        _audit(db, request, "totp_enrollment_failed", "mfa_confirm", "denied", actor=user, status_code=422, reason_code="invalid_code")
+        raise HTTPException(status_code=422, detail="The six-digit verification code is invalid") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="No pending MFA setup was found") from exc
+    _record_mfa_activity(db, "mfa_enabled", "Authenticator-app MFA was enabled", user.id)
     rotate_csrf(db, auth_session)
-    _audit(db, request, "mfa_enrolled", "mfa_enroll", "success", actor=user, status_code=200, resource_type="mfa_device", resource_id=device.id)
+    _audit(db, request, "totp_enrollment_confirmed", "mfa_confirm", "success", actor=user, status_code=200, resource_type="mfa_device", resource_id=device.id)
+    _audit(db, request, "recovery_codes_generated", "mfa_recovery_generate", "success", actor=user, status_code=200, metadata={"count": len(codes)})
     return {"ok": True, "recovery_codes": codes, "warning": "Store these recovery codes now. They cannot be displayed again."}
+
+
+@router.post("/mfa/cancel")
+def cancel_mfa_enrollment(request: Request, db: Session = Depends(get_db), auth_session: AuthSession = Depends(require_authenticated_csrf)):
+    deleted = mfa_service.cancel_enrollment(db, auth_session.user_id)
+    _audit(db, request, "totp_enrollment_cancelled", "mfa_cancel", "success", actor=auth_session.user, status_code=200, metadata={"pending_setup_removed": bool(deleted)})
+    return {"ok": True, "cancelled": bool(deleted)}
 
 
 @router.post("/mfa/disable")
 def disable_mfa(payload: MfaDisableRequest, request: Request, db: Session = Depends(get_db), auth_session: AuthSession = Depends(require_authenticated_csrf)):
     user = auth_session.user
+    if not payload.confirm_disable:
+        raise HTTPException(status_code=422, detail="Explicit confirmation is required")
+    if not user.mfa_enabled:
+        raise HTTPException(status_code=409, detail="MFA is not enabled")
     if not verify_password(user.password_hash, payload.current_password) or not mfa_service.verify_user_factor(db, user, payload.code, payload.recovery_code):
         raise HTTPException(status_code=400, detail="MFA could not be disabled")
     now = utcnow()
     db.query(MfaDevice).filter_by(user_id=user.id, enabled=True).update({MfaDevice.enabled: False, MfaDevice.disabled_at: now}, synchronize_session=False)
     db.query(MfaRecoveryCode).filter_by(user_id=user.id).delete(synchronize_session=False)
+    db.query(MfaLoginChallenge).filter_by(user_id=user.id, used_at=None).delete(synchronize_session=False)
     user.mfa_enabled = False
     db.commit()
+    sessions_revoked = revoke_user_sessions(db, user.id, "mfa_disabled", except_session_id=auth_session.id)
+    _record_mfa_activity(db, "mfa_disabled", "Authenticator-app MFA was disabled", user.id)
     rotate_csrf(db, auth_session)
-    _audit(db, request, "mfa_disabled", "mfa_disable", "success", actor=user, status_code=200)
-    return {"ok": True}
+    _audit(db, request, "mfa_disabled", "mfa_disable", "success", actor=user, status_code=200, metadata={"other_sessions_revoked": sessions_revoked})
+    return {"ok": True, "other_sessions_revoked": sessions_revoked}
 
 
 @router.post("/mfa/recovery/regenerate")
 def regenerate_recovery(payload: MfaRecoveryRegenerateRequest, request: Request, db: Session = Depends(get_db), auth_session: AuthSession = Depends(require_authenticated_csrf)):
     user = auth_session.user
+    if payload.recovery_code:
+        raise HTTPException(status_code=422, detail="A current authenticator code is required")
     if not verify_password(user.password_hash, payload.current_password) or not mfa_service.verify_user_factor(db, user, payload.code, payload.recovery_code):
         raise HTTPException(status_code=400, detail="Recovery codes could not be regenerated")
     codes = mfa_service.generate_recovery_codes(db, user.id)
+    _record_mfa_activity(db, "recovery_codes_regenerated", "MFA recovery codes were regenerated", user.id)
     _audit(db, request, "recovery_codes_regenerated", "mfa_recovery_regenerate", "success", actor=user, status_code=200)
     return {"recovery_codes": codes, "warning": "Previous recovery codes are now invalid. Store these codes now."}
 
