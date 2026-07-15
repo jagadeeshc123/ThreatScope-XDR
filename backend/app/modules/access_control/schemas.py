@@ -1,12 +1,35 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 
 class LoginRequest(BaseModel):
-    username: str = Field(min_length=1, max_length=64)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    identifier: str = Field(min_length=1, max_length=254, validation_alias=AliasChoices("identifier", "username"))
     password: str = Field(min_length=1, max_length=128)
+
+
+class RegistrationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(min_length=3, max_length=254)
+    username: str | None = Field(default=None, min_length=3, max_length=64)
+    display_name: str = Field(min_length=2, max_length=120)
+    password: str = Field(min_length=12, max_length=128)
+    password_confirmation: str = Field(min_length=12, max_length=128)
+    terms_accepted: bool
+    privacy_notice_version: str = Field(min_length=1, max_length=64)
+
+
+class RegistrationApprovalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    role_keys: list[str] = Field(default_factory=lambda: ["registered_user"], min_length=1, max_length=20)
+    confirm_administrator: bool = False
+
+
+class RegistrationRejectionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=3, max_length=500)
 
 
 class MfaLoginRequest(BaseModel):
@@ -98,4 +121,3 @@ class AuditFilter(BaseModel):
     q: str | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None
-

@@ -9,3 +9,6 @@
 - Audit chaining provides local tamper evidence, not external notarization against a privileged full-database rewrite.
 - Demo seeding currently provides a deterministic base scenario and does not auto-create demo users.
 - Native PDF generation, cloud backup, external monitoring, telemetry, deployment, and automatic update are absent.
+- Local email ownership is not verified and no verification or password-reset email is sent.
+- Account recovery requires a local administrator using `scripts/manage_accounts.py`.
+- Local authentication does not connect to Google, Gmail, or another external identity provider.

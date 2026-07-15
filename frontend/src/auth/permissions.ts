@@ -6,7 +6,7 @@ export const routePermissions: Array<[string, string]> = [
   ['/operations/jobs', 'operations:maintenance'],
   ['/operations/diagnostics', 'operations:diagnostics'], ['/operations/health', 'operations:diagnostics'],
   ['/operations', 'operations:view'],
-  ['/admin/users', 'users:read'], ['/admin/roles', 'roles:read'], ['/security-audit', 'audit:read'],
+  ['/admin/registrations', 'users:manage'], ['/admin/users', 'users:read'], ['/admin/roles', 'roles:read'], ['/security-audit', 'audit:read'],
   ['/dashboard', 'dashboard:view'], ['/targets', 'web:read'], ['/scans/new', 'web:run_scans'], ['/scans', 'web:read'], ['/reports', 'web:read'],
   ['/api-security/new', 'api:manage_assessments'], ['/api-security/assessments/', 'api:read'], ['/api-security', 'api:read'],
   ['/soc/simulator', 'soc:simulate'], ['/soc/imports', 'soc:import'], ['/soc/rules', 'soc:manage_rules'], ['/soc/blocklist', 'soc:manage_watchlist'], ['/soc', 'soc:read'],

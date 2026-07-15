@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { apiClient, registerUnauthorizedHandler } from '../api/client';
 import { clearCsrfToken, refreshCsrfToken } from './csrf';
 import { AuthContext, type AuthUser } from './authContext';
+import type { LoginResult } from '../api/access';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -43,11 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => registerUnauthorizedHandler(null);
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     hasEstablishedSession.current = false;
     setSessionExpired(false);
     sessionExpiryTriggered.current = false;
-    const response = await apiClient.post<{ requires_mfa: boolean; challenge_token?: string; user?: AuthUser }>('/auth/login', { username, password });
+    const response = await apiClient.post<LoginResult>('/auth/login', { identifier, password });
     if (response.data.user) {
       hasEstablishedSession.current = true;
       setUser(response.data.user);

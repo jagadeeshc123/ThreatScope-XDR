@@ -27,7 +27,7 @@ class PasswordPolicyError(ValueError):
     pass
 
 
-def validate_password(password: str, username: str) -> None:
+def validate_password(password: str, username: str, prohibited_terms: tuple[str, ...] = ()) -> None:
     if not isinstance(password, str):
         raise PasswordPolicyError("Password is required")
     if len(password) < _POLICY["minimum_length"]:
@@ -40,12 +40,16 @@ def validate_password(password: str, username: str) -> None:
     normalized_password = password.casefold()
     if normalized_username and normalized_username in normalized_password:
         raise PasswordPolicyError("Password must not contain the username")
+    for term in prohibited_terms:
+        normalized_term = term.strip().casefold()
+        if len(normalized_term) >= 3 and normalized_term in normalized_password:
+            raise PasswordPolicyError("Password must not contain the email identifier")
     if normalized_password in _COMMON:
         raise PasswordPolicyError("Password is too commonly used")
 
 
-def hash_password(password: str, username: str) -> str:
-    validate_password(password, username)
+def hash_password(password: str, username: str, prohibited_terms: tuple[str, ...] = ()) -> str:
+    validate_password(password, username, prohibited_terms)
     return _HASHER.hash(password)
 
 
@@ -62,4 +66,3 @@ def needs_rehash(password_hash: str) -> bool:
         return _HASHER.check_needs_rehash(password_hash)
     except InvalidHashError:
         return True
-

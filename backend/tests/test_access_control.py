@@ -72,7 +72,7 @@ class AccessControlTests(unittest.TestCase):
             counts = (db.query(AccessPermission).count(), db.query(AccessRole).count(), db.query(RolePermissionAssignment).count())
             seed_roles_and_permissions(db)
             self.assertEqual(counts, (db.query(AccessPermission).count(), db.query(AccessRole).count(), db.query(RolePermissionAssignment).count()))
-            self.assertEqual({r.role_key for r in db.query(AccessRole).filter_by(system_role=True)}, {"administrator", "security_analyst", "auditor", "executive_viewer"})
+            self.assertEqual({r.role_key for r in db.query(AccessRole).filter_by(system_role=True)}, {"administrator", "registered_user", "security_analyst", "auditor", "executive_viewer"})
             admin = db.query(AccessRole).filter_by(role_key="administrator").one()
             self.assertEqual(len(admin.permissions), db.query(AccessPermission).count())
 

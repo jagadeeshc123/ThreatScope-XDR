@@ -1,0 +1,2 @@
+import clsx from 'clsx';
+export function RegistrationStatusBadge({status}:{status:string}){return <span className={clsx('rounded-full px-2.5 py-1 text-xs font-semibold',status==='active'?'bg-emerald-500/15 text-emerald-300':status==='pending_approval'?'bg-amber-500/15 text-amber-200':status==='rejected'||status==='disabled'?'bg-red-500/15 text-red-200':'bg-muted text-muted-foreground')}>{status.replaceAll('_',' ')}</span>}

@@ -141,6 +141,7 @@ class Notification(Base):
     type = Column(String) # info, success, warning, danger
     entity_type = Column(String) # target, scan, finding, report, system
     entity_id = Column(Integer, nullable=True)
+    recipient_user_id = Column(Integer, ForeignKey("user_accounts.id", ondelete="CASCADE"), nullable=True, index=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
 

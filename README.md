@@ -16,3 +16,16 @@ uvicorn app.main:app --reload
 In another terminal run `cd frontend`, `npm ci`, and `npm run dev`. Docker users may configure `.env` from `.env.example` and run `docker compose up --build -d`.
 
 This is a locally verified release candidate, not a production certification or compliance claim.
+
+## Local accounts and owner setup
+
+ThreatScope XDR supports local registration and sign-in with either a username or an email address. Gmail and non-Gmail addresses are ordinary identifiers; users create a separate ThreatScope password, and the platform does not connect to a mailbox or request email-account credentials.
+
+Create an owner administrator even when test accounts already exist:
+
+```powershell
+cd backend
+python scripts/manage_accounts.py create-admin
+```
+
+No account or password is built in. See `docs/LOCAL_ACCOUNT_SETUP.md` for registration modes, approval, and safe CLI commands.

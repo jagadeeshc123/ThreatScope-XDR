@@ -1,0 +1,1 @@
+export function RegistrationSourceBadge({source}:{source:string}){return <span className="rounded border border-border bg-background px-2 py-1 text-xs capitalize text-muted-foreground">{source.replaceAll('_',' ')}</span>}

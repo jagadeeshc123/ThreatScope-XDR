@@ -20,7 +20,7 @@ export interface AuthContextValue {
   loading: boolean;
   sessionExpired: boolean;
   clearExpiredSession: () => void;
-  login: (username: string, password: string) => Promise<{ requires_mfa: boolean; challenge_token?: string }>;
+  login: (identifier: string, password: string) => Promise<import('../api/access').LoginResult>;
   completeMfa: (challengeToken: string, code: string, recoveryCode: boolean) => Promise<void>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;

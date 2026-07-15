@@ -10,10 +10,12 @@ from app.modules.access_control.audit_middleware import SecurityMiddleware
 from app.modules.access_control.config import get_config
 from app.modules.access_control.dependencies import authorize_platform_request, get_current_user
 from app.modules.access_control.role_service import seed_roles_and_permissions
+from app.modules.access_control.migration import ensure_local_account_schema
 from app.modules.platform_operations.configuration_service import get_operations_config
 
 
 Base.metadata.create_all(bind=engine)
+ensure_local_account_schema(engine)
 
 app = FastAPI(title="ThreatScope XDR API", description="Local security assessment and response platform API")
 app.add_middleware(SecurityMiddleware)

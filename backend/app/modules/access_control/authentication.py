@@ -12,18 +12,20 @@ from .rate_limit_service import (
     username_hash,
 )
 from .session_service import client_ip_hash, utcnow
-from .user_service import normalize_username
+from .user_service import normalize_email, normalize_username
 
 
-GENERIC_LOGIN_ERROR = "Invalid username or password"
+GENERIC_LOGIN_ERROR = "Invalid email, username, or password"
 
 
-def authenticate_password(db: Session, request: Request, username: str, password: str) -> UserAccount:
+def authenticate_password(db: Session, request: Request, identifier: str, password: str) -> UserAccount:
+    raw = identifier.strip()
+    is_email = "@" in raw
     try:
-        normalized = normalize_username(username)
+        normalized = normalize_email(raw) if is_email else normalize_username(raw)
     except ValueError:
-        normalized = username.strip().casefold()[:64]
-    user = db.query(UserAccount).filter_by(username_normalized=normalized).first()
+        normalized = raw.casefold()[:254]
+    user = db.query(UserAccount).filter_by(**({"email_normalized": normalized} if is_email else {"username_normalized": normalized})).first()
     expired_lock = unlock_if_expired(db, user) if user else False
     ip_hash = client_ip_hash(request)
     if expired_lock:

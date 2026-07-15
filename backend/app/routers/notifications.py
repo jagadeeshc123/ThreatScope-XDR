@@ -23,6 +23,8 @@ ENTITY_PERMISSIONS = {
 }
 
 def _visible(db, request, item):
+    if getattr(item, "recipient_user_id", None) is not None and item.recipient_user_id != request.state.current_user.id:
+        return False
     required = ENTITY_PERMISSIONS.get(item.entity_type)
     return required is None or required in effective_permissions(db, request.state.current_user)
 

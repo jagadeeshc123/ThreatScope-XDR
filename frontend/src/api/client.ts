@@ -25,6 +25,7 @@ export function registerUnauthorizedHandler(handler: UnauthorizedHandler | null)
 function isAuthenticationLifecycleRequest(requestUrl: string) {
   const normalized = requestUrl.split('?')[0];
   return normalized === '/auth/login'
+    || normalized === '/auth/register'
     || normalized === '/auth/mfa/verify-login'
     || normalized === '/auth/logout'
     || normalized === '/auth/csrf';
@@ -33,7 +34,7 @@ function isAuthenticationLifecycleRequest(requestUrl: string) {
 apiClient.interceptors.request.use(async config => {
   const method = (config.method || 'get').toUpperCase();
   const mutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-  const authExempt = config.url === '/auth/login' || config.url === '/auth/mfa/verify-login';
+  const authExempt = config.url === '/auth/login' || config.url === '/auth/register' || config.url === '/auth/mfa/verify-login';
   if (mutation && !authExempt) {
     const token = getCsrfToken() || await refreshCsrfToken();
     config.headers.set('X-CSRF-Token', token);

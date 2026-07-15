@@ -17,6 +17,7 @@ import { Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tool
 import type { DashboardSummary, Finding, Report, Scan, Target as TargetRecord } from '../types';
 import { vulnscopeApi, type PolicyPack } from '../api/vulnscope';
 import { EmptyState, FindingCard, PageHeader, PageShell, RiskScoreBadge, SectionCard, SeverityBadge, StatCard, StatusBadge } from '../components/ui';
+import { useAuth } from '../auth/useAuth';
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: '#f87171',
@@ -27,6 +28,8 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export function Dashboard() {
+  const { user } = useAuth();
+  const limitedAccount = !!user?.roles.includes('registered_user') && !user.permissions.some(permission => ['web:read','api:read','soc:read','document:read','phishing:read','correlation:read','cases:read','governance:read','operations:view'].includes(permission));
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -37,6 +40,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (limitedAccount) { setLoading(false); return; }
     const loadDashboard = async () => {
       setLoading(true);
       setError(null);
@@ -65,7 +69,9 @@ export function Dashboard() {
     };
 
     void loadDashboard();
-  }, []);
+  }, [limitedAccount]);
+
+  if (limitedAccount) return <PageShell><PageHeader title={`Welcome, ${user?.display_name || 'Registered User'}`} subtitle="Your limited local ThreatScope account is active."/><div className="grid gap-5 md:grid-cols-2"><SectionCard title="Account onboarding"><p className="text-sm leading-6 text-muted-foreground">Your account can access this welcome dashboard, your profile, and notifications. Security modules remain hidden until an administrator assigns an appropriate operational role.</p><Link to="/profile/security" className="mt-4 inline-block text-sm font-semibold text-primary">Review profile security</Link></SectionCard><SectionCard title="Account status"><dl className="space-y-3 text-sm"><div><dt className="text-muted-foreground">Status</dt><dd className="capitalize">{user?.status.replaceAll('_',' ')}</dd></div><div><dt className="text-muted-foreground">Role</dt><dd>Registered User</dd></div><div><dt className="text-muted-foreground">Email ownership</dt><dd>Not independently verified</dd></div></dl></SectionCard></div></PageShell>;
 
   if (loading) {
     return <PageShell><div className="text-muted-foreground">Loading dashboard...</div></PageShell>;

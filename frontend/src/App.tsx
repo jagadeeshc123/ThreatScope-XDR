@@ -8,7 +8,6 @@ import { Targets } from './pages/Targets';
 import { Scans } from './pages/Scans';
 import { NewScan } from './pages/NewScan';
 import { Reports } from './pages/Reports';
-import { LandingPage } from './pages/LandingPage';
 import { SearchResultsPage } from './pages/SearchResults';
 import { Policies } from './pages/Policies';
 import { Profile } from './pages/Profile';
@@ -31,6 +30,12 @@ import { SecurityAuditPage } from './pages/access/SecurityAuditPage';
 import { SecurityAuditDetailsPage } from './pages/access/SecurityAuditDetailsPage';
 import { AuditIntegrityPage } from './pages/access/AuditIntegrityPage';
 import { ForbiddenPage } from './pages/access/ForbiddenPage';
+import { PublicLandingPage, KnownLimitationsPage } from './pages/access/PublicLandingPage';
+import { SignUpPage } from './pages/access/SignUpPage';
+import { AccountPendingPage } from './pages/access/AccountPendingPage';
+import { AccountRejectedPage } from './pages/access/AccountRejectedPage';
+import { RegistrationManagementPage } from './pages/access/RegistrationManagementPage';
+import { RegistrationDetailsPage } from './pages/access/RegistrationDetailsPage';
 
 const ApiSecurityOverview = lazy(() => import('./pages/api-security/ApiSecurityOverview').then(module => ({ default: module.ApiSecurityOverview })));
 const NewApiAssessment = lazy(() => import('./pages/api-security/NewApiAssessment').then(module => ({ default: module.NewApiAssessment })));
@@ -114,8 +119,12 @@ function App() {
     <Router>
       <SessionExpiryGuard>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<PublicLandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/account-pending" element={<AccountPendingPage />} />
+        <Route path="/account-rejected" element={<AccountRejectedPage />} />
+        <Route path="/known-limitations" element={<KnownLimitationsPage />} />
         <Route path="/mfa-challenge" element={<MfaChallengePage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
         <Route element={<ProtectedRoute />}>
@@ -191,6 +200,8 @@ function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
+          <Route path="/admin/registrations" element={<RegistrationManagementPage />} />
+          <Route path="/admin/registrations/:userId" element={<RegistrationDetailsPage />} />
           <Route path="/admin/users/:userId" element={<UserDetailsPage />} />
           <Route path="/admin/roles" element={<RoleManagementPage />} />
           <Route path="/admin/roles/:roleId" element={<RoleDetailsPage />} />

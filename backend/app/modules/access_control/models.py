@@ -41,6 +41,17 @@ class UserAccount(Base):
     created_at = Column(DateTime, nullable=False, default=utcnow)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
     disabled_at = Column(DateTime)
+    registration_source = Column(String(32), nullable=False, default="administrator", index=True)
+    approved_at = Column(DateTime)
+    approved_by_user_id = Column(Integer, ForeignKey("user_accounts.id", ondelete="SET NULL"), index=True)
+    rejected_at = Column(DateTime)
+    rejected_by_user_id = Column(Integer, ForeignKey("user_accounts.id", ondelete="SET NULL"), index=True)
+    rejection_reason = Column(String(500))
+    terms_accepted_at = Column(DateTime)
+    privacy_notice_version = Column(String(64))
+    email_verified = Column(Boolean, nullable=False, default=False)
+    onboarding_completed_at = Column(DateTime)
+    is_demo_account = Column(Boolean, nullable=False, default=False)
 
     roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", cascade="all, delete-orphan")
     sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")
@@ -179,4 +190,3 @@ class SecurityAuditEvent(Base):
     occurred_at = Column(DateTime, nullable=False, default=utcnow, index=True)
     previous_event_hash = Column(String(64))
     event_hash = Column(String(64), nullable=False, unique=True)
-

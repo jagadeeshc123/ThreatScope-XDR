@@ -56,3 +56,26 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Open `/change-password` anonymously and confirm it redirects to `/login` without an expiry modal.
 - [ ] While authenticated on `/change-password`, revoke the session and trigger a protected request; confirm one modal appears and the password form is no longer usable.
 - [ ] Check the console/network panel for repeated 401 requests or refresh loops.
+
+# Phase 12 local-account checks
+
+- [ ] Clear site cookies and open `/`; confirm Sign In and Create Account are visible and no protected metrics or sidebar appears.
+- [ ] Refresh `/`, `/login`, `/signup`, `/account-pending`, `/account-rejected`, and `/known-limitations` directly.
+- [ ] Register once with a Gmail address and once with a non-Gmail address, always using a new separate ThreatScope password.
+- [ ] Confirm registration never asks for an email-account password, mailbox access, a role, status, administrator access, or MFA state.
+- [ ] In `auto_activate_limited` mode, confirm the activated result appears and the account receives only Registered User access.
+- [ ] In `approval_required` mode, confirm the pending result appears and protected routes remain inaccessible.
+- [ ] Sign in to the same account by normalized email and by username; confirm both restore the intended protected route.
+- [ ] Submit invalid email/password and username/password combinations; confirm only the generic login error appears and no expiry modal opens.
+- [ ] Confirm pending and rejected status pages reveal account details only after correct password authentication.
+- [ ] Confirm disabled and locked accounts cannot access protected routes and a locked account follows the existing temporary lockout policy.
+- [ ] Run `python scripts/manage_accounts.py create-admin` from `backend/` while another non-administrator account exists.
+- [ ] Sign in as the new owner and open Administration / Registrations; check loading, empty, error, keyboard-focus, narrow, and wide layouts.
+- [ ] Approve one registration with Registered User and another with an operational role; explicitly confirm any Administrator assignment.
+- [ ] Reject a pending registration with a bounded reason, verify rejected login status, then reopen it and confirm it returns to pending.
+- [ ] Confirm Security Analyst and Registered User accounts receive HTTP 403 for registration-management routes and see no administration navigation.
+- [ ] Confirm Registered User sees only the safe welcome dashboard, profile, notifications, and account status with no fake module zeroes.
+- [ ] Log out explicitly and confirm no expiry modal; then invalidate a real authenticated session and confirm exactly one expiry modal.
+- [ ] Inspect cookies, browser storage, and requests: session cookie is HttpOnly, no browser token exists, and authenticated mutations use CSRF.
+- [ ] Check the console and network panel for route errors, external identity calls, Google scripts, mailbox calls, repeated requests, or exposed secrets.
+- [ ] Check responsive layout and visible keyboard focus for landing, login, signup, status, registration list, and approval/rejection dialogs.

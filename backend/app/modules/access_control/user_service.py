@@ -54,6 +54,11 @@ def create_user(
     must_change_password: bool = True,
     is_system_admin: bool = False,
     actor_id: int | None = None,
+    registration_source: str = "administrator",
+    status: str | None = None,
+    terms_accepted_at: datetime | None = None,
+    privacy_notice_version: str | None = None,
+    is_demo_account: bool = False,
 ) -> UserAccount:
     username_normalized = normalize_username(username)
     email_normalized = normalize_email(email)
@@ -69,10 +74,15 @@ def create_user(
         email=email.strip() if email and email.strip() else None,
         email_normalized=email_normalized,
         password_hash=hash_password(password, username_normalized),
-        status="pending_password_change" if must_change_password else "active",
+        status=status or ("pending_password_change" if must_change_password else "active"),
         is_system_admin=is_system_admin,
         must_change_password=must_change_password,
         password_changed_at=now,
+        registration_source=registration_source,
+        terms_accepted_at=terms_accepted_at,
+        privacy_notice_version=privacy_notice_version,
+        email_verified=False,
+        is_demo_account=is_demo_account,
     )
     db.add(user)
     db.flush()
@@ -85,7 +95,7 @@ def create_user(
 def active_administrator_count(db: Session, exclude_user_id: int | None = None) -> int:
     query = db.query(UserAccount).filter(
         UserAccount.is_system_admin.is_(True),
-        UserAccount.status.notin_(["disabled"]),
+        UserAccount.status.in_(["active", "pending_password_change"]),
     )
     if exclude_user_id is not None:
         query = query.filter(UserAccount.id != exclude_user_id)
@@ -98,11 +108,11 @@ def ensure_not_last_admin(db: Session, user: UserAccount) -> None:
 
 
 def set_password(db: Session, user: UserAccount, password: str, must_change: bool, reason: str, current_session_id: int | None = None) -> None:
-    was_disabled = user.status == "disabled"
+    preserved_status = user.status if user.status in {"disabled", "pending_approval", "rejected"} else None
     user.password_hash = hash_password(password, user.username_normalized)
     user.password_changed_at = utcnow()
     user.must_change_password = must_change
-    user.status = "disabled" if was_disabled else ("pending_password_change" if must_change else "active")
+    user.status = preserved_status or ("pending_password_change" if must_change else "active")
     db.commit()
     revoke_user_sessions(db, user.id, reason, except_session_id=current_session_id)
 
@@ -131,6 +141,14 @@ def user_dict(db: Session, user: UserAccount, *, include_permissions: bool = Fal
         "password_changed_at": user.password_changed_at,
         "created_at": user.created_at,
         "updated_at": user.updated_at,
+        "registration_source": user.registration_source,
+        "approved_at": user.approved_at,
+        "rejected_at": user.rejected_at,
+        "rejection_reason": user.rejection_reason,
+        "privacy_notice_version": user.privacy_notice_version,
+        "email_verified": user.email_verified,
+        "onboarding_completed_at": user.onboarding_completed_at,
+        "is_demo_account": user.is_demo_account,
         "roles": role_keys(db, user.id),
     }
     if include_permissions:

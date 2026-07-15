@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import or_
@@ -8,8 +8,17 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 
 from . import mfa_service
+from .account_service import (
+    approve_registration,
+    mask_email,
+    register_local_account,
+    registration_dict,
+    reject_registration,
+    reopen_registration,
+)
 from .audit_service import LIMITATIONS, append_event, verify_integrity
 from .authentication import authenticate_password
+from .config import get_config
 from .dependencies import (
     get_current_session,
     get_current_user,
@@ -28,7 +37,7 @@ from .models import (
     UserRoleAssignment,
 )
 from .password_service import PasswordPolicyError, verify_password
-from .rate_limit_service import clear_failures
+from .rate_limit_service import ManagementRateLimitError, clear_failures, record_management_attempt
 from .role_service import assign_roles, effective_permissions, role_keys, seed_roles_and_permissions
 from .schemas import (
     LoginRequest,
@@ -39,6 +48,9 @@ from .schemas import (
     MfaLoginRequest,
     MfaRecoveryRegenerateRequest,
     PasswordChangeRequest,
+    RegistrationApprovalRequest,
+    RegistrationRejectionRequest,
+    RegistrationRequest,
     PermissionAssignments,
     ResetPasswordRequest,
     RoleAssignments,
@@ -97,11 +109,19 @@ def _audit(db: Session, request: Request, event_type: str, action: str, outcome:
 
 @router.post("/login")
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    if not get_config().local_login_enabled:
+        raise HTTPException(status_code=403, detail="Local login is unavailable")
     try:
-        user = authenticate_password(db, request, payload.username, payload.password)
+        user = authenticate_password(db, request, payload.identifier, payload.password)
     except HTTPException as exc:
         _audit(db, request, "login_failure", "login", "failure", status_code=exc.status_code, reason_code="invalid_credentials")
         raise
+    if user.status == "pending_approval":
+        _audit(db, request, "login_pending", "login", "denied", actor=user, status_code=200, reason_code="pending_approval")
+        return {"requires_mfa": False, "account_status": "pending_approval", "next_route": "/account-pending", "account": {"username": user.username, "display_name": user.display_name, "email": mask_email(user.email) if user.email else None}}
+    if user.status == "rejected":
+        _audit(db, request, "login_rejected", "login", "denied", actor=user, status_code=200, reason_code="rejected")
+        return {"requires_mfa": False, "account_status": "rejected", "next_route": "/account-rejected", "account": {"username": user.username, "display_name": user.display_name, "email": mask_email(user.email) if user.email else None, "rejection_reason": user.rejection_reason}}
     if user.mfa_enabled:
         challenge = mfa_service.create_challenge(db, user.id)
         _audit(db, request, "login_mfa_required", "login", "success", actor=user, status_code=200)
@@ -109,8 +129,34 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     auth_session, token, _ = create_session(db, user, request, mfa_verified=False)
     db.commit()
     set_session_cookie(response, token)
-    _audit(db, request, "login_success", "login", "success", actor=user, status_code=200, resource_type="auth_session", resource_id=auth_session.id)
+    identifier_type = "email" if "@" in payload.identifier else "username"
+    _audit(db, request, f"{identifier_type}_login_success", "login", "success", actor=user, status_code=200, resource_type="auth_session", resource_id=auth_session.id, metadata={"identifier_type": identifier_type})
     return {"requires_mfa": False, "user": user_dict(db, user, include_permissions=True)}
+
+
+@router.get("/providers")
+def providers():
+    config = get_config()
+    registration_enabled = config.local_login_enabled and config.self_registration_enabled and config.registration_mode != "disabled"
+    return {
+        "local_login_enabled": config.local_login_enabled,
+        "self_registration_enabled": registration_enabled,
+        "registration_mode": config.registration_mode if registration_enabled else "disabled",
+        "approval_required": registration_enabled and config.registration_mode == "approval_required",
+        "password_policy_summary": {"minimum_length": 12, "maximum_length": 128, "common_passwords_rejected": True, "identifier_inclusion_rejected": True},
+        "privacy_notice_version": config.privacy_notice_version,
+    }
+
+
+@router.post("/register", status_code=201)
+def register(payload: RegistrationRequest, request: Request, db: Session = Depends(get_db)):
+    try:
+        user, result = register_local_account(db, request, payload)
+    except HTTPException as exc:
+        _audit(db, request, "registration_failure", "register", "failure", status_code=exc.status_code, reason_code="registration_rejected")
+        raise
+    _audit(db, request, "registration_success", "register", "success", actor=user, status_code=201, resource_type="user", resource_id=user.id, metadata={"status": user.status, "source": "local"})
+    return result
 
 
 @router.post("/mfa/verify-login")
@@ -265,6 +311,77 @@ def _user_or_404(db: Session, user_id: int) -> UserAccount:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@admin_router.get("/registrations", dependencies=[Depends(require_permission("users:manage"))])
+def registrations(
+    db: Session = Depends(get_db),
+    status: str | None = None,
+    email: str | None = Query(None, max_length=254),
+    username: str | None = Query(None, max_length=64),
+    source: str | None = Query(None, max_length=32),
+    created_from: datetime | None = None,
+    created_to: datetime | None = None,
+    pending_age_days: int | None = Query(None, ge=0, le=3650),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
+):
+    query = db.query(UserAccount).filter(UserAccount.registration_source == "local")
+    if status: query = query.filter(UserAccount.status == status)
+    if email: query = query.filter(UserAccount.email_normalized.ilike(f"%{email.strip().casefold()}%"))
+    if username: query = query.filter(UserAccount.username_normalized.ilike(f"%{username.strip().casefold()}%"))
+    if source: query = query.filter(UserAccount.registration_source == source)
+    if created_from: query = query.filter(UserAccount.created_at >= created_from)
+    if created_to: query = query.filter(UserAccount.created_at <= created_to)
+    if pending_age_days is not None: query = query.filter(UserAccount.status == "pending_approval", UserAccount.created_at <= utcnow() - timedelta(days=pending_age_days))
+    total = query.count()
+    items = query.order_by(UserAccount.created_at.desc()).offset(skip).limit(limit).all()
+    return {"items": [registration_dict(db, item) for item in items], "total": total}
+
+
+@admin_router.get("/registrations/{user_id}", dependencies=[Depends(require_permission("users:manage"))])
+def registration_detail(user_id: int, db: Session = Depends(get_db)):
+    user = _user_or_404(db, user_id)
+    if user.registration_source != "local": raise HTTPException(status_code=404, detail="Registration not found")
+    data = registration_dict(db, user)
+    data["rejection_reason"] = user.rejection_reason
+    return data
+
+
+@admin_router.post("/registrations/{user_id}/approve", dependencies=[Depends(require_authenticated_csrf), Depends(require_permission("users:manage"))])
+def approve(user_id: int, payload: RegistrationApprovalRequest, request: Request, db: Session = Depends(get_db), actor: UserAccount = Depends(get_current_user)):
+    user = _user_or_404(db, user_id)
+    try:
+        record_management_attempt(db, actor.id, "approve", client_ip_hash(request))
+        approve_registration(db, user, actor, payload.role_keys, payload.confirm_administrator)
+    except ManagementRateLimitError as exc: db.rollback(); raise HTTPException(status_code=429, detail="Registration management is temporarily unavailable") from exc
+    except ValueError as exc: db.rollback(); raise HTTPException(status_code=422, detail=str(exc)) from exc
+    _audit(db, request, "account_approved", "approve_registration", "success", actor=actor, status_code=200, resource_type="user", resource_id=user.id, metadata={"role_keys": payload.role_keys})
+    return registration_dict(db, user)
+
+
+@admin_router.post("/registrations/{user_id}/reject", dependencies=[Depends(require_authenticated_csrf), Depends(require_permission("users:manage"))])
+def reject(user_id: int, payload: RegistrationRejectionRequest, request: Request, db: Session = Depends(get_db), actor: UserAccount = Depends(get_current_user)):
+    user = _user_or_404(db, user_id)
+    try:
+        record_management_attempt(db, actor.id, "reject", client_ip_hash(request))
+        reject_registration(db, user, actor, payload.reason)
+    except ManagementRateLimitError as exc: db.rollback(); raise HTTPException(status_code=429, detail="Registration management is temporarily unavailable") from exc
+    except ValueError as exc: db.rollback(); raise HTTPException(status_code=422, detail=str(exc)) from exc
+    _audit(db, request, "account_rejected", "reject_registration", "success", actor=actor, status_code=200, resource_type="user", resource_id=user.id)
+    return registration_dict(db, user)
+
+
+@admin_router.post("/registrations/{user_id}/reopen", dependencies=[Depends(require_authenticated_csrf), Depends(require_permission("users:manage"))])
+def reopen(user_id: int, request: Request, db: Session = Depends(get_db), actor: UserAccount = Depends(get_current_user)):
+    user = _user_or_404(db, user_id)
+    try:
+        record_management_attempt(db, actor.id, "reopen", client_ip_hash(request))
+        reopen_registration(db, user, actor)
+    except ManagementRateLimitError as exc: db.rollback(); raise HTTPException(status_code=429, detail="Registration management is temporarily unavailable") from exc
+    except ValueError as exc: db.rollback(); raise HTTPException(status_code=422, detail=str(exc)) from exc
+    _audit(db, request, "account_reopened", "reopen_registration", "success", actor=actor, status_code=200, resource_type="user", resource_id=user.id)
+    return registration_dict(db, user)
 
 
 @admin_router.get("/users", dependencies=[Depends(require_permission("users:read"))])

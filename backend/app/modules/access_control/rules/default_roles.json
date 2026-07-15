@@ -4,6 +4,11 @@
     "description": "Full local platform administration and operations.",
     "permissions": ["*"]
   },
+  "registered_user": {
+    "name": "Registered User",
+    "description": "Limited local account access for onboarding, profile, and notifications.",
+    "permissions": ["dashboard:view", "profile:manage", "notifications:read"]
+  },
   "security_analyst": {
     "name": "Security Analyst",
     "description": "Operational security analysis, cases, governance, and reporting.",
