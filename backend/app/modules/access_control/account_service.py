@@ -10,7 +10,7 @@ from app import models
 from .config import get_config
 from .models import AccessRole, UserAccount
 from .password_service import PasswordPolicyError, hash_password
-from .rate_limit_service import is_registration_rate_limited, record_registration_attempt
+from .rate_limit_service import clear_user_login_attempts, is_registration_rate_limited, record_registration_attempt
 from .role_service import assign_roles, role_keys
 from .session_service import client_ip_hash, revoke_user_sessions, utcnow
 from .user_service import ensure_not_last_admin, normalize_email, normalize_username, user_dict, validate_display_name
@@ -113,6 +113,11 @@ def register_local_account(db: Session, request: Request, payload) -> tuple[User
         assign_roles(db, user, ["registered_user"])
         db.commit()
         db.refresh(user)
+        # A visitor may have attempted this identifier before registering it.
+        # Successful registration establishes new credentials, so those stale
+        # unknown-account failures must not block the newly created account.
+        clear_user_login_attempts(db, user)
+        db.commit()
     except (ValueError, PasswordPolicyError) as exc:
         db.rollback()
         record_registration_attempt(db, email_normalized, ip_hash, False, "validation")

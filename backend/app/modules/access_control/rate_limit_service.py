@@ -104,7 +104,19 @@ def register_user_failure(db: Session, user: UserAccount) -> None:
     db.commit()
 
 
+def clear_user_login_attempts(db: Session, user: UserAccount) -> int:
+    identities = {user.username_normalized}
+    if user.email_normalized:
+        identities.add(user.email_normalized)
+    hashes = [username_hash(identity) for identity in identities]
+    return db.query(LoginAttempt).filter(
+        LoginAttempt.username_hash.in_(hashes),
+        LoginAttempt.success.is_(False),
+    ).delete(synchronize_session=False)
+
+
 def clear_failures(db: Session, user: UserAccount) -> None:
+    clear_user_login_attempts(db, user)
     user.failed_login_count = 0
     user.locked_until = None
     if user.status == "locked":

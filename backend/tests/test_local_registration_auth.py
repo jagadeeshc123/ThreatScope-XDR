@@ -95,6 +95,14 @@ class LocalRegistrationAuthTests(unittest.TestCase):
             response=self.login(identifier);self.assertEqual(response.status_code,200,response.text);self.assertNotIn("token",response.text.lower());self.assertIn("HttpOnly",response.headers.get("set-cookie",""))
         csrf=self.client.get("/api/auth/csrf");self.assertEqual(csrf.status_code,200);self.assertEqual(self.client.post("/api/auth/logout").status_code,403);self.client.headers["X-CSRF-Token"]=csrf.json()["csrf_token"];self.assertEqual(self.client.post("/api/auth/logout").status_code,200)
 
+    def test_registration_clears_preexisting_identifier_login_throttle(self):
+        for _ in range(5):
+            failed=self.login("local.user","Wrong-Before-Registration-91!")
+            self.assertEqual(failed.status_code,401)
+        self.assertEqual(self.login("local.user","Wrong-Before-Registration-91!").status_code,429)
+        registered=self.register();self.assertEqual(registered.status_code,201,registered.text)
+        authenticated=self.login("local.user");self.assertEqual(authenticated.status_code,200,authenticated.text)
+
     def test_non_gmail_email_login_and_registration_rate_limit(self):
         registered=self.register(email="person@example.org",username="other.user",password="Another-Local-Password-82!");self.assertEqual(registered.status_code,201)
         self.assertEqual(self.login("PERSON@EXAMPLE.ORG","Another-Local-Password-82!").status_code,200)
