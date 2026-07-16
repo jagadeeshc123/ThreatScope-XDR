@@ -64,6 +64,14 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
     threat_intel_high_risk_matches=db.query(models.IndicatorMatch).filter(models.IndicatorMatch.risk_score>=60,models.IndicatorMatch.status.notin_(["false_positive","accepted_risk"])).count()
     threat_intel_recent_imports=db.query(models.ThreatIntelImport).filter(models.ThreatIntelImport.completed_at>=now-__import__('datetime').timedelta(days=7)).count()
     threat_intel_recent_escalations=db.query(models.IndicatorMatch).filter(models.IndicatorMatch.status=="escalated",models.IndicatorMatch.reviewed_at>=now-__import__('datetime').timedelta(days=30)).count()
+    detection_metrics_allowed = "detections:view" in permissions or "correlation:read" in permissions
+    detection_active_rules=db.query(models.DetectionRule).filter_by(lifecycle_status="active").count() if detection_metrics_allowed else 0
+    detection_high_risk_matches=db.query(models.DetectionMatch).filter(models.DetectionMatch.risk_score>=60,models.DetectionMatch.status.notin_(["false_positive","suppressed"])).count() if detection_metrics_allowed else 0
+    detection_failed_validations=db.query(models.DetectionRule).filter(models.DetectionRule.last_validated_at.is_(None),models.DetectionRule.lifecycle_status.in_(["testing","disabled"])).count() if detection_metrics_allowed else 0
+    detection_covered=db.query(func.count(func.distinct(models.DetectionRuleTechnique.technique_id))).join(models.DetectionRule).filter(models.DetectionRule.lifecycle_status=="active").scalar() or 0 if detection_metrics_allowed else 0
+    detection_techniques=db.query(models.AttackTechnique).count() if detection_metrics_allowed else 0
+    detection_attack_coverage=round(detection_covered*100/detection_techniques,1) if detection_techniques else 0
+    detection_recent_escalations=db.query(models.DetectionMatch).filter(models.DetectionMatch.status=="escalated",models.DetectionMatch.reviewed_at>=now-__import__('datetime').timedelta(days=30)).count() if detection_metrics_allowed else 0
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -160,6 +168,11 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         threat_intel_high_risk_matches=threat_intel_high_risk_matches,
         threat_intel_recent_imports=threat_intel_recent_imports,
         threat_intel_recent_escalations=threat_intel_recent_escalations,
+        detection_active_rules=detection_active_rules,
+        detection_high_risk_matches=detection_high_risk_matches,
+        detection_failed_validations=detection_failed_validations,
+        detection_attack_coverage=detection_attack_coverage,
+        detection_recent_escalations=detection_recent_escalations,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets,

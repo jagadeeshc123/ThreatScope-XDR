@@ -9,4 +9,8 @@ For the frontend, run `npm ci` and `npm run dev` in `frontend`. For Docker, supp
 The preferred owner command is `python scripts/manage_accounts.py create-admin`; it can add an owner when other local or smoke-test accounts exist. Recommended development configuration enables local login and registration with `THREATSCOPE_REGISTRATION_MODE=auto_activate_limited`. Production should use `approval_required`. Compose contains empty registration substitutions and no credentials.
 # Threat-intelligence schema
 
-Phase 13 uses the existing database and requires no feed key, external service, Redis, worker, or new package. On startup, SQLAlchemy creates the threat-intelligence tables and role seeding adds the Phase 13 permissions. Existing SQLite installations should be backed up before first Phase 13 startup. The current backup/restore schema identifier is `threatscope-schema-v13`.
+Phase 13 uses the existing database and requires no feed key, external service, Redis, worker, or new package. On startup, SQLAlchemy creates the threat-intelligence tables and role seeding adds the Phase 13 permissions. Existing SQLite installations should be backed up before first Phase 13 startup. Phase 13 introduced backup/restore schema identifier `threatscope-schema-v13`; Phase 14 advances it as described below.
+
+# Detection-engineering schema
+
+Phase 14 uses the existing SQLite database and already-pinned PyYAML dependency. Startup idempotently creates detection tables, seeds six `detections:*` permissions, 27 local educational ATT&CK-style techniques, and four protected demonstration packs. Back up existing installations before first startup. The backup/restore schema identifier is `threatscope-schema-v14`; no Redis, worker, external rule repository, or feed credential is required.

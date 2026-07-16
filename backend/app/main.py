@@ -73,6 +73,8 @@ def startup_event():
         seed_default_rules(db)
         from app.modules.threat_intelligence.service import seed_watchlists
         seed_watchlists(db)
+        from app.modules.detection_engineering.service import seed_catalog_and_packs
+        seed_catalog_and_packs(db)
     finally:
         db.close()
     # Environment bootstrap is explicit and no-op unless all bootstrap variables are supplied.
@@ -84,6 +86,8 @@ def startup_event():
     try:
         from app.modules.threat_intelligence.service import seed_watchlists
         seed_watchlists(db)
+        from app.modules.detection_engineering.service import seed_catalog_and_packs
+        seed_catalog_and_packs(db)
     finally:
         db.close()
 
@@ -103,6 +107,7 @@ from app.modules.api_security.router import router as api_security_router
 from app.modules.document_threats.router import router as document_threats_router
 from app.modules.governance.router import router as governance_router
 from app.modules.threat_intelligence.router import router as threat_intel_router
+from app.modules.detection_engineering.router import router as detection_engineering_router
 from app.modules.phishing_defense.router import router as phishing_defense_router
 from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.unified_correlation.router import router as correlation_router
@@ -132,3 +137,4 @@ app.include_router(phishing_defense_router, prefix="/api/phishing-defense", tags
 app.include_router(correlation_router, prefix="/api/correlation", tags=["Correlation & Cases"], dependencies=protected)
 app.include_router(governance_router, prefix="/api/governance", tags=["Governance & Reporting"], dependencies=protected)
 app.include_router(threat_intel_router, prefix="/api/threat-intel", tags=["Threat Intelligence"], dependencies=protected)
+app.include_router(detection_engineering_router, prefix="/api/detections", tags=["Detection Engineering"], dependencies=protected)

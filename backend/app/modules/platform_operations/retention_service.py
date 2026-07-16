@@ -7,6 +7,7 @@ from app.models import Notification
 from app.modules.access_control.models import AuthSession, LoginAttempt, MfaLoginChallenge
 from app.modules.soc_monitor.models import SocActivity
 from app.modules.threat_intelligence.models import ThreatCorrelationRun, ThreatIntelImport
+from app.modules.detection_engineering.models import DetectionExecution, DetectionReport
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -22,6 +23,8 @@ DEFAULTS = [
     ("old_activity", "Old operational activity", "old_activity", 180, 100),
     ("threat_intel_import_manifests", "Old threat-intelligence import manifests", "threat_intel_import_manifests", 365, 50),
     ("threat_correlation_runs", "Old completed threat-intelligence correlation runs", "threat_correlation_runs", 180, 50),
+    ("detection_executions", "Old completed detection executions", "detection_executions", 180, 50),
+    ("detection_reports", "Old generated detection reports", "detection_reports", 365, 25),
 ]
 
 
@@ -44,6 +47,8 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "old_activity": return SocActivity, [SocActivity.created_at < cutoff, SocActivity.entity_type.like("operational_%")]
     if policy.entity_type == "threat_intel_import_manifests": return ThreatIntelImport, [ThreatIntelImport.completed_at.is_not(None), ThreatIntelImport.completed_at < cutoff]
     if policy.entity_type == "threat_correlation_runs": return ThreatCorrelationRun, [ThreatCorrelationRun.status.in_(["completed", "failed"]), ThreatCorrelationRun.completed_at < cutoff]
+    if policy.entity_type == "detection_executions": return DetectionExecution, [DetectionExecution.status.in_(["completed", "failed", "cancelled"]), DetectionExecution.completed_at < cutoff]
+    if policy.entity_type == "detection_reports": return DetectionReport, [DetectionReport.created_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 

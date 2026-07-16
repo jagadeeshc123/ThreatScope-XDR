@@ -37,5 +37,11 @@ def reset(db: Session) -> dict:
     for indicator in demo_indicators: db.delete(indicator)
     demo_sources = db.query(ThreatIntelSource).filter_by(name="ThreatScope Synthetic Demo Intelligence", system_owned=True).all()
     for source in demo_sources: db.delete(source)
+    from app.modules.detection_engineering.models import DetectionExecution, DetectionRule
+    demo_rules = db.query(DetectionRule).filter(DetectionRule.tags_json.like('%"threatscope-demo"%'), DetectionRule.system_owned.is_(False)).all()
+    demo_rule_ids = [rule.id for rule in demo_rules]
+    demo_executions = db.query(DetectionExecution).filter(DetectionExecution.rule_id.in_(demo_rule_ids)).all() if demo_rule_ids else []
+    for execution in demo_executions: db.delete(execution)
+    for rule in demo_rules: db.delete(rule)
     add_activity(db, "demo_reset", f"Removed {count} demo-owned target records; analyst records were preserved.", "operational_demo", None); notify(db,"Demo reset succeeded",f"Removed {count} demo-owned records and preserved analyst data.","success","operational_demo",None); db.commit()
-    return {**status(db), "deleted_demo_records": count + len(demo_indicators) + len(demo_sources), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "non_demo_records_preserved": True}
+    return {**status(db), "deleted_demo_records": count + len(demo_indicators) + len(demo_sources) + len(demo_rules) + len(demo_executions), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "deleted_demo_detection_records": len(demo_rules) + len(demo_executions), "non_demo_records_preserved": True}

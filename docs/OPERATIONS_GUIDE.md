@@ -12,3 +12,7 @@ From `backend/`, use `python scripts/manage_accounts.py list`, `create-admin`, `
 # Threat-intelligence operations
 
 Use `/api/threat-intel/correlation/run` only for bounded scans of existing database records. A failed run rolls back its new sightings/matches and records a failed run manifest; previous matches remain intact. Monitor Phase 13 table health in Operations diagnostics. Database backups include Phase 13 automatically. Retention policies for old IOC import manifests and completed/failed correlation-run manifests are dry-run-first; indicators are retained when they expire. No threat-intelligence operation requires outbound connectivity.
+
+# Detection-engineering operations
+
+Use `/api/detections/executions` for bounded synchronous scans of existing stored events. Requests are limited to 25 rules and 5,000 records, and fingerprinted matches prevent repeated duplicate creation. Diagnostics list the module and database table health; full SQLite backup/restore includes all detection tables. Dry-run-first retention covers completed executions and generated reports, while immutable rule versions and case-linked records are not automatically deleted. Demo reset removes only explicitly tagged analyst demo rules/executions and preserves protected system packs.

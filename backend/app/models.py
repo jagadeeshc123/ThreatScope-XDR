@@ -247,3 +247,8 @@ from app.modules.threat_intelligence.models import (  # noqa: E402,F401
     ThreatCampaignIndicator, IndicatorRelationship, ThreatCorrelationRun,
     ThreatIntelReport,
 )
+from app.modules.detection_engineering.models import (  # noqa: E402,F401
+    DetectionRule, DetectionRuleVersion, DetectionRulePack, DetectionRulePackEntry,
+    AttackTechnique, DetectionRuleTechnique, DetectionTestCase, DetectionExecution,
+    DetectionMatch, DetectionSuppression, DetectionReport,
+)

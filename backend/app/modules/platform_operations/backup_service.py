@@ -18,7 +18,7 @@ from .maintenance_service import add_activity, fail_job, finish_job, new_key, no
 from .models import BackupRecord, OperationalJob, utcnow
 
 _LOCK = threading.Lock()
-EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches"}
+EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches"}
 
 
 def sha256_file(path: Path) -> str:

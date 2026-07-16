@@ -131,6 +131,13 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     threat_campaigns=db.query(models.ThreatCampaign).filter(or_(models.ThreatCampaign.name.ilike(query),models.ThreatCampaign.description.ilike(query))).limit(10).all()
     threat_matches=db.query(models.IndicatorMatch).join(models.ThreatIndicator).filter(or_(models.ThreatIndicator.normalized_value.ilike(query),models.IndicatorMatch.status.ilike(query))).limit(10).all()
     threat_reports=db.query(models.ThreatIntelReport).filter(models.ThreatIntelReport.title.ilike(query)).limit(10).all()
+    detection_rules=db.query(models.DetectionRule).filter(or_(models.DetectionRule.title.ilike(query),models.DetectionRule.description.ilike(query),models.DetectionRule.tags_json.ilike(query))).limit(15).all()
+    detection_packs=db.query(models.DetectionRulePack).filter(or_(models.DetectionRulePack.name.ilike(query),models.DetectionRulePack.description.ilike(query))).limit(10).all()
+    attack_techniques=db.query(models.AttackTechnique).filter(or_(models.AttackTechnique.external_id.ilike(query),models.AttackTechnique.name.ilike(query),models.AttackTechnique.tactic.ilike(query))).limit(15).all()
+    detection_matches=db.query(models.DetectionMatch).join(models.DetectionRule).filter(or_(models.DetectionRule.title.ilike(query),models.DetectionMatch.evidence_summary.ilike(query),models.DetectionMatch.status.ilike(query))).limit(10).all()
+    detection_executions=db.query(models.DetectionExecution).filter(or_(models.DetectionExecution.status.ilike(query),models.DetectionExecution.mode.ilike(query))).limit(10).all()
+    detection_suppressions=db.query(models.DetectionSuppression).filter(or_(models.DetectionSuppression.name.ilike(query),models.DetectionSuppression.description.ilike(query))).limit(10).all()
+    detection_reports=db.query(models.DetectionReport).filter(models.DetectionReport.title.ilike(query)).limit(10).all()
     operations = []
     if "operations:view" in permissions:
         from app.modules.platform_operations.models import BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact, RestoreRecord, RetentionPolicy, RetentionRun
@@ -150,6 +157,7 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     if "cases:read" not in permissions: incident_cases = incident_evidence = incident_reports = []
     if "governance:read" not in permissions: governance_risks = governance_frameworks = governance_controls = governance_mappings = governance_treatments = governance_exceptions = governance_evidence_packages = governance_reviews = governance_reports = []
     if "threat_intel:view" not in permissions: threat_indicators = threat_sources = threat_watchlists = threat_campaigns = threat_matches = threat_reports = []
+    if "detections:view" not in permissions: detection_rules = detection_packs = attack_techniques = detection_matches = detection_executions = detection_suppressions = detection_reports = []
     return schemas.SearchResults(
         targets=targets,
         scans=scans,
@@ -213,5 +221,12 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         threat_campaigns=[{"id":x.id,"name":x.name,"severity":x.severity,"confidence":x.confidence,"active":x.active} for x in threat_campaigns],
         threat_matches=[{"id":x.id,"indicator_id":x.indicator_id,"status":x.status,"risk_score":x.risk_score,"module":x.sighting.module} for x in threat_matches],
         threat_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"defanged":x.defanged,"created_at":x.created_at} for x in threat_reports],
+        detection_rules=[{"id":x.id,"title":x.title,"severity":x.severity,"lifecycle_status":x.lifecycle_status,"quality_score":x.quality_score} for x in detection_rules],
+        detection_packs=[{"id":x.id,"name":x.name,"version":x.version,"enabled":x.enabled,"system_owned":x.system_owned} for x in detection_packs],
+        attack_techniques=[{"id":x.id,"external_id":x.external_id,"name":x.name,"tactic":x.tactic} for x in attack_techniques],
+        detection_matches=[{"id":x.id,"rule_id":x.rule_id,"status":x.status,"risk_score":x.risk_score,"severity":x.severity,"snippet":x.evidence_summary[:240]} for x in detection_matches],
+        detection_executions=[{"id":x.id,"status":x.status,"mode":x.mode,"records_scanned":x.records_scanned,"matches_found":x.matches_found} for x in detection_executions],
+        detection_suppressions=[{"id":x.id,"name":x.name,"description":x.description[:240],"enabled":x.enabled} for x in detection_suppressions],
+        detection_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at} for x in detection_reports],
         operations=operations,
     )

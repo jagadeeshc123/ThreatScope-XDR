@@ -1,0 +1,7 @@
+import { useEffect,useState } from 'react';
+import { Link } from 'react-router-dom';
+import { detectionsApi } from '../../api/detections';
+import { useAuth } from '../../auth/useAuth';
+import { DetectionLayout } from './shared';
+import { Panel,RuleQualityMeter } from './components';
+export function DetectionOverviewPage(){const {can}=useAuth();const [data,setData]=useState<Record<string,unknown>|null>(null);useEffect(()=>{void detectionsApi.overview().then(setData)},[]);const metrics=['total_rules','active_rules','draft_testing_rules','disabled_rules','total_matches','high_risk_matches','confirmed_matches','attack_coverage_percentage'];return <DetectionLayout title="Detection Engineering" subtitle="Offline rule engineering and deterministic evaluation of stored ThreatScope records only." actions={can('detections:manage')?<Link className="rounded bg-primary px-3 py-2" to="/detections/rules/new">Create rule</Link>:undefined}><div className="rounded border border-cyan-500/40 bg-cyan-500/5 p-4 text-sm">No endpoint agent, external rule feed, command execution, active response, or complete ATT&CK coverage claim.</div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(key=><Panel key={key} title={key.replaceAll('_',' ')}><strong className="text-2xl">{String(data?.[key]??0)}{key.endsWith('percentage')?'%':''}</strong></Panel>)}</div><Panel title="Average rule quality"><RuleQualityMeter value={Number(data?.average_quality??0)}/></Panel></DetectionLayout>}

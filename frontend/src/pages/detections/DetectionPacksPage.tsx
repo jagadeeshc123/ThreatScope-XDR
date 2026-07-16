@@ -1,0 +1,2 @@
+import { DetectionLayout,DetectionTable,useDetectionPage } from './shared';
+export function DetectionPacksPage(){const {data}=useDetectionPage('packs');return <DetectionLayout title="Rule Packs" subtitle="Protected demonstration packs and analyst-managed local collections."><DetectionTable title="Detection packs" items={(data?.items??[]) as Array<Record<string,unknown>>} detailBase="/detections/packs" columns={[["name","Name"],["version","Version"],["enabled","Enabled",x=>x.enabled?'Yes':'No'],["system_owned","Protected",x=>x.system_owned?'Yes':'No']]}/></DetectionLayout>}

@@ -78,5 +78,11 @@
   ["threat_intel:import", "Import bounded IOC data", "Threat Intelligence"],
   ["threat_intel:manage", "Manage indicators, sources, watchlists, and campaigns", "Threat Intelligence"],
   ["threat_intel:correlate", "Run stored-data IOC correlation and review matches", "Threat Intelligence"],
-  ["threat_intel:export", "Generate and export threat-intelligence reports", "Threat Intelligence"]
+  ["threat_intel:export", "Generate and export threat-intelligence reports", "Threat Intelligence"],
+  ["detections:view", "View detection engineering data", "Detection Engineering"],
+  ["detections:manage", "Create and manage detection rules, packs, tests, and suppressions", "Detection Engineering"],
+  ["detections:import", "Validate and import bounded Sigma rules", "Detection Engineering"],
+  ["detections:execute", "Run bounded detection tests and historical executions", "Detection Engineering"],
+  ["detections:review", "Review detection matches and explicitly promote outcomes", "Detection Engineering"],
+  ["detections:export", "Generate and export detection engineering reports", "Detection Engineering"]
 ]

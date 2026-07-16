@@ -36,3 +36,7 @@ TOTP enrollment uses the existing encrypted MFA store and standard six-digit, 30
 # Phase 13: offline threat intelligence
 
 ThreatScope XDR includes a permission-aware Threat Intelligence module for normalized IOC inventory, bounded CSV/JSON/STIX/text imports, protected watchlists, campaigns, analyst relationships, stored-data-only cross-module sightings, deterministic match risk, explicit incident-case escalation, and static HTML reports. It performs no external IOC lookup or automated blocking. See [docs/THREAT_INTELLIGENCE.md](docs/THREAT_INTELLIGENCE.md).
+
+# Phase 14: offline detection engineering
+
+Detection Engineering adds native and bounded Sigma-compatible rules, immutable versions, synthetic positive/negative tests, test-gated activation, protected demonstration packs, a local educational ATT&CK subset, deterministic historical evaluation, suppressions, explicit alert/case promotion, and static reports. It evaluates stored records only and never executes commands or downloads rules. See [docs/DETECTION_ENGINEERING.md](docs/DETECTION_ENGINEERING.md).

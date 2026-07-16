@@ -16,9 +16,11 @@ export const routePermissions: Array<[string, string]> = [
   ['/governance', 'governance:read'], ['/search', 'search:use'], ['/notifications', 'notifications:read'],
   ['/threat-intelligence/indicators/new', 'threat_intel:manage'], ['/threat-intelligence/imports', 'threat_intel:import'],
   ['/threat-intelligence/reports', 'threat_intel:export'], ['/threat-intelligence', 'threat_intel:view'],
+  ['/detections/rules/new', 'detections:manage'], ['/detections/import', 'detections:import'], ['/detections/reports', 'detections:export'], ['/detections', 'detections:view'],
   ['/settings', 'system:manage'], ['/profile', 'profile:manage'],
 ];
 
 export function permissionForPath(path: string): string | undefined {
+  if (/^\/detections\/rules\/\d+\/edit$/.test(path)) return 'detections:manage';
   return routePermissions.find(([prefix]) => path.startsWith(prefix))?.[1];
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## Phase 14 - Detection Engineering
+
+- Added native and bounded Sigma YAML/JSON rules, static validation, immutable versioning, rollback-as-new-version, and test-gated activation.
+- Added deterministic stored-event normalization/evaluation, historical execution, idempotent matches, suppressions, risk and quality scoring, and explicit alert/case promotion.
+- Added four protected rule packs, a 27-technique local educational ATT&CK-style subset, coverage UI, reports, dashboard/search integration, RBAC, audit/activity/notifications, retention, backup, and diagnostics integration.
+- Added all Detection Engineering frontend routes/components and focused offline-safety regression coverage.
+
 ## 1.0.0-rc1 — Phase 11
 
 - Added minimal public liveness/readiness and permission-protected health and diagnostics.

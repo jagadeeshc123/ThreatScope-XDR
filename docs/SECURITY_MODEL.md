@@ -12,3 +12,7 @@ The protected Registered User role contains only dashboard, own-profile, and not
 # Threat-intelligence safety boundary
 
 Threat-intelligence inputs remain inert text. The backend does not resolve, fetch, preview, enrich, execute, block, or otherwise interact with an indicator. Imports are bounded to 2 MiB and 5,000 records, parsed without archive extraction or subprocesses, and original bytes are discarded. The frontend defangs indicators and never generates automatic anchors. Mutations require CSRF and the relevant `threat_intel:*` permission; escalation additionally requires `cases:create` and explicit confirmation. See `THREAT_INTELLIGENCE.md` for scoring and lifecycle rules.
+
+# Detection-engineering safety boundary
+
+Rule content and event evidence are hostile inert data. YAML uses the safe loader after rejecting aliases, anchors, and custom tags. Conditions are parsed by a bounded allowlisted parser—not `eval`, `exec`, regex, templates, shells, PowerShell, subprocesses, or dynamic code generation. Historical evaluation is read-only, deterministic, synchronous, and bounded. URLs, command lines, paths, and evidence are escaped/redacted text. Alert and case promotion require explicit confirmation and additional permissions. See `DETECTION_ENGINEERING.md`.

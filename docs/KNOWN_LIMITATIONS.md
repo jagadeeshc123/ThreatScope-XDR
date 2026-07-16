@@ -19,3 +19,11 @@
 - Correlation uses exact normalized values, URL host context, and explicit CIDR membership; it does not use fuzzy hash or IP matching.
 - Scores are deterministic rules, not machine learning or an external reputation claim.
 - Watchlists and cases are analyst workflow data only; ThreatScope XDR does not block traffic or create cases without explicit confirmation.
+
+# Detection engineering
+
+- Sigma compatibility is a bounded safe subset, not full Sigma specification or backend conversion support.
+- The local ATT&CK-style catalog is an educational 27-technique subset and is not the complete current catalog or proof of organizational coverage.
+- Evaluation currently maps stored ThreatScope fields and does not deploy agents, collect live telemetry, query cloud SIEMs, or download external rule feeds.
+- Risk and quality scores are deterministic heuristics, not machine learning, threat reputation, or efficacy guarantees.
+- There is no command execution, malware execution, active containment, process termination, firewall blocking, or automated alert/case creation.

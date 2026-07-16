@@ -200,6 +200,11 @@ class DashboardSummary(BaseModel):
     threat_intel_high_risk_matches: int = 0
     threat_intel_recent_imports: int = 0
     threat_intel_recent_escalations: int = 0
+    detection_active_rules: int = 0
+    detection_high_risk_matches: int = 0
+    detection_failed_validations: int = 0
+    detection_attack_coverage: float = 0
+    detection_recent_escalations: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -327,4 +332,11 @@ class SearchResults(BaseModel):
     threat_campaigns: List[dict] = []
     threat_matches: List[dict] = []
     threat_reports: List[dict] = []
+    detection_rules: List[dict] = []
+    detection_packs: List[dict] = []
+    attack_techniques: List[dict] = []
+    detection_matches: List[dict] = []
+    detection_executions: List[dict] = []
+    detection_suppressions: List[dict] = []
+    detection_reports: List[dict] = []
     operations: List[dict] = []

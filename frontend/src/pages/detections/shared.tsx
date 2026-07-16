@@ -1,0 +1,9 @@
+import { useCallback,useEffect,useState,type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { detectionsApi } from '../../api/detections';
+import { EmptyState,PageHeader,PageShell } from '../../components/ui';
+import { Panel } from './components';
+
+export function useDetectionPage<T=Record<string,unknown>>(resource:string,params:Record<string,unknown>={}){const [data,setData]=useState<{items:T[];total:number}|null>(null);const [error,setError]=useState('');const key=JSON.stringify(params);const load=useCallback(()=>detectionsApi.list<T>(resource,params).then(setData).catch(()=>setError(`Unable to load ${resource}.`)),[resource,key]);useEffect(()=>{void load()},[load]);return {data,error,load}}
+export function DetectionLayout({title,subtitle,actions,children}:{title:string;subtitle:string;actions?:ReactNode;children:ReactNode}){return <PageShell><PageHeader title={title} subtitle={subtitle} actions={actions}/><div className="space-y-5">{children}</div></PageShell>}
+export function DetectionTable({title,items,columns,detailBase}:{title:string;items:Array<Record<string,unknown>>;columns:Array<[string,string,((x:Record<string,unknown>)=>ReactNode)?]>;detailBase?:string}){return <Panel title={title}>{items.length?<div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{columns.map(x=><th key={x[0]} className="p-3">{x[1]}</th>)}{detailBase&&<th>Action</th>}</tr></thead><tbody>{items.map(item=><tr key={String(item.id)} className="border-t">{columns.map(([key,,render])=><td key={key} className="p-3">{render?render(item):String(item[key]??'—')}</td>)}{detailBase&&<td><Link className="text-primary" to={`${detailBase}/${String(item.id)}`}>View</Link></td>}</tr>)}</tbody></table></div>:<EmptyState title="No records" description="No detection engineering records match this view."/>}</Panel>}

@@ -79,6 +79,19 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
             return {"threat_intel:export"}, True
         return {"threat_intel:manage"}, True
 
+    if path.startswith("/api/detections"):
+        if read:
+            return ({"detections:export"} if path.endswith("/download") else {"detections:view"}), True
+        if "/imports" in path:
+            return {"detections:import"}, True
+        if "/executions" in path or path.endswith("/tests/run"):
+            return {"detections:execute"}, True
+        if "/matches/" in path:
+            return {"detections:review"}, True
+        if "/reports" in path:
+            return {"detections:export"}, True
+        return {"detections:manage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:

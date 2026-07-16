@@ -123,3 +123,20 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Remove the CSRF header from a mutation and confirm HTTP 403. Confirm anonymous is 401 and Registered User is 403.
 - [ ] Inspect browser Network while creating/importing/correlating/reporting; confirm no request targets an external host.
 - [ ] Verify keyboard focus, narrow/mobile tables/forms, loading, empty, error, and long-value wrapping states.
+
+## Detection Engineering
+
+- [ ] Sign in as Administrator; refresh every `/detections` route and check loading, empty, error, keyboard-focus, responsive-table, and console states.
+- [ ] Create a native rule with one positive and one negative synthetic test; run tests and verify activation is blocked until both pass.
+- [ ] Edit the rule, inspect immutable version hashes, compare versions, and confirm rollback creates another version without deleting history.
+- [ ] Preview/import safe Sigma YAML and JSON; inspect unsupported-field and unknown ATT&CK-tag warnings.
+- [ ] Confirm YAML anchors/aliases, custom tags, malformed conditions, excessive depth, wildcards, fields, rules, and file sizes fail safely.
+- [ ] Inspect all four protected demonstration packs and confirm non-administrators clone rather than modify system content.
+- [ ] Open ATT&CK Coverage and verify covered/uncovered local techniques, local-subset disclaimer, accessible labels, and technique filters.
+- [ ] Run a bounded historical execution twice and confirm deterministic ordering, match fingerprints, no endless duplicates, and unchanged source events.
+- [ ] Mark one match false positive and confirm the disposition persists. Create an expiring suppression and confirm rerun produces a countable suppressed match.
+- [ ] Confirm alert promotion and case escalation both require explicit confirmation and their additional permissions.
+- [ ] Generate a report and verify all 24 sections, redaction/escaping, defanged URL text, sandboxed preview, and absence of remote assets/scripts.
+- [ ] Search rules, packs, techniques, matches, executions, suppressions, and reports; verify internal navigation and dashboard detection metrics.
+- [ ] Sign in as Analyst, Auditor, Executive Viewer, Registered User, and anonymously; verify the documented sidebar, route, API, and mutation matrix.
+- [ ] Remove CSRF from a mutation and verify 403. Inspect Network and confirm no external request, rule download, URL fetch, command, or process execution occurs.
