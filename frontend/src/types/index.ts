@@ -131,6 +131,7 @@ export interface DashboardSummary {
   phishing_active_watchlist_entries: number;
   active_correlation_matches:number;open_incident_cases:number;p1_incident_cases:number;high_critical_incident_cases:number;multi_module_entities:number;
   governance_open_risks:number;governance_high_critical_risks:number;governance_risks_exceeding_appetite:number;governance_control_gaps:number;governance_mappings_awaiting_review:number;governance_active_exceptions:number;
+  threat_intel_active_indicators:number;threat_intel_high_risk_matches:number;threat_intel_recent_imports:number;threat_intel_recent_escalations:number;
   severity_distribution: Record<string, number>;
   recent_scans: Scan[];
   highest_risk_targets: Target[];
@@ -206,6 +207,12 @@ export interface SearchResults {
   phishing_reports: Array<Pick<PhishingReport, 'id' | 'analysis_id' | 'title' | 'created_at'>>;
   unified_entities:UnifiedEntity[];correlation_matches:CorrelationMatch[];incident_cases:IncidentCase[];incident_evidence:IncidentEvidence[];incident_reports:IncidentReport[];
   governance_risks:GovernanceRisk[];governance_frameworks:GovernanceFramework[];governance_controls:GovernanceControl[];governance_mappings:GovernanceControlMapping[];governance_treatments:RiskTreatmentPlan[];governance_exceptions:RiskException[];governance_evidence_packages:GovernanceEvidencePackage[];governance_reviews:GovernanceReview[];governance_reports:GovernanceReport[];
+  threat_indicators:Array<{id:number;indicator_type:string;display_value:string;severity:string;confidence:number;active:boolean}>;
+  threat_sources:Array<{id:number;name:string;source_type:string;reliability:number;enabled:boolean}>;
+  threat_watchlists:Array<{id:number;name:string;enabled:boolean;system_owned:boolean}>;
+  threat_campaigns:Array<{id:number;name:string;severity:string;confidence:number;active:boolean}>;
+  threat_matches:Array<{id:number;indicator_id:number;status:string;risk_score:number;module:string}>;
+  threat_reports:Array<{id:number;title:string;report_type:string;defanged:boolean;created_at:string}>;
   operations:Array<{id:number;kind:string;title:string;status:string;internal_path:string}>;
 }
 export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}

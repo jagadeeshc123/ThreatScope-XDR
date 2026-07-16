@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 APPLICATION_NAME = "ThreatScope XDR"
-SCHEMA_IDENTIFIER = "threatscope-schema-v11"
+SCHEMA_IDENTIFIER = "threatscope-schema-v13"
 BACKUP_MANIFEST_VERSION = "1"
 EXPORT_MANIFEST_VERSION = "1"
 

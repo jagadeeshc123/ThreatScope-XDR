@@ -66,6 +66,19 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
         if method == "PATCH": return {"phishing:manage_disposition"}, True
         return {"phishing:analyze"}, True
 
+    if path.startswith("/api/threat-intel"):
+        if read:
+            return ({"threat_intel:export"} if path.endswith("/download") else {"threat_intel:view"}), True
+        if "/imports" in path:
+            return {"threat_intel:import"}, True
+        if "/correlation" in path:
+            return {"threat_intel:correlate"}, True
+        if "/matches/" in path and (path.endswith("/review") or path.endswith("/escalate")):
+            return {"threat_intel:manage", "threat_intel:correlate"}, False
+        if "/reports" in path:
+            return {"threat_intel:export"}, True
+        return {"threat_intel:manage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:
@@ -89,4 +102,3 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
         if "/reviews" in path: return {"governance:manage_reviews"}, True
         return {"governance:manage_risks"}, True
     return set(), True
-

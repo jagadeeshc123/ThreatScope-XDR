@@ -60,6 +60,10 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
     governance_control_gaps=db.query(models.GovernanceControlMapping).filter_by(mapping_status="candidate").count()
     governance_mappings_awaiting_review=db.query(models.GovernanceControlMapping).filter_by(mapping_status="candidate").count()
     governance_active_exceptions=db.query(models.RiskException).filter_by(status="approved").count()
+    threat_intel_active_indicators=db.query(models.ThreatIndicator).filter(models.ThreatIndicator.active.is_(True),models.ThreatIndicator.revoked.is_(False),models.ThreatIndicator.false_positive.is_(False),or_(models.ThreatIndicator.valid_until.is_(None),models.ThreatIndicator.valid_until>=now)).count()
+    threat_intel_high_risk_matches=db.query(models.IndicatorMatch).filter(models.IndicatorMatch.risk_score>=60,models.IndicatorMatch.status.notin_(["false_positive","accepted_risk"])).count()
+    threat_intel_recent_imports=db.query(models.ThreatIntelImport).filter(models.ThreatIntelImport.completed_at>=now-__import__('datetime').timedelta(days=7)).count()
+    threat_intel_recent_escalations=db.query(models.IndicatorMatch).filter(models.IndicatorMatch.status=="escalated",models.IndicatorMatch.reviewed_at>=now-__import__('datetime').timedelta(days=30)).count()
     
     # Failed and in-progress scans do not contain assessment scores.
     avg_risk = db.query(func.avg(models.Scan.risk_score)).filter(models.Scan.status == "completed").scalar() or 0.0
@@ -106,6 +110,8 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         open_incident_cases = p1_incident_cases = high_critical_incident_cases = 0
     if "governance:read" not in permissions:
         governance_open_risks = governance_high_critical_risks = governance_risks_exceeding_appetite = governance_control_gaps = governance_mappings_awaiting_review = governance_active_exceptions = 0
+    if "threat_intel:view" not in permissions and "correlation:read" not in permissions:
+        threat_intel_active_indicators = threat_intel_high_risk_matches = threat_intel_recent_imports = threat_intel_recent_escalations = 0
     return schemas.DashboardSummary(
         total_targets=total_targets,
         total_scans=total_scans,
@@ -150,6 +156,10 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         governance_control_gaps=governance_control_gaps,
         governance_mappings_awaiting_review=governance_mappings_awaiting_review,
         governance_active_exceptions=governance_active_exceptions,
+        threat_intel_active_indicators=threat_intel_active_indicators,
+        threat_intel_high_risk_matches=threat_intel_high_risk_matches,
+        threat_intel_recent_imports=threat_intel_recent_imports,
+        threat_intel_recent_escalations=threat_intel_recent_escalations,
         severity_distribution=distribution,
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets,

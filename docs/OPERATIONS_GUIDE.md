@@ -9,3 +9,6 @@ Runtime directories are configurable and generated beneath an allowlisted base. 
 ## Local account operations
 
 From `backend/`, use `python scripts/manage_accounts.py list`, `create-admin`, `reset-password --identifier user@example.com`, or `disable --identifier smoke.admin`. The list command shows only ID, username, masked email, status, roles, and demo status. It never displays passwords, hashes, sessions, MFA secrets, or recovery codes. Owner administrators may be added while smoke-test users exist; those records are tests, not default credentials. Registration approvals are managed under Administration / Registrations, and no email notification is sent.
+# Threat-intelligence operations
+
+Use `/api/threat-intel/correlation/run` only for bounded scans of existing database records. A failed run rolls back its new sightings/matches and records a failed run manifest; previous matches remain intact. Monitor Phase 13 table health in Operations diagnostics. Database backups include Phase 13 automatically. Retention policies for old IOC import manifests and completed/failed correlation-run manifests are dry-run-first; indicators are retained when they expire. No threat-intelligence operation requires outbound connectivity.

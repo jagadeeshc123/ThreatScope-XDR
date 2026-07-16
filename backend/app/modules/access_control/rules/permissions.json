@@ -73,5 +73,10 @@
   ["operations:maintenance", "Manage operational jobs", "Operations"],
   ["operations:demo_manage", "Manage the synthetic demo environment", "Operations"],
   ["operations:release", "Build local release candidates", "Operations"],
-  ["operations:inventory", "View and generate software inventory", "Operations"]
+  ["operations:inventory", "View and generate software inventory", "Operations"],
+  ["threat_intel:view", "View threat-intelligence data", "Threat Intelligence"],
+  ["threat_intel:import", "Import bounded IOC data", "Threat Intelligence"],
+  ["threat_intel:manage", "Manage indicators, sources, watchlists, and campaigns", "Threat Intelligence"],
+  ["threat_intel:correlate", "Run stored-data IOC correlation and review matches", "Threat Intelligence"],
+  ["threat_intel:export", "Generate and export threat-intelligence reports", "Threat Intelligence"]
 ]

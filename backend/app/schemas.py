@@ -196,6 +196,10 @@ class DashboardSummary(BaseModel):
     governance_control_gaps: int = 0
     governance_mappings_awaiting_review: int = 0
     governance_active_exceptions: int = 0
+    threat_intel_active_indicators: int = 0
+    threat_intel_high_risk_matches: int = 0
+    threat_intel_recent_imports: int = 0
+    threat_intel_recent_escalations: int = 0
     severity_distribution: dict
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
@@ -317,4 +321,10 @@ class SearchResults(BaseModel):
     governance_evidence_packages: List[dict] = []
     governance_reviews: List[dict] = []
     governance_reports: List[dict] = []
+    threat_indicators: List[dict] = []
+    threat_sources: List[dict] = []
+    threat_watchlists: List[dict] = []
+    threat_campaigns: List[dict] = []
+    threat_matches: List[dict] = []
+    threat_reports: List[dict] = []
     operations: List[dict] = []

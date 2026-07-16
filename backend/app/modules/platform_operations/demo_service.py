@@ -32,5 +32,10 @@ def seed(db: Session) -> dict:
 def reset(db: Session) -> dict:
     require_demo_mode(); targets = db.query(Target).filter_by(name=DEMO_TARGET_NAME, environment="synthetic-demo").all(); count = len(targets)
     for target in targets: db.delete(target)
+    from app.modules.threat_intelligence.models import ThreatIndicator, ThreatIntelSource
+    demo_indicators = db.query(ThreatIndicator).filter(ThreatIndicator.tags_json.like('%"threatscope-demo"%')).all()
+    for indicator in demo_indicators: db.delete(indicator)
+    demo_sources = db.query(ThreatIntelSource).filter_by(name="ThreatScope Synthetic Demo Intelligence", system_owned=True).all()
+    for source in demo_sources: db.delete(source)
     add_activity(db, "demo_reset", f"Removed {count} demo-owned target records; analyst records were preserved.", "operational_demo", None); notify(db,"Demo reset succeeded",f"Removed {count} demo-owned records and preserved analyst data.","success","operational_demo",None); db.commit()
-    return {**status(db), "deleted_demo_records": count, "non_demo_records_preserved": True}
+    return {**status(db), "deleted_demo_records": count + len(demo_indicators) + len(demo_sources), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "non_demo_records_preserved": True}

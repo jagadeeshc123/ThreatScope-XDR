@@ -101,3 +101,25 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Inspect cookies, browser storage, and requests: session cookie is HttpOnly, no browser token exists, and authenticated mutations use CSRF.
 - [ ] Check the console and network panel for route errors, external identity calls, Google scripts, mailbox calls, repeated requests, or exposed secrets.
 - [ ] Check responsive layout and visible keyboard focus for landing, login, signup, status, registration list, and approval/rejection dialogs.
+# Phase 13 threat-intelligence checks
+
+- [ ] Sign in as Administrator and refresh all `/threat-intelligence` routes directly without a console error.
+- [ ] Create domain, URL, email, IP, CIDR, and hash indicators; verify server normalization and safe defanged display.
+- [ ] Confirm Copy is explicit and malicious URLs/domains/emails/IPs are text, not anchors, previews, favicons, or open-in-browser controls.
+- [ ] Re-enter the same normalized IOC; verify the bounded duplicate response, stable identity, merged tags, and no revoked reactivation.
+- [ ] Import a CSV with valid, duplicate, and invalid rows; verify accepted/duplicate/rejected counts and that only a manifest remains.
+- [ ] Import equivalent JSON and the documented STIX subset; verify unsupported objects become bounded warnings.
+- [ ] Create a watchlist, add/remove indicators, and confirm indicator records remain. Confirm protected watchlist identity cannot be changed.
+- [ ] Create a campaign with indicators and inspect the data-only graph/causality disclaimer.
+- [ ] Add and remove an analyst relationship; confirm self/duplicate relationships fail safely.
+- [ ] Seed stored observations in existing modules, run correlation twice, and confirm sightings/matches do not duplicate.
+- [ ] Inspect exact URL, URL-host, email, hash, IP, and CIDR membership matches and their risk-factor explanations.
+- [ ] Review a match as false positive and confirm status/counts update. Review another as confirmed.
+- [ ] Try escalation without confirmation, then explicitly confirm and verify the new/linked incident case and audit event.
+- [ ] Generate the default report; verify all 20 sections, defanged values, no active links, no remote assets/scripts, and refresh-safe details.
+- [ ] Search for an indicator, source, watchlist, campaign, match, and report; follow each internal result.
+- [ ] Verify the four Threat Intelligence dashboard metrics and responsive card layout.
+- [ ] Sign in as Security Analyst, Auditor, Executive Viewer, Registered User, and anonymously; verify sidebar/actions/API access follow the documented matrix.
+- [ ] Remove the CSRF header from a mutation and confirm HTTP 403. Confirm anonymous is 401 and Registered User is 403.
+- [ ] Inspect browser Network while creating/importing/correlating/reporting; confirm no request targets an external host.
+- [ ] Verify keyboard focus, narrow/mobile tables/forms, loading, empty, error, and long-value wrapping states.

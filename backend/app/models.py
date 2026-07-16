@@ -241,3 +241,9 @@ from app.modules.platform_operations.models import (  # noqa: E402,F401
     BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact,
     RestoreRecord, RetentionPolicy, RetentionRun,
 )
+from app.modules.threat_intelligence.models import (  # noqa: E402,F401
+    ThreatIntelSource, ThreatIndicator, ThreatIntelImport, IndicatorSighting,
+    IndicatorMatch, ThreatWatchlist, ThreatWatchlistEntry, ThreatCampaign,
+    ThreatCampaignIndicator, IndicatorRelationship, ThreatCorrelationRun,
+    ThreatIntelReport,
+)

@@ -12,3 +12,10 @@
 - Local email ownership is not verified and no verification or password-reset email is sent.
 - Account recovery requires a local administrator using `scripts/manage_accounts.py`.
 - Local authentication does not connect to Google, Gmail, or another external identity provider.
+# Threat intelligence
+
+- IOC intelligence is local and offline; there is no external reputation lookup, automatic feed/TAXII polling, DNS resolution, URL fetch, or commercial integration.
+- STIX support is a bounded useful subset, not full STIX/TAXII compatibility.
+- Correlation uses exact normalized values, URL host context, and explicit CIDR membership; it does not use fuzzy hash or IP matching.
+- Scores are deterministic rules, not machine learning or an external reputation claim.
+- Watchlists and cases are analyst workflow data only; ThreatScope XDR does not block traffic or create cases without explicit confirmation.

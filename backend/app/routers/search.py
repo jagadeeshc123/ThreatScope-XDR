@@ -5,6 +5,7 @@ from app import schemas, models
 from app.database import get_db
 from app.modules.api_security.service import endpoint_to_schema, jwt_to_schema, report_to_schema
 from app.modules.access_control.role_service import effective_permissions
+from app.modules.threat_intelligence.normalization import defang
 
 router = APIRouter()
 
@@ -124,6 +125,12 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     governance_evidence_packages=db.query(models.GovernanceEvidencePackage).filter(or_(models.GovernanceEvidencePackage.package_key.ilike(query),models.GovernanceEvidencePackage.title.ilike(query),models.GovernanceEvidencePackage.description.ilike(query))).limit(10).all()
     governance_reviews=db.query(models.GovernanceReview).filter(or_(models.GovernanceReview.review_key.ilike(query),models.GovernanceReview.title.ilike(query),models.GovernanceReview.scope_summary.ilike(query))).limit(10).all()
     governance_reports=db.query(models.GovernanceReport).filter(models.GovernanceReport.title.ilike(query)).limit(10).all()
+    threat_indicators=db.query(models.ThreatIndicator).filter(or_(models.ThreatIndicator.normalized_value.ilike(query),models.ThreatIndicator.title.ilike(query),models.ThreatIndicator.tags_json.ilike(query))).limit(15).all()
+    threat_sources=db.query(models.ThreatIntelSource).filter(or_(models.ThreatIntelSource.name.ilike(query),models.ThreatIntelSource.description.ilike(query))).limit(10).all()
+    threat_watchlists=db.query(models.ThreatWatchlist).filter(or_(models.ThreatWatchlist.name.ilike(query),models.ThreatWatchlist.description.ilike(query))).limit(10).all()
+    threat_campaigns=db.query(models.ThreatCampaign).filter(or_(models.ThreatCampaign.name.ilike(query),models.ThreatCampaign.description.ilike(query))).limit(10).all()
+    threat_matches=db.query(models.IndicatorMatch).join(models.ThreatIndicator).filter(or_(models.ThreatIndicator.normalized_value.ilike(query),models.IndicatorMatch.status.ilike(query))).limit(10).all()
+    threat_reports=db.query(models.ThreatIntelReport).filter(models.ThreatIntelReport.title.ilike(query)).limit(10).all()
     operations = []
     if "operations:view" in permissions:
         from app.modules.platform_operations.models import BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact, RestoreRecord, RetentionPolicy, RetentionRun
@@ -142,6 +149,7 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     if "correlation:read" not in permissions: unified_entities = correlation_matches = []
     if "cases:read" not in permissions: incident_cases = incident_evidence = incident_reports = []
     if "governance:read" not in permissions: governance_risks = governance_frameworks = governance_controls = governance_mappings = governance_treatments = governance_exceptions = governance_evidence_packages = governance_reviews = governance_reports = []
+    if "threat_intel:view" not in permissions: threat_indicators = threat_sources = threat_watchlists = threat_campaigns = threat_matches = threat_reports = []
     return schemas.SearchResults(
         targets=targets,
         scans=scans,
@@ -199,5 +207,11 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         governance_evidence_packages=[{"id":x.id,"package_key":x.package_key,"title":x.title,"status":x.status} for x in governance_evidence_packages],
         governance_reviews=[{"id":x.id,"review_key":x.review_key,"title":x.title,"status":x.status,"review_type":x.review_type} for x in governance_reviews],
         governance_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at} for x in governance_reports],
+        threat_indicators=[{"id":x.id,"indicator_type":x.indicator_type,"display_value":defang(x.normalized_value,x.indicator_type),"severity":x.severity,"confidence":x.confidence,"active":x.active and not x.revoked} for x in threat_indicators],
+        threat_sources=[{"id":x.id,"name":x.name,"source_type":x.source_type,"reliability":x.reliability,"enabled":x.enabled} for x in threat_sources],
+        threat_watchlists=[{"id":x.id,"name":x.name,"enabled":x.enabled,"system_owned":x.system_owned} for x in threat_watchlists],
+        threat_campaigns=[{"id":x.id,"name":x.name,"severity":x.severity,"confidence":x.confidence,"active":x.active} for x in threat_campaigns],
+        threat_matches=[{"id":x.id,"indicator_id":x.indicator_id,"status":x.status,"risk_score":x.risk_score,"module":x.sighting.module} for x in threat_matches],
+        threat_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"defanged":x.defanged,"created_at":x.created_at} for x in threat_reports],
         operations=operations,
     )

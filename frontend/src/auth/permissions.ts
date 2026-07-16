@@ -14,6 +14,8 @@ export const routePermissions: Array<[string, string]> = [
   ['/phishing-defense/analyze', 'phishing:analyze'], ['/phishing-defense/watchlist', 'phishing:read'], ['/phishing-defense', 'phishing:read'],
   ['/correlation/cases', 'cases:read'], ['/correlation', 'correlation:read'],
   ['/governance', 'governance:read'], ['/search', 'search:use'], ['/notifications', 'notifications:read'],
+  ['/threat-intelligence/indicators/new', 'threat_intel:manage'], ['/threat-intelligence/imports', 'threat_intel:import'],
+  ['/threat-intelligence/reports', 'threat_intel:export'], ['/threat-intelligence', 'threat_intel:view'],
   ['/settings', 'system:manage'], ['/profile', 'profile:manage'],
 ];
 

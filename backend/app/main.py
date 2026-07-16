@@ -71,11 +71,21 @@ def startup_event():
         seed_policies(db)
         from app.modules.soc_monitor.detection_rules import seed_default_rules
         seed_default_rules(db)
+        from app.modules.threat_intelligence.service import seed_watchlists
+        seed_watchlists(db)
     finally:
         db.close()
     # Environment bootstrap is explicit and no-op unless all bootstrap variables are supplied.
     from scripts.create_admin import bootstrap_from_environment
     bootstrap_from_environment()
+    # A first-run environment administrator is created after the initial seed transaction.
+    # Re-open the session so protected IOC watchlists are also present on that first run.
+    db = SessionLocal()
+    try:
+        from app.modules.threat_intelligence.service import seed_watchlists
+        seed_watchlists(db)
+    finally:
+        db.close()
 
 
 @app.get("/health")
@@ -92,6 +102,7 @@ from app.routers import dashboard, notifications, policies, profile, reports, sc
 from app.modules.api_security.router import router as api_security_router
 from app.modules.document_threats.router import router as document_threats_router
 from app.modules.governance.router import router as governance_router
+from app.modules.threat_intelligence.router import router as threat_intel_router
 from app.modules.phishing_defense.router import router as phishing_defense_router
 from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.unified_correlation.router import router as correlation_router
@@ -120,3 +131,4 @@ app.include_router(document_threats_router, prefix="/api/document-threats", tags
 app.include_router(phishing_defense_router, prefix="/api/phishing-defense", tags=["Phishing Defense"], dependencies=protected)
 app.include_router(correlation_router, prefix="/api/correlation", tags=["Correlation & Cases"], dependencies=protected)
 app.include_router(governance_router, prefix="/api/governance", tags=["Governance & Reporting"], dependencies=protected)
+app.include_router(threat_intel_router, prefix="/api/threat-intel", tags=["Threat Intelligence"], dependencies=protected)

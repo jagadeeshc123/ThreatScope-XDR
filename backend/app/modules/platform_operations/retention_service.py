@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models import Notification
 from app.modules.access_control.models import AuthSession, LoginAttempt, MfaLoginChallenge
 from app.modules.soc_monitor.models import SocActivity
+from app.modules.threat_intelligence.models import ThreatCorrelationRun, ThreatIntelImport
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -19,6 +20,8 @@ DEFAULTS = [
     ("used_mfa_challenges", "Used MFA challenges", "used_mfa_challenges", 7, 20),
     ("read_notifications", "Old read notifications", "read_notifications", 90, 20),
     ("old_activity", "Old operational activity", "old_activity", 180, 100),
+    ("threat_intel_import_manifests", "Old threat-intelligence import manifests", "threat_intel_import_manifests", 365, 50),
+    ("threat_correlation_runs", "Old completed threat-intelligence correlation runs", "threat_correlation_runs", 180, 50),
 ]
 
 
@@ -39,6 +42,8 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "used_mfa_challenges": return MfaLoginChallenge, [MfaLoginChallenge.used_at.is_not(None), MfaLoginChallenge.used_at < cutoff]
     if policy.entity_type == "read_notifications": return Notification, [Notification.is_read.is_(True), Notification.created_at < cutoff]
     if policy.entity_type == "old_activity": return SocActivity, [SocActivity.created_at < cutoff, SocActivity.entity_type.like("operational_%")]
+    if policy.entity_type == "threat_intel_import_manifests": return ThreatIntelImport, [ThreatIntelImport.completed_at.is_not(None), ThreatIntelImport.completed_at < cutoff]
+    if policy.entity_type == "threat_correlation_runs": return ThreatCorrelationRun, [ThreatCorrelationRun.status.in_(["completed", "failed"]), ThreatCorrelationRun.completed_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 

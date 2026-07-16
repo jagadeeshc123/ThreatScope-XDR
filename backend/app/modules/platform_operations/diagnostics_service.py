@@ -48,7 +48,7 @@ def security_diagnostics(db: Session) -> dict:
 
 
 def module_diagnostics() -> dict:
-    expected = ["web_exposure", "api_security", "soc_monitor", "document_threats", "phishing_defense", "unified_correlation", "governance", "access_control", "platform_operations"]
+    expected = ["web_exposure", "api_security", "soc_monitor", "document_threats", "phishing_defense", "unified_correlation", "governance", "threat_intelligence", "access_control", "platform_operations"]
     return {"registered_modules": [{"module": name, "registered": True} for name in expected], "registered_count": len(expected)}
 
 
