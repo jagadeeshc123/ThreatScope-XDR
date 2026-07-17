@@ -8,6 +8,7 @@ from app.modules.access_control.models import AuthSession, LoginAttempt, MfaLogi
 from app.modules.soc_monitor.models import SocActivity
 from app.modules.threat_intelligence.models import ThreatCorrelationRun, ThreatIntelImport
 from app.modules.detection_engineering.models import DetectionExecution, DetectionReport
+from app.modules.vulnerability_management.models import AssetSynchronizationRun, VulnerabilityIngestionRun
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -25,6 +26,8 @@ DEFAULTS = [
     ("threat_correlation_runs", "Old completed threat-intelligence correlation runs", "threat_correlation_runs", 180, 50),
     ("detection_executions", "Old completed detection executions", "detection_executions", 180, 50),
     ("detection_reports", "Old generated detection reports", "detection_reports", 365, 25),
+    ("vm_asset_sync_runs", "Old completed asset synchronization runs", "vm_asset_sync_runs", 180, 25),
+    ("vm_ingestion_runs", "Old completed vulnerability ingestion runs", "vm_ingestion_runs", 180, 25),
 ]
 
 
@@ -49,6 +52,8 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "threat_correlation_runs": return ThreatCorrelationRun, [ThreatCorrelationRun.status.in_(["completed", "failed"]), ThreatCorrelationRun.completed_at < cutoff]
     if policy.entity_type == "detection_executions": return DetectionExecution, [DetectionExecution.status.in_(["completed", "failed", "cancelled"]), DetectionExecution.completed_at < cutoff]
     if policy.entity_type == "detection_reports": return DetectionReport, [DetectionReport.created_at < cutoff]
+    if policy.entity_type == "vm_asset_sync_runs": return AssetSynchronizationRun, [AssetSynchronizationRun.status.in_(["completed", "failed"]), AssetSynchronizationRun.completed_at < cutoff]
+    if policy.entity_type == "vm_ingestion_runs": return VulnerabilityIngestionRun, [VulnerabilityIngestionRun.status.in_(["completed", "failed"]), VulnerabilityIngestionRun.completed_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 

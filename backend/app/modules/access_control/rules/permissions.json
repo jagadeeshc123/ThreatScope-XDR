@@ -84,5 +84,16 @@
   ["detections:import", "Validate and import bounded Sigma rules", "Detection Engineering"],
   ["detections:execute", "Run bounded detection tests and historical executions", "Detection Engineering"],
   ["detections:review", "Review detection matches and explicitly promote outcomes", "Detection Engineering"],
-  ["detections:export", "Generate and export detection engineering reports", "Detection Engineering"]
+  ["detections:export", "Generate and export detection engineering reports", "Detection Engineering"],
+  ["assets:view", "View unified asset inventory", "Vulnerability Management"],
+  ["assets:manage", "Manage unified asset inventory", "Vulnerability Management"],
+  ["vulnerabilities:view", "View vulnerability and remediation records", "Vulnerability Management"],
+  ["vulnerabilities:aggregate", "View aggregate vulnerability and SLA metrics", "Vulnerability Management"],
+  ["vulnerabilities:triage", "Triage and assign vulnerabilities", "Vulnerability Management"],
+  ["vulnerabilities:remediate", "Manage remediation plans and tasks", "Vulnerability Management"],
+  ["vulnerabilities:verify", "Perform bounded vulnerability verification", "Vulnerability Management"],
+  ["vulnerabilities:accept_risk", "Request vulnerability risk acceptance", "Vulnerability Management"],
+  ["vulnerabilities:approve_risk", "Approve vulnerability risk acceptance", "Vulnerability Management"],
+  ["vulnerabilities:export", "Generate vulnerability-management reports", "Vulnerability Management"],
+  ["sla:manage", "Manage vulnerability SLA policies", "Vulnerability Management"]
 ]

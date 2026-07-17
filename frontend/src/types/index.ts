@@ -137,6 +137,7 @@ export interface DashboardSummary {
   recent_scans: Scan[];
   highest_risk_targets: Target[];
   operations: {readiness_status:string;degraded_check_count:number;latest_backup_at:string|null;failed_job_count:number;pending_restore_count:number;demo_mode:boolean;release_version:string}|null;
+  vulnerability_management: {active_vulnerabilities:number;critical_high_vulnerabilities:number;overdue_vulnerabilities:number;due_within_seven_days:number;unassigned_vulnerabilities:number;recent_resolutions:number;recent_regressions:number}|null;
 }
 
 export interface Notification {
@@ -221,6 +222,15 @@ export interface SearchResults {
   detection_executions:Array<{id:number;status:string;mode:string;records_scanned:number;matches_found:number}>;
   detection_suppressions:Array<{id:number;name:string;description:string;enabled:boolean}>;
   detection_reports:Array<{id:number;title:string;report_type:string;created_at:string}>;
+  vm_assets:Array<{id:number;name:string;asset_type:string;criticality:string;environment:string;internal_path:string}>;
+  vm_vulnerabilities:Array<{id:number;title:string;severity:string;priority_score:number;status:string;internal_path:string}>;
+  vm_remediation_plans:Array<{id:number;title:string;status:string;priority:string;internal_path:string}>;
+  vm_remediation_tasks:Array<{id:number;title:string;status:string;plan_id:number;internal_path:string}>;
+  vm_sla_policies:Array<{id:number;name:string;enabled:boolean;target_days:number;internal_path:string}>;
+  vm_risk_acceptances:Array<{id:number;vulnerability_id:number;status:string;residual_risk:string;internal_path:string}>;
+  vm_verifications:Array<{id:number;vulnerability_id:number;status:string;verification_type:string;internal_path:string}>;
+  vm_remediation_templates:Array<{id:number;title:string;category:string;system_owned:boolean;internal_path:string}>;
+  vm_reports:Array<{id:number;title:string;report_type:string;created_at:string;internal_path:string}>;
   operations:Array<{id:number;kind:string;title:string;status:string;internal_path:string}>;
 }
 export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}

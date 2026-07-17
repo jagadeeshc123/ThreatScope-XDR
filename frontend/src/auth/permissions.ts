@@ -1,4 +1,5 @@
 export const routePermissions: Array<[string, string]> = [
+  ['/vulnerability-management/reports', 'vulnerabilities:export'], ['/vulnerability-management', 'vulnerabilities:view'],
   ['/operations/backups', 'operations:backup'], ['/operations/restores', 'operations:restore'],
   ['/operations/exports', 'operations:export'], ['/operations/retention', 'operations:retention'],
   ['/operations/demo', 'operations:demo_manage'], ['/operations/releases', 'operations:release'],

@@ -1,5 +1,9 @@
 # Security model
 
+## Phase 15 vulnerability-management boundary
+
+Vulnerability management reads only local stored ThreatScope records. Asset synchronization never resolves DNS or probes a network. Ingestion eligibility prevents ordinary SOC events, IOC matches, and detection matches from automatically becoming vulnerabilities. Imported evidence is hostile: server responses truncate and redact it, reports escape and defang it, UI views render it as inert text, and report frames are sandboxed. Resolution is server-authoritative and requires passed verification evidence. All mutations are authenticated, CSRF protected, permission checked, bounded, and audit chained. No Phase 15 path invokes a shell, subprocess, remote command, external URL, patch mechanism, or ticketing service.
+
 ThreatScope uses local Argon2id accounts, opaque hashed server-side sessions in HttpOnly cookies, per-session CSRF tokens, TOTP MFA with encrypted secrets, one-time hashed recovery codes, deterministic RBAC, and a hash-chained `SecurityAuditEvent` ledger. Operational permissions are separately assigned to administrator, analyst, and auditor roles; backend authorization remains authoritative.
 
 Full database backups are restricted sensitive recovery artifacts. Safe export ZIPs instead include bounded redacted JSON summaries and never include authentication records, databases, environment values, original PDFs, emails, attachments, raw logs, or executable content. Validation never extracts untrusted archives or contacts external systems.

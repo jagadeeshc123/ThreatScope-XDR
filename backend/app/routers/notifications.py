@@ -20,6 +20,11 @@ ENTITY_PERMISSIONS = {
     "operational_export": "operations:export", "operational_release": "operations:release",
     "operational_job": "operations:maintenance", "operational_retention": "operations:retention",
     "operational_demo": "operations:demo_manage", "operational_configuration": "operations:diagnostics",
+    "vm_asset": "assets:view", "vm_asset_sync": "assets:view",
+    "vm_vulnerability": "vulnerabilities:view", "vm_ingestion": "vulnerabilities:view",
+    "vm_remediation_plan": "vulnerabilities:view", "vm_remediation_task": "vulnerabilities:view",
+    "vm_sla": "vulnerabilities:view", "vm_risk_acceptance": "vulnerabilities:view",
+    "vm_verification": "vulnerabilities:view", "vm_report": "vulnerabilities:export",
 }
 
 def _visible(db, request, item):

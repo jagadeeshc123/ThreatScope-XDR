@@ -13,7 +13,7 @@ from app.version import version_info
 
 from .configuration_service import get_operations_config, validate_configuration
 
-REQUIRED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "operational_jobs", "backup_records"}
+REQUIRED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "operational_jobs", "backup_records", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence"}
 
 
 def _check(key, category, fn):

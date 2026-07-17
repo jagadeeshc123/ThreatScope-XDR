@@ -252,3 +252,11 @@ from app.modules.detection_engineering.models import (  # noqa: E402,F401
     AttackTechnique, DetectionRuleTechnique, DetectionTestCase, DetectionExecution,
     DetectionMatch, DetectionSuppression, DetectionReport,
 )
+from app.modules.vulnerability_management.models import (  # noqa: E402,F401
+    Asset, AssetAlias, AssetRelationship, VulnerabilityRecord,
+    VulnerabilityOccurrence, VulnerabilityEvidence, RemediationPlan,
+    RemediationTask, VulnerabilityComment, SlaPolicy, RiskAcceptance,
+    VerificationRequest, RemediationTemplate, VulnerabilityReport,
+    AssetSynchronizationRun, VulnerabilityIngestionRun,
+    VulnerabilityStatusHistory,
+)

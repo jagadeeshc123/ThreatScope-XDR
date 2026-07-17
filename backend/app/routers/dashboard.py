@@ -11,6 +11,10 @@ router = APIRouter()
 @router.get("/summary", response_model=schemas.DashboardSummary)
 def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
     permissions = effective_permissions(db, request.state.current_user)
+    vulnerability_management = None
+    if "vulnerabilities:view" in permissions or "vulnerabilities:aggregate" in permissions:
+        from app.modules.vulnerability_management.service import overview as vulnerability_overview
+        vulnerability_management = vulnerability_overview(db, aggregate_only="vulnerabilities:view" not in permissions)
     operations = None
     if "operations:view" in permissions:
         from app.modules.platform_operations.health_service import public_readiness
@@ -177,4 +181,5 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         recent_scans=recent_scans,
         highest_risk_targets=highest_risk_targets,
         operations=operations,
+        vulnerability_management=vulnerability_management,
     )

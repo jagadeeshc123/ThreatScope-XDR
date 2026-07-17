@@ -1,5 +1,12 @@
 # Changelog
 
+## Phase 15 - Unified Vulnerability Management
+
+- Added explicit unified asset inventory and bounded stored-data synchronization.
+- Added eligible finding ingestion, deterministic deduplication, occurrences, scoring, triage, merge/split, and recurrence reopening.
+- Added remediation plans/tasks/library, deterministic SLA, expiring risk acceptance, false-positive evidence, and verification-required resolution.
+- Added 28-section safe static reports, dashboard/search/notification/activity integration, RBAC/audit controls, operations integration, frontend routes, and regression coverage.
+
 ## Phase 14 - Detection Engineering
 
 - Added native and bounded Sigma YAML/JSON rules, static validation, immutable versioning, rollback-as-new-version, and test-gated activation.

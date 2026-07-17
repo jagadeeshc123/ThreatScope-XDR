@@ -1,5 +1,11 @@
 # Operations guide
 
+## Vulnerability-management operations
+
+Run asset synchronization and finding ingestion from the Vulnerability Management overview. Both jobs process at most 5,000 stored records per request and record bounded run history. Repeated runs are safe and idempotent. Administrators may explicitly recalculate no more than 500 active SLA records per request; historical due dates otherwise remain fixed. Backup and restore sentinels include the Phase 15 inventory, vulnerability, occurrence, evidence, remediation, acceptance, and verification tables. Diagnostics list the module and safely count accessible tables. Retention policies may preview and remove old completed synchronization/ingestion runs only; active/resolved vulnerabilities and evidence are not retention targets.
+
+Demo seeding creates one custom asset owned by the exact `platform_operations_demo` source namespace. Demo reset deletes only assets with that marker; synchronized or analyst-created assets and all vulnerability, occurrence, evidence, workflow, exception, verification, and report records are preserved.
+
 `GET /api/health/live` is a minimal public liveness signal. `GET /api/health/ready` is a minimal public readiness signal and returns bounded `503` when a required check fails. Authenticated operators with `operations:diagnostics` can inspect detailed checks, aggregate diagnostics, and setting-name-only configuration validation under `/api/operations`.
 
 Operational jobs are synchronous and bounded; their status, progress, safe summary, and error code are retained. JSON-compatible request logs include request ID, route, method, status, duration, and safe actor ID. Recursive redaction excludes bodies, passwords, cookies, authorization, CSRF, MFA, tokens, environment secrets, and sensitive paths. Security audit events remain the authoritative tamper-evident action record.

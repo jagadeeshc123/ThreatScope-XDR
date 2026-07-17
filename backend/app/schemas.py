@@ -209,6 +209,7 @@ class DashboardSummary(BaseModel):
     recent_scans: List[Scan]
     highest_risk_targets: List[Target]
     operations: Optional[dict] = None
+    vulnerability_management: Optional[dict] = None
 
 class NotificationBase(BaseModel):
     title: str
@@ -339,4 +340,13 @@ class SearchResults(BaseModel):
     detection_executions: List[dict] = []
     detection_suppressions: List[dict] = []
     detection_reports: List[dict] = []
+    vm_assets: List[dict] = []
+    vm_vulnerabilities: List[dict] = []
+    vm_remediation_plans: List[dict] = []
+    vm_remediation_tasks: List[dict] = []
+    vm_sla_policies: List[dict] = []
+    vm_risk_acceptances: List[dict] = []
+    vm_verifications: List[dict] = []
+    vm_remediation_templates: List[dict] = []
+    vm_reports: List[dict] = []
     operations: List[dict] = []

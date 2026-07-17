@@ -138,6 +138,15 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     detection_executions=db.query(models.DetectionExecution).filter(or_(models.DetectionExecution.status.ilike(query),models.DetectionExecution.mode.ilike(query))).limit(10).all()
     detection_suppressions=db.query(models.DetectionSuppression).filter(or_(models.DetectionSuppression.name.ilike(query),models.DetectionSuppression.description.ilike(query))).limit(10).all()
     detection_reports=db.query(models.DetectionReport).filter(models.DetectionReport.title.ilike(query)).limit(10).all()
+    vm_assets=db.query(models.Asset).filter(or_(models.Asset.name.ilike(query),models.Asset.normalized_identifier.ilike(query),models.Asset.description.ilike(query))).limit(15).all()
+    vm_vulnerabilities=db.query(models.VulnerabilityRecord).filter(or_(models.VulnerabilityRecord.title.ilike(query),models.VulnerabilityRecord.description.ilike(query),models.VulnerabilityRecord.category.ilike(query),models.VulnerabilityRecord.weakness_id.ilike(query))).limit(15).all()
+    vm_remediation_plans=db.query(models.RemediationPlan).filter(or_(models.RemediationPlan.title.ilike(query),models.RemediationPlan.objective.ilike(query),models.RemediationPlan.remediation_guidance.ilike(query))).limit(10).all()
+    vm_remediation_tasks=db.query(models.RemediationTask).filter(or_(models.RemediationTask.title.ilike(query),models.RemediationTask.description.ilike(query))).limit(10).all()
+    vm_sla_policies=db.query(models.SlaPolicy).filter(or_(models.SlaPolicy.name.ilike(query),models.SlaPolicy.description.ilike(query))).limit(10).all()
+    vm_risk_acceptances=db.query(models.RiskAcceptance).filter(or_(models.RiskAcceptance.reason.ilike(query),models.RiskAcceptance.compensating_controls.ilike(query))).limit(10).all()
+    vm_verifications=db.query(models.VerificationRequest).filter(or_(models.VerificationRequest.request_note.ilike(query),models.VerificationRequest.result_summary.ilike(query))).limit(10).all()
+    vm_remediation_templates=db.query(models.RemediationTemplate).filter(or_(models.RemediationTemplate.title.ilike(query),models.RemediationTemplate.summary.ilike(query),models.RemediationTemplate.weakness_id.ilike(query))).limit(10).all()
+    vm_reports=db.query(models.VulnerabilityReport).filter(models.VulnerabilityReport.title.ilike(query)).limit(10).all()
     operations = []
     if "operations:view" in permissions:
         from app.modules.platform_operations.models import BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact, RestoreRecord, RetentionPolicy, RetentionRun
@@ -158,6 +167,7 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     if "governance:read" not in permissions: governance_risks = governance_frameworks = governance_controls = governance_mappings = governance_treatments = governance_exceptions = governance_evidence_packages = governance_reviews = governance_reports = []
     if "threat_intel:view" not in permissions: threat_indicators = threat_sources = threat_watchlists = threat_campaigns = threat_matches = threat_reports = []
     if "detections:view" not in permissions: detection_rules = detection_packs = attack_techniques = detection_matches = detection_executions = detection_suppressions = detection_reports = []
+    if "vulnerabilities:view" not in permissions: vm_assets = vm_vulnerabilities = vm_remediation_plans = vm_remediation_tasks = vm_sla_policies = vm_risk_acceptances = vm_verifications = vm_remediation_templates = vm_reports = []
     return schemas.SearchResults(
         targets=targets,
         scans=scans,
@@ -228,5 +238,14 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         detection_executions=[{"id":x.id,"status":x.status,"mode":x.mode,"records_scanned":x.records_scanned,"matches_found":x.matches_found} for x in detection_executions],
         detection_suppressions=[{"id":x.id,"name":x.name,"description":x.description[:240],"enabled":x.enabled} for x in detection_suppressions],
         detection_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at} for x in detection_reports],
+        vm_assets=[{"id":x.id,"name":x.name,"asset_type":x.asset_type,"criticality":x.business_criticality,"environment":x.environment,"internal_path":f"/vulnerability-management/assets/{x.id}"} for x in vm_assets],
+        vm_vulnerabilities=[{"id":x.id,"title":x.title,"severity":x.severity,"priority_score":x.priority_score,"status":x.status,"internal_path":f"/vulnerability-management/vulnerabilities/{x.id}"} for x in vm_vulnerabilities],
+        vm_remediation_plans=[{"id":x.id,"title":x.title,"status":x.status,"priority":x.priority,"internal_path":f"/vulnerability-management/plans/{x.id}"} for x in vm_remediation_plans],
+        vm_remediation_tasks=[{"id":x.id,"title":x.title,"status":x.status,"plan_id":x.plan_id,"internal_path":f"/vulnerability-management/plans/{x.plan_id}"} for x in vm_remediation_tasks],
+        vm_sla_policies=[{"id":x.id,"name":x.name,"enabled":x.enabled,"target_days":x.target_days,"internal_path":"/vulnerability-management/sla"} for x in vm_sla_policies],
+        vm_risk_acceptances=[{"id":x.id,"vulnerability_id":x.vulnerability_id,"status":x.status,"residual_risk":x.residual_risk,"internal_path":"/vulnerability-management/risk-acceptances"} for x in vm_risk_acceptances],
+        vm_verifications=[{"id":x.id,"vulnerability_id":x.vulnerability_id,"status":x.status,"verification_type":x.verification_type,"internal_path":"/vulnerability-management/verifications"} for x in vm_verifications],
+        vm_remediation_templates=[{"id":x.id,"title":x.title,"category":x.category,"system_owned":x.system_owned,"internal_path":"/vulnerability-management/library"} for x in vm_remediation_templates],
+        vm_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at,"internal_path":f"/vulnerability-management/reports/{x.id}"} for x in vm_reports],
         operations=operations,
     )

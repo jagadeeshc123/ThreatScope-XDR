@@ -92,6 +92,24 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
             return {"detections:export"}, True
         return {"detections:manage"}, True
 
+    if path.startswith("/api/vulnerability-management"):
+        if path.rstrip("/").endswith("/overview") and read:
+            return {"vulnerabilities:view", "vulnerabilities:aggregate"}, False
+        if read:
+            if "/assets" in path: return {"assets:view"}, True
+            if "/reports" in path: return {"vulnerabilities:export"}, True
+            return {"vulnerabilities:view"}, True
+        if "/assets" in path: return {"assets:manage"}, True
+        if "/reports" in path: return {"vulnerabilities:export"}, True
+        if "/sla-policies" in path: return {"sla:manage"}, True
+        if "/verifications" in path: return {"vulnerabilities:verify"}, True
+        if "/risk-acceptances/" in path and any(path.endswith(suffix) for suffix in ("/approve", "/reject", "/revoke")):
+            return {"vulnerabilities:approve_risk"}, True
+        if "/risk-acceptances" in path: return {"vulnerabilities:accept_risk"}, True
+        if "/plans" in path or "/tasks" in path or "/remediation-templates" in path:
+            return {"vulnerabilities:remediate"}, True
+        return {"vulnerabilities:triage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:

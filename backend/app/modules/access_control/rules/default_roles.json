@@ -24,6 +24,7 @@
       "governance:read", "governance:synchronize", "governance:manage_risks", "governance:manage_mappings", "governance:manage_treatments", "governance:manage_exceptions", "governance:manage_evidence", "governance:manage_reviews", "governance:generate_reports",
       "threat_intel:view", "threat_intel:import", "threat_intel:manage", "threat_intel:correlate", "threat_intel:export",
       "detections:view", "detections:manage", "detections:import", "detections:execute", "detections:review", "detections:export",
+      "assets:view", "assets:manage", "vulnerabilities:view", "vulnerabilities:triage", "vulnerabilities:remediate", "vulnerabilities:verify", "vulnerabilities:accept_risk", "vulnerabilities:export",
       "operations:view", "operations:diagnostics", "operations:export", "operations:inventory"
     ]
   },
@@ -32,7 +33,7 @@
     "description": "Read-only platform and audit access with integrity verification.",
     "permissions": [
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
-      "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read", "threat_intel:view", "threat_intel:export", "detections:view", "detections:export",
+      "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read", "threat_intel:view", "threat_intel:export", "detections:view", "detections:export", "assets:view", "vulnerabilities:view", "vulnerabilities:export",
       "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all",
       "operations:view", "operations:diagnostics", "operations:inventory"
     ]
@@ -42,7 +43,7 @@
     "description": "High-level dashboards, incident summaries, and governance reporting.",
     "permissions": [
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
-      "correlation:read", "cases:read", "governance:read", "cases:generate_reports", "governance:generate_reports"
+      "correlation:read", "cases:read", "governance:read", "cases:generate_reports", "governance:generate_reports", "vulnerabilities:aggregate"
     ]
   }
 }

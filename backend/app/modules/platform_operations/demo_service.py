@@ -16,7 +16,9 @@ def require_demo_mode():
 
 def status(db: Session) -> dict:
     target = db.query(Target).filter_by(name=DEMO_TARGET_NAME).first()
-    return {"demo_mode": get_operations_config().demo_mode, "seeded": bool(target), "record_counts": {"web_targets": 1 if target else 0}, "last_seed_time": target.created_at if target else None, "scenarios": SCENARIOS, "synthetic_data": True, "local_target_restriction": True, "demo_users_created": False}
+    from app.modules.vulnerability_management.models import Asset
+    vm_assets = db.query(Asset).filter_by(source_module="platform_operations_demo").count()
+    return {"demo_mode": get_operations_config().demo_mode, "seeded": bool(target), "record_counts": {"web_targets": 1 if target else 0, "vulnerability_management_assets": vm_assets}, "last_seed_time": target.created_at if target else None, "scenarios": SCENARIOS, "synthetic_data": True, "local_target_restriction": True, "demo_users_created": False}
 
 
 def seed(db: Session) -> dict:
@@ -25,12 +27,17 @@ def seed(db: Session) -> dict:
     if not target:
         target = Target(name=DEMO_TARGET_NAME, base_url="http://192.0.2.10", domain="demo.example.test", authorization_confirmed=True, environment="synthetic-demo")
         db.add(target); db.flush(); created = True
+    from app.modules.vulnerability_management.service import get_or_create_asset
+    get_or_create_asset(db, asset_type="custom", identifier="threatscope-synthetic-demo-asset", name="ThreatScope Synthetic Demo Asset", source_module="platform_operations_demo", source_entity_type="target", source_entity_id=target.id, observed_at=target.created_at, defaults={"environment": "testing", "tags": ["threatscope-demo"]})
     add_activity(db, "demo_seeded", "Deterministic synthetic demo environment seeded locally.", "operational_demo", target.id); notify(db,"Demo seed succeeded","Synthetic local demo records are ready.","success","operational_demo",target.id); db.commit()
     return {**status(db), "created": created, "credentials_created": False}
 
 
 def reset(db: Session) -> dict:
     require_demo_mode(); targets = db.query(Target).filter_by(name=DEMO_TARGET_NAME, environment="synthetic-demo").all(); count = len(targets)
+    from app.modules.vulnerability_management.models import Asset
+    demo_vm_assets = db.query(Asset).filter_by(source_module="platform_operations_demo").all()
+    for asset in demo_vm_assets: db.delete(asset)
     for target in targets: db.delete(target)
     from app.modules.threat_intelligence.models import ThreatIndicator, ThreatIntelSource
     demo_indicators = db.query(ThreatIndicator).filter(ThreatIndicator.tags_json.like('%"threatscope-demo"%')).all()
@@ -44,4 +51,4 @@ def reset(db: Session) -> dict:
     for execution in demo_executions: db.delete(execution)
     for rule in demo_rules: db.delete(rule)
     add_activity(db, "demo_reset", f"Removed {count} demo-owned target records; analyst records were preserved.", "operational_demo", None); notify(db,"Demo reset succeeded",f"Removed {count} demo-owned records and preserved analyst data.","success","operational_demo",None); db.commit()
-    return {**status(db), "deleted_demo_records": count + len(demo_indicators) + len(demo_sources) + len(demo_rules) + len(demo_executions), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "deleted_demo_detection_records": len(demo_rules) + len(demo_executions), "non_demo_records_preserved": True}
+    return {**status(db), "deleted_demo_records": count + len(demo_vm_assets) + len(demo_indicators) + len(demo_sources) + len(demo_rules) + len(demo_executions), "deleted_demo_vulnerability_management_records": len(demo_vm_assets), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "deleted_demo_detection_records": len(demo_rules) + len(demo_executions), "non_demo_records_preserved": True}

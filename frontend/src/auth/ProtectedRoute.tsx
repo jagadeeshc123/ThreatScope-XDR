@@ -12,7 +12,8 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   if (user.must_change_password && location.pathname !== '/change-password') return <Navigate to="/change-password" replace />;
+  if (location.pathname === '/vulnerability-management' && !user.permissions.some(item => item === 'vulnerabilities:view' || item === 'vulnerabilities:aggregate')) return <Navigate to="/forbidden" replace />;
   const permission = permissionForPath(location.pathname);
-  if (permission && !user.permissions.includes(permission)) return <Navigate to="/forbidden" replace />;
+  if (permission && !(location.pathname === '/vulnerability-management' && user.permissions.includes('vulnerabilities:aggregate')) && !user.permissions.includes(permission)) return <Navigate to="/forbidden" replace />;
   return <Outlet />;
 }

@@ -1,5 +1,12 @@
 # Known limitations
 
+- Vulnerability management uses only stored ThreatScope data. It does not query NVD, CVE services, EPSS, exploit databases, package repositories, cloud CMDBs, or external ticketing systems.
+- It does not scan beyond existing safe module workflows, exploit targets, deploy patches, execute commands, install endpoint agents, or change production systems.
+- Source severity, optional manually supplied CVSS, internal priority, and accepted residual risk are distinct measures and are not interchangeable.
+- Stored-data eligibility and deterministic scoring require analyst review; they are not external exploitability or remediation guarantees.
+- Verification relies on later stored evidence, an existing safe scoped module check, or explicit manual confirmation. Inconclusive evidence cannot resolve a vulnerability.
+- Risk-acceptance expiry is evaluated during module access and scoring in this local synchronous deployment; there is no unmanaged background scheduler.
+
 - SQLite restore is deliberately staged; final replacement requires a stopped backend and local administrator script.
 - Import is validation-only and never merges records into live modules.
 - Retention has no automatic scheduler.

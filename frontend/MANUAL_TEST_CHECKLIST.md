@@ -1,5 +1,26 @@
 # VulnScope Frontend Manual Test Checklist
 
+## Phase 15 - Vulnerability Management
+
+Automation status on 2026-07-17: the in-app browser backend was unavailable after the prescribed connection check. Live Docker/API tests covered role authorization, synchronization, ingestion/deduplication, deterministic priority, lifecycle, plan/task completion, SLA, risk acceptance, verification/resolution, recurrence reopening, reports, source immutability, and direct HTTP 200 refreshes for all Phase 15 routes. The visual, browser-console, responsive-width, and keyboard-focus items below intentionally remain unchecked and must not be inferred from those executable checks.
+
+- [ ] Administrator opens `/vulnerability-management`; local-data disclaimer and metrics or empty states render without console errors.
+- [ ] Run asset synchronization twice; the second run creates no equivalent duplicate and source records remain unchanged.
+- [ ] Search/filter assets, create a manual explicitly typed asset, and inspect identifiers, aliases, ownership, relationships, vulnerability count, priority, and overdue count.
+- [ ] Run ingestion twice; eligible Web/API/Document/Phishing weaknesses aggregate occurrences and an ordinary SOC event is excluded.
+- [ ] Inspect source severity, priority factors, optional CVSS distinction, affected assets, inert evidence, timeline, SLA, recurrence, plans, acceptance, and verification.
+- [ ] Assign and triage through confirmed, in progress, and mitigated using keyboard controls.
+- [ ] Create/approve a remediation plan, select local template guidance, create/assign/block/complete tasks, and confirm plan completion does not resolve the vulnerability.
+- [ ] Request verification, pass with retained evidence, confirm resolution, ingest a newer matching occurrence, and confirm reopen.
+- [ ] Request time-bounded risk acceptance; approve with a different authorized account, verify SLA pause, then revoke/expire and confirm reopened work.
+- [ ] Mark a test record false positive only with note, evidence basis, and reviewer; confirm unchanged re-ingestion does not reactivate it.
+- [ ] Verify SLA dashboard UTC label, warning/due/overdue/paused counts, distributions, upcoming deadlines, policies, and explicit recalculation permission.
+- [ ] Generate a report; verify all 28 sections, sandboxed rendering, escaped hostile HTML, redacted secrets, defanged URLs, no active links, scripts, or remote assets.
+- [ ] Global search returns assets, vulnerabilities, plans, tasks, policies, acceptances, verifications, templates, and reports.
+- [ ] Dashboard shows active critical/high, overdue, due-soon, unassigned, resolution, and regression metrics when permitted.
+- [ ] Auditor is read/export only; Executive Viewer gets aggregate overview only; Registered User and anonymous access are denied.
+- [ ] Test loading, error, empty, responsive layouts and keyboard focus at 320 px, 768 px, and desktop widths.
+
 Run the backend and frontend, then verify each workflow with browser developer tools open and no failed API requests.
 
 - [ ] Refresh `/dashboard`, `/targets`, `/scans`, `/reports`, `/policies`, `/search`, `/profile`, `/settings`, and `/notifications` directly.

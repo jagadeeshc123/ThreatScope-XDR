@@ -18,7 +18,7 @@ from .maintenance_service import add_activity, fail_job, finish_job, new_key, no
 from .models import BackupRecord, OperationalJob, utcnow
 
 _LOCK = threading.Lock()
-EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches"}
+EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence", "vm_remediation_plans", "vm_risk_acceptances", "vm_verification_requests"}
 
 
 def sha256_file(path: Path) -> str:
@@ -53,7 +53,7 @@ def _safe_counts(path: Path) -> dict[str, int]:
         missing = EXPECTED_TABLES - names
         if missing:
             raise ValueError("Backup is missing required core tables")
-        for name in sorted(names - SENSITIVE_TABLES)[:120]:
+        for name in sorted(names - SENSITIVE_TABLES)[:200]:
             if name.replace("_", "").isalnum():
                 result[name] = int(conn.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0])
         if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
