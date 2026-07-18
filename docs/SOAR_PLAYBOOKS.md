@@ -13,4 +13,3 @@ Delay and retry waits persist `next_resume_at`; they never block an HTTP request
 Trigger sources are SOC alert, incident case, confirmed detection match, confirmed threat-intelligence match, vulnerability, phishing analysis, document analysis, and manual. Rules use allowed source fields only, default to proposal-only, apply stable fingerprints, cooldown, an hourly proposal cap, deduplication, and recursion prevention. Automatic-local rules are valid only when every action is read-only or explicitly eligible harmless-local.
 
 Cancellation requires a reason, cancels pending approvals/inputs, stops future dispatch and retries, preserves completed mutations, and never silently rolls them back. Evidence snapshots are redacted before bounded storage and hashed. Reports are static self-contained escaped HTML with 41 documented sections, inline CSS only, no script, active link, or remote asset.
-

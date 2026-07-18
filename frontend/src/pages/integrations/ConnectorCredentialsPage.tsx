@@ -1,0 +1,1 @@
+export { ConnectorCredentialsPage } from './IntegrationsPages';

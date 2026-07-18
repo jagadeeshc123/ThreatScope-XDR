@@ -1,0 +1,1 @@
+export { DeliveryDetailsPage } from './IntegrationsPages';

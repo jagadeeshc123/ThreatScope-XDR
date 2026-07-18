@@ -139,6 +139,7 @@ export interface DashboardSummary {
   operations: {readiness_status:string;degraded_check_count:number;latest_backup_at:string|null;failed_job_count:number;pending_restore_count:number;demo_mode:boolean;release_version:string}|null;
   vulnerability_management: {active_vulnerabilities:number;critical_high_vulnerabilities:number;overdue_vulnerabilities:number;due_within_seven_days:number;unassigned_vulnerabilities:number;recent_resolutions:number;recent_regressions:number}|null;
   soar:{pending_approvals:number;failed_executions:number;running_executions:number;waiting_analyst_inputs:number;simulation_count:number;rollback_failures:number;sensitive_action_requests:number}|null;
+  integrations:{unhealthy_connectors:number;open_circuits:number;failed_deliveries:number;dead_letters:number;quarantined_events:number;rejected_signatures:number;due_retries:number;external_tickets_created:number;[key:string]:unknown}|null;
 }
 
 export interface Notification {
@@ -241,6 +242,7 @@ export interface SearchResults {
   soar_actions:Array<{action_key:string;display_name:string;safety_classification:string;internal_path:string}>;
   soar_rollbacks:Array<{id:number;title:string;status:string;internal_path:string}>;
   soar_reports:Array<{id:number;title:string;status:string;internal_path:string}>;
+  integrations:Array<{id:number;kind:string;title:string;status:string;internal_path:string}>;
 }
 export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}
 export interface EntityObservation{id:number;entity_id:number;source_module:string;source_record_type:string;source_record_id:number;source_internal_route:string|null;title_snapshot:string;evidence_snapshot:string;severity:string;confidence:string;observed_at:string}

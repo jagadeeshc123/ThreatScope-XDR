@@ -168,6 +168,12 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
             for item in db.query(model).filter(column.ilike(query)).limit(5).all():
                 if getattr(item,"deleted_at",None) is not None: continue
                 operations.append({"id":item.id,"kind":kind,"title":str(getattr(item,column.key))[:160],"status":str(getattr(item,"status","configured"))[:40],"internal_path":f"{prefix}{item.id}" if prefix.endswith("/") else prefix})
+    integrations=[]
+    if "integrations:view" in permissions:
+        from app.modules.integrations.models import ConnectorDeadLetter, ConnectorDelivery, ConnectorFieldMapping, ConnectorInboundEndpoint, ConnectorInboundEvent, ConnectorInstance, ConnectorReport, ConnectorSubscription
+        integration_candidates=[(ConnectorInstance,ConnectorInstance.name,"connector","/integrations/connectors/","lifecycle_status"),(ConnectorSubscription,ConnectorSubscription.name,"subscription","/integrations/subscriptions/","event_type"),(ConnectorFieldMapping,ConnectorFieldMapping.name,"mapping","/integrations/mappings/","validation_status"),(ConnectorDelivery,ConnectorDelivery.delivery_uuid,"delivery","/integrations/deliveries/","status"),(ConnectorDeadLetter,ConnectorDeadLetter.reason_summary,"dead letter","/integrations/dead-letters/","replay_status"),(ConnectorInboundEndpoint,ConnectorInboundEndpoint.name,"inbound endpoint","/integrations/inbound-endpoints/","enabled"),(ConnectorInboundEvent,ConnectorInboundEvent.external_event_id,"inbound event","/integrations/inbound-events/","status"),(ConnectorReport,ConnectorReport.title,"report","/integrations/reports/","report_type")]
+        for model,column,kind,prefix,status_column in integration_candidates:
+            for item in db.query(model).filter(column.ilike(query)).limit(5).all():integrations.append({"id":item.id,"kind":kind,"title":str(getattr(item,column.key))[:160],"status":str(getattr(item,status_column,"configured"))[:40],"internal_path":f"{prefix}{item.id}"})
     
     if "web:read" not in permissions: targets = scans = findings = reports = []
     if "api:read" not in permissions: api_assessments = api_endpoints = api_findings = jwt_analyses = api_reports = api_roles = authorization_reviews = api_business_flows = api_business_flow_risks = []
@@ -268,4 +274,5 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         soar_actions=soar_actions,
         soar_rollbacks=[{"id":x.id,"title":x.rollback_uuid,"status":x.status,"internal_path":f"/soar/rollbacks/{x.id}"} for x in soar_rollbacks],
         soar_reports=[{"id":x.id,"title":x.title,"status":x.report_type,"internal_path":f"/soar/reports/{x.id}"} for x in soar_reports],
+        integrations=integrations,
     )

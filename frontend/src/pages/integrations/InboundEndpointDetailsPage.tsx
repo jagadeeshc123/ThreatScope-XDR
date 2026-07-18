@@ -1,0 +1,1 @@
+export { InboundEndpointDetailsPage } from './IntegrationsPages';

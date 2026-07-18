@@ -1,0 +1,1 @@
+export { MappingsPage } from './IntegrationsPages';

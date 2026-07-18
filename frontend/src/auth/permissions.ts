@@ -1,4 +1,6 @@
 export const routePermissions: Array<[string, string]> = [
+  ['/integrations/connectors/new', 'integrations:manage'], ['/integrations/connectors/', 'integrations:view'],
+  ['/integrations/reports', 'integrations:export'], ['/integrations', 'integrations:view'],
   ['/soar/action-policies', 'soar:action_policy_manage'], ['/soar/reports', 'soar:export'], ['/soar', 'soar:view'],
   ['/vulnerability-management/reports', 'vulnerabilities:export'], ['/vulnerability-management', 'vulnerabilities:view'],
   ['/operations/backups', 'operations:backup'], ['/operations/restores', 'operations:restore'],
@@ -24,5 +26,8 @@ export const routePermissions: Array<[string, string]> = [
 
 export function permissionForPath(path: string): string | undefined {
   if (/^\/detections\/rules\/\d+\/edit$/.test(path)) return 'detections:manage';
+  if (/^\/integrations\/connectors\/\d+\/credentials$/.test(path)) return 'integrations:credentials_manage';
+  if (/^\/integrations\/connectors\/\d+\/network-policy$/.test(path)) return 'integrations:network_policy_manage';
+  if (/^\/integrations\/connectors\/\d+\/(edit)$/.test(path)) return 'integrations:manage';
   return routePermissions.find(([prefix]) => path.startsWith(prefix))?.[1];
 }

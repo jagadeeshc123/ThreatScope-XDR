@@ -95,4 +95,3 @@ def evaluate(condition: dict[str, Any], context: dict[str, Any], *, depth: int =
     safe_left = "missing" if left is MISSING else type(left).__name__
     safe_right = "missing" if right is MISSING else type(right).__name__
     return ConditionResult(matched, f"{operator}({safe_left}, {safe_right}) => {str(matched).lower()}", 1)
-

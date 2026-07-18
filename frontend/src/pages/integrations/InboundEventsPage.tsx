@@ -1,0 +1,1 @@
+export { InboundEventsPage } from './IntegrationsPages';

@@ -15,4 +15,3 @@ Read actions cover SOC alerts, cases, detections, IOC matches, vulnerabilities, 
 Simulation-only actions cover IP/domain/URL block, endpoint quarantine, host isolation, external account/token changes, malicious-email removal, firewall/WAF/DNS/proxy/EDR updates, process termination, and malicious-file quarantine. Every result is `simulated`, records intended target, reason and assumptions, states that no external infrastructure was modified, and displays `SIMULATION ONLY — NO EXTERNAL ACTION IS PERFORMED`. No simulated action supports `live_local`.
 
 Administrators may disable catalog actions, allow eligible harmless automatic-local work, require stricter approval, lower retries, or add notes. They cannot weaken sensitive approval/separation, enable sensitive/simulation automatic-local behavior, change a classification, make simulation real, or exceed the server retry maximum. Policies seed idempotently and existing changes survive restart.
-

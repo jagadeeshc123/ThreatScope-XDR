@@ -5,4 +5,3 @@ Rollback never rewinds the database or deletes execution history. A request crea
 Supported compensation includes restoring a previous case owner, severity, or valid status; removing an execution-added tag; cancelling an execution-created case/remediation task; restoring a vulnerability owner; restoring playbook enabled state; and approval-gated re-enable of a temporarily disabled ThreatScope user.
 
 Rollback is explicitly unsupported for external simulations, delivered notifications, audit history, consumed approvals, irreversibly revoked sessions, and any external firewall/DNS/WAF/proxy/EDR/mailbox/endpoint/identity-provider simulation. A simulation is never described as externally reversed. Partial rollback is accurate: supported records may complete while unsupported or failed records remain visible.
-

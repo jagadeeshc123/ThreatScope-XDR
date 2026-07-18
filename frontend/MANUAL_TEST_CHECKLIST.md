@@ -1,5 +1,15 @@
 # VulnScope Frontend Manual Test Checklist
 
+## Phase 17 - Security Integration Hub
+
+- [ ] Admin creates, validates, tests, activates, disables, retests, and archives Local Test Sink.
+- [ ] Stored/rotated secrets never render and removal disables the connector.
+- [ ] Localhost, private/metadata IP, wildcard, userinfo, fragment, non-HTTPS, and invalid ports fail.
+- [ ] Subscriptions/mappings, outbox, attempts, retry, circuit, dead letter, replay, and cancellation are usable.
+- [ ] Signed inbound quarantine/promotion, STIX/TAXII, reports, dashboard/search, RBAC, responsive layout, focus, refresh, and console are verified.
+- [ ] No secret, raw authorization header/response, false expiry modal, uncontrolled network, or containment claim appears.
+- [ ] Browser fallback: automation was unavailable during remediation. Manually verify Administrator sign-in, every Integration Hub loading/error/empty state, keyboard traversal, focus visibility, responsive layouts, console errors, write-only secret inputs, and external-link `rel="noopener noreferrer"`. Authenticated API and 27-route refresh automation do not replace these visual checks.
+
 ## Phase 15 - Vulnerability Management
 
 Automation status on 2026-07-17: the in-app browser backend was unavailable after the prescribed connection check. Live Docker/API tests covered role authorization, synchronization, ingestion/deduplication, deterministic priority, lifecycle, plan/task completion, SLA, risk acceptance, verification/resolution, recurrence reopening, reports, source immutability, and direct HTTP 200 refreshes for all Phase 15 routes. The visual, browser-console, responsive-width, and keyboard-focus items below intentionally remain unchecked and must not be inferred from those executable checks.

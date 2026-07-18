@@ -124,6 +124,29 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
         if "/executions" in path or path.endswith("/evaluate"): return {"soar:execute"}, True
         return {"soar:manage"}, True
 
+    if path.startswith("/api/integrations"):
+        if "/inbound/" in path:
+            return set(), True
+        if read and path.rstrip("/").endswith("/overview"):
+            return {"integrations:view", "integrations:aggregate"}, False
+        if read:
+            return ({"integrations:export"} if path.endswith("/download") else {"integrations:view"}), True
+        if "/credentials" in path or "/rotate-secret" in path:
+            return {"integrations:credentials_manage"}, True
+        if "/network-policy" in path:
+            return {"integrations:network_policy_manage"}, True
+        if "/promote" in path:
+            return {"integrations:inbound_promote"}, True
+        if "/dead-letters/" in path and path.endswith("/replay"):
+            return {"integrations:replay"}, True
+        if "/reports" in path:
+            return {"integrations:export"}, True
+        if any(part in path for part in ("/test", "/send-test", "/health-checks")):
+            return {"integrations:test"}, True
+        if any(part in path for part in ("/deliveries", "/process-due", "/taxii/pull")):
+            return {"integrations:execute"}, True
+        return {"integrations:manage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:

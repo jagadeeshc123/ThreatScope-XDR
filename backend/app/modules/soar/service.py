@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Notification
+from app.modules.access_control.audit_service import append_event
 from app.modules.access_control.models import AccessPermission, AuthSession, UserAccount
 from app.modules.access_control.redaction import redact
 from app.modules.access_control.role_service import effective_permissions
@@ -297,6 +298,8 @@ def run_execution(db: Session, execution: SoarExecution, actor: UserAccount) -> 
                 output=_dispatch(db,execution,step_run,action,config,actor);status="simulated" if action.simulation_only else "succeeded";route=step.get("on_success")
             step_run.status=status;step_run.output_snapshot_json=dumps(output);step_run.redacted_output_summary=str(output.get("summary",""))[:2000];step_run.completed_at=utcnow();execution.current_step_key=route;event(db,execution,"step_completed",f"Step {step_run.step_name} completed with status {status}.",actor_id=actor.id,step_id=step_run.id,previous="running",new=status,metadata={"action_key":step_run.action_key,"safety_classification":ACTION_CATALOG[step_run.action_key].safety_classification if step_run.action_key in ACTION_CATALOG else None})
             db.commit()
+            if step_run.action_key in {"queue_connector_notification","queue_external_ticket_create","queue_external_ticket_update","queue_siem_event_publish","queue_stix_export","test_connector_health","create_connector_delivery_review_task"}:
+                append_event(db,event_type="integration_operation",action="soar_connector_delivery_queue",request_id=execution.execution_uuid,outcome="success",actor=actor,resource_type="integration_delivery",resource_id=output.get("record_id"),status_code=200,metadata={"soar_execution_id":execution.id,"action_key":step_run.action_key})
             if not route:
                 execution.status="completed_with_warnings";execution.completed_at=utcnow();event(db,execution,"execution_completed_with_warnings","Execution stopped at a step without a success route.",actor_id=actor.id,new=execution.status);_notify_once(db,execution.id,execution.requested_by_user_id,"SOAR execution completed with warnings",f"Execution {execution.execution_uuid[:16]} completed with warnings.","warning");add_activity(db,"soar_execution_completed_with_warnings",f"SOAR execution {execution.execution_uuid[:16]} completed with warnings.","soar_execution",execution.id);db.commit();return execution
         except HTTPException: raise
@@ -394,6 +397,14 @@ def _dispatch(db:Session,execution:SoarExecution,step:SoarStepExecution,action:A
             elif key=="request_vulnerability_verification":item=VerificationRequest(vulnerability_id=vulnerability.id,requested_by_user_id=actor.id,assigned_to_user_id=config.get("owner_user_id"),verification_type="manual_confirmation",status="requested",request_note=str(config.get("reason"))[:8000],source_module="soar",source_entity_type="execution",source_entity_id=execution.id);db.add(item);db.flush();record_id=item.id
             else:item=RiskAcceptance(vulnerability_id=vulnerability.id,reason=str(config.get("reason"))[:8000],residual_risk=str(config.get("severity") or "high"),accepted_by_user_id=actor.id,accepted_at=utcnow(),expires_at=utcnow()+timedelta(days=30),status="pending");db.add(item);db.flush();record_id=item.id
             execution.records_created+=1
+    elif key in {"queue_connector_notification","queue_external_ticket_create","queue_external_ticket_update","queue_siem_event_publish","queue_stix_export","test_connector_health","create_connector_delivery_review_task"}:
+        from app.modules.integrations.models import ConnectorInstance
+        from app.modules.integrations.service import queue_delivery
+        connector=db.get(ConnectorInstance,int(config.get("connector_id") or 0))
+        if not connector:raise ValueError("Connector target is invalid")
+        operation={"queue_connector_notification":"notify","queue_external_ticket_create":"create_ticket","queue_external_ticket_update":"update_ticket","queue_siem_event_publish":"publish_event","queue_stix_export":"publish_event","test_connector_health":"health_test","create_connector_delivery_review_task":"notify"}[key]
+        payload={"title":str(config.get("title") or action.display_name)[:240],"summary":str(config.get("body") or config.get("reason") or "SOAR connector delivery request")[:1000],"severity":config.get("severity"),"source_entity_type":execution.trigger_source_type,"source_entity_id":execution.trigger_source_id,"external_reference":config.get("external_reference"),"payload_profile":config.get("payload_profile") or connector.payload_profile,"soar_execution_uuid":execution.execution_uuid}
+        item=queue_delivery(db,connector,payload,"soar.execution.proposed",operation,hashlib.sha256(f"soar-connector:{execution.id}:{step.step_key}:{key}".encode()).hexdigest(),actor.id,soar_execution_id=execution.id);record_id=item.id;execution.records_created+=1
     elif key=="create_internal_notification":
         stable=f"SOAR execution {execution.execution_uuid}";item=db.query(Notification).filter_by(title=str(config.get("title") or action.display_name)[:150],entity_type="soar_execution",entity_id=execution.id,recipient_user_id=config.get("owner_user_id") or actor.id).first()
         if not item:item=Notification(title=str(config.get("title") or action.display_name)[:150],message=(str(config.get("body") or config.get("reason") or stable)+f" ({stable})")[:500],type="info",entity_type="soar_execution",entity_id=execution.id,recipient_user_id=config.get("owner_user_id") or actor.id);db.add(item);db.flush();execution.records_created+=1

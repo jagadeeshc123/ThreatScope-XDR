@@ -1,5 +1,7 @@
 # VulnScope Project Overview
 
+Phase 17 extends the platform with the integration plane documented in `docs/INTEGRATION_HUB.md`. It reuses RBAC, CSRF, audit, activity, notifications, reports, backup/restore, retention, diagnostics, Threat Intelligence, cases, and SOAR; it does not add arbitrary connectors, managed workers, external deletion, or real containment.
+
 VulnScope is the Web Exposure module inside ThreatScope XDR. It performs authorized, non-destructive web posture assessments and stores all operational data in the FastAPI backend.
 
 ## Current Scope

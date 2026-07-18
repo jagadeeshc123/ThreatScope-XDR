@@ -1,0 +1,1 @@
+export { ConnectorEditPage } from './IntegrationsPages';

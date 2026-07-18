@@ -13,6 +13,38 @@ from .role_service import effective_permissions
 from .session_service import client_ip_hash, lookup_session, summarize_user_agent
 
 
+def _integration_operation(method: str, path: str) -> tuple[str, str | None]:
+    suffix=path.removeprefix("/api/integrations");parts=[p for p in suffix.split("/") if p];resource_id=next((p for p in parts if p.isdigit()),None)
+    root=parts[0] if parts else "overview";method=method.upper();verb={"POST":"create","PATCH":"update","DELETE":"delete"}.get(method,method.lower())
+    if root=="connectors":
+        if "credentials" in parts:return ("credential_rotate" if "rotate" in parts else "credential_remove" if method=="DELETE" else "credential_replace"),resource_id
+        if "network-policy" in parts:return "network_policy_update",resource_id
+        if "taxii" in parts and "pull" in parts:return "taxii_pull",resource_id
+        actions={"move-to-testing":"connector_move_to_testing","activate":"connector_activate","disable":"connector_disable","archive":"connector_archive","validate":"configuration_validate","test":"connector_test","send-test":"connector_test_send","reset-circuit":"circuit_reset"}
+        for token,action in actions.items():
+            if token in parts:return action,resource_id
+        return ("connector_create" if method=="POST" else "connector_update" if method=="PATCH" else f"connector_{method.lower()}"),resource_id
+    if root=="subscriptions":return f"subscription_{verb}",resource_id
+    if root=="mappings":
+        if "validate" in parts:return "mapping_validate",resource_id
+        if "preview" in parts:return "mapping_preview",resource_id
+        return f"mapping_{verb}",resource_id
+    if root=="deliveries":
+        if "retry" in parts:return "delivery_manual_retry",resource_id
+        if "cancel" in parts:return "delivery_cancel",resource_id
+        return "delivery_queue",resource_id
+    if root=="dead-letters":return ("dead_letter_replay" if "replay" in parts else "dead_letter_cancel"),resource_id
+    if root=="inbound-endpoints":
+        if "rotate-secret" in parts:return "inbound_secret_rotate",resource_id
+        if "disable" in parts:return "inbound_endpoint_disable",resource_id
+        return f"inbound_endpoint_{verb}",resource_id
+    if root=="inbound-events":return ("inbound_promote" if "promote" in parts else "inbound_reject"),resource_id
+    if root=="stix":return ("stix_preview" if "preview" in parts else "stix_promote"),resource_id
+    if root=="reports":return ("report_export" if "download" in parts else "report_generation"),resource_id
+    if root=="process-due":return "delivery_process_due",resource_id
+    return f"{root.replace('-','_')}_{method.lower()}",resource_id
+
+
 def get_current_session(request: Request, db: Session = Depends(get_db)) -> AuthSession:
     auth_session = lookup_session(db, request)
     if not auth_session:
@@ -156,18 +188,19 @@ def authorize_platform_request(
         raise
     else:
         if request.method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+            integration=request.url.path.startswith("/api/integrations");action,resource_id=_integration_operation(request.method,request.url.path) if integration else (f"{request.method.lower()} {request.url.path}",None)
             append_event(
                 db,
-                event_type="module_mutation",
-                action=f"{request.method.lower()} {request.url.path}",
+                event_type="integration_operation" if integration else "module_mutation",
+                action=action,
                 request_id=getattr(request.state, "request_id", "unknown"),
                 outcome="success",
                 actor=user,
                 route_template=request.url.path,
                 request_method=request.method,
                 status_code=200,
-                resource_type=request.url.path.split("/")[2] if len(request.url.path.split("/")) > 2 else "platform",
+                resource_type="integration" if integration else (request.url.path.split("/")[2] if len(request.url.path.split("/")) > 2 else "platform"),
+                resource_id=resource_id,
                 client_ip_hash=client_ip_hash(request),
                 user_agent_summary=summarize_user_agent(request.headers.get("user-agent")),
             )
-

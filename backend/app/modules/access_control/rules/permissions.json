@@ -104,5 +104,15 @@
   ["soar:rollback", "Approve and execute SOAR compensation", "SOAR-Lite"],
   ["soar:export", "Generate and export SOAR reports", "SOAR-Lite"],
   ["soar:sensitive_actions", "Approve sensitive local user and session actions", "SOAR-Lite"],
-  ["soar:action_policy_manage", "Manage server-owned SOAR action policies", "SOAR-Lite"]
+  ["soar:action_policy_manage", "Manage server-owned SOAR action policies", "SOAR-Lite"],
+  ["integrations:view", "View connector inventory and delivery history", "Security Integrations"],
+  ["integrations:aggregate", "View aggregate connector health and delivery metrics", "Security Integrations"],
+  ["integrations:manage", "Manage connector configuration, mappings, and subscriptions", "Security Integrations"],
+  ["integrations:test", "Run bounded connector validation and tests", "Security Integrations"],
+  ["integrations:execute", "Queue and process bounded connector deliveries", "Security Integrations"],
+  ["integrations:replay", "Manually replay dead-letter deliveries", "Security Integrations"],
+  ["integrations:export", "Generate and export integration reports", "Security Integrations"],
+  ["integrations:credentials_manage", "Manage write-only connector credentials", "Security Integrations"],
+  ["integrations:network_policy_manage", "Manage connector egress network policies", "Security Integrations"],
+  ["integrations:inbound_promote", "Promote quarantined inbound integration events", "Security Integrations"]
 ]

@@ -35,3 +35,11 @@
 - Risk and quality scores are deterministic heuristics, not machine learning, threat reputation, or efficacy guarantees.
 - There is no command execution, malware execution, active containment, process termination, firewall blocking, or automated alert/case creation.
 - SOAR-Lite has no Phase 17 connectors, outbound webhooks, external ticket delivery, remote agent, real containment, automatic case closure, vulnerability resolution, risk acceptance, worker, or scheduler. External response actions are simulation-only. Revoked sessions and delivered notifications cannot be restored; rollback compensates only explicitly supported local state and may be partial.
+
+# Integration Hub
+
+- Connector delivery is synchronous when the bounded due-delivery endpoint is invoked; Phase 17 installs no worker or scheduler.
+- OAuth authorization-code flows, arbitrary connector code, custom REST paths, redirects, automatic dead-letter replay, and automatic inbound promotion are intentionally unsupported.
+- TAXII support is a bounded pull subset, STIX support is import-oriented, and ticket synchronization is explicit rather than silent bidirectional overwrite.
+- Private destinations require exact Administrator approval and remain subject to address validation; this is not a general intranet proxy.
+- Connector actions do not provide endpoint isolation, account disabling, firewall or DNS changes, email deletion, or any other real containment.

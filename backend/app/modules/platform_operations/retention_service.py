@@ -10,6 +10,7 @@ from app.modules.threat_intelligence.models import ThreatCorrelationRun, ThreatI
 from app.modules.detection_engineering.models import DetectionExecution, DetectionReport
 from app.modules.vulnerability_management.models import AssetSynchronizationRun, VulnerabilityIngestionRun
 from app.modules.soar.models import SoarExecution, SoarReport
+from app.modules.integrations.models import ConnectorDelivery, ConnectorDeliveryAttempt, ConnectorHealthCheck, ConnectorInboundEvent, ConnectorReplayNonce, ConnectorReport, ConnectorInboundRateCounter
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -33,6 +34,13 @@ DEFAULTS = [
     ("soar_simulations", "Old terminal SOAR simulations", "soar_simulations", 180, 50),
     ("soar_live_local_executions", "Old terminal SOAR live-local executions", "soar_live_local_executions", 365, 100),
     ("soar_reports", "Old generated SOAR reports", "soar_reports", 365, 25),
+    ("integration_delivery_attempts", "Old connector delivery attempts", "integration_delivery_attempts", 180, 100),
+    ("integration_successful_deliveries", "Old successful connector deliveries", "integration_successful_deliveries", 180, 100),
+    ("integration_rejected_inbound", "Old rejected inbound events", "integration_rejected_inbound", 90, 100),
+    ("integration_health_checks", "Old connector health checks", "integration_health_checks", 90, 50),
+    ("integration_replay_nonces", "Expired inbound replay nonces", "integration_replay_nonces", 1, 0),
+    ("integration_inbound_rate_counters", "Expired inbound rate counters", "integration_inbound_rate_counters", 1, 0),
+    ("integration_reports", "Old integration reports", "integration_reports", 365, 25),
 ]
 
 
@@ -64,6 +72,13 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "soar_simulations": return SoarExecution, [SoarExecution.mode == "simulation", SoarExecution.status.in_(terminal), SoarExecution.completed_at < cutoff, SoarExecution.trigger_source_type != "incident_case"]
     if policy.entity_type == "soar_live_local_executions": return SoarExecution, [SoarExecution.mode == "live_local", SoarExecution.status.in_(terminal), SoarExecution.completed_at < cutoff, SoarExecution.trigger_source_type != "incident_case"]
     if policy.entity_type == "soar_reports": return SoarReport, [SoarReport.created_at < cutoff]
+    if policy.entity_type == "integration_delivery_attempts": return ConnectorDeliveryAttempt, [ConnectorDeliveryAttempt.completed_at.is_not(None), ConnectorDeliveryAttempt.completed_at < cutoff]
+    if policy.entity_type == "integration_successful_deliveries": return ConnectorDelivery, [ConnectorDelivery.status.in_(["succeeded", "succeeded_with_warnings"]), ConnectorDelivery.completed_at < cutoff]
+    if policy.entity_type == "integration_rejected_inbound": return ConnectorInboundEvent, [ConnectorInboundEvent.status == "rejected", ConnectorInboundEvent.updated_at < cutoff]
+    if policy.entity_type == "integration_health_checks": return ConnectorHealthCheck, [ConnectorHealthCheck.created_at < cutoff]
+    if policy.entity_type == "integration_replay_nonces": return ConnectorReplayNonce, [ConnectorReplayNonce.expires_at < now]
+    if policy.entity_type == "integration_inbound_rate_counters": return ConnectorInboundRateCounter, [ConnectorInboundRateCounter.expires_at < now]
+    if policy.entity_type == "integration_reports": return ConnectorReport, [ConnectorReport.created_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 

@@ -137,6 +137,7 @@ export function SearchResultsPage() {
           <ResultGroup title="SOAR Action Catalog" icon={<Shield className="h-5 w-5 text-cyan-300"/>} count={results.soar_actions.length}>{results.soar_actions.map(x=><ResultLink key={x.action_key} to={x.internal_path} title={x.display_name} detail={x.safety_classification}/>)}</ResultGroup>
           <ResultGroup title="SOAR Rollbacks" icon={<AlertTriangle className="h-5 w-5 text-orange-300"/>} count={results.soar_rollbacks.length}>{results.soar_rollbacks.map(x=><ResultLink key={x.id} to={x.internal_path} title={x.title} detail={x.status}/>)}</ResultGroup>
           <ResultGroup title="SOAR Reports" icon={<FileText className="h-5 w-5 text-fuchsia-300"/>} count={results.soar_reports.length}>{results.soar_reports.map(x=><ResultLink key={x.id} to={x.internal_path} title={x.title} detail={x.status}/>)}</ResultGroup>
+          <ResultGroup title="Security Integrations" icon={<Network className="h-5 w-5 text-cyan-300"/>} count={results.integrations.length}>{results.integrations.map(x=><ResultLink key={`${x.kind}-${x.id}`} to={x.internal_path} title={`${x.kind} · ${x.title}`} detail={x.status}/>)}</ResultGroup>
         </div>
       )}
     </PageShell>

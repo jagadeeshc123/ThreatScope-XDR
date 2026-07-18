@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 17 - Security Integrations and Connectors
+
+- Added a server-owned connector catalog, encrypted write-only credentials, explicit network policies, SSRF/DNS-rebinding defenses, signed inbound quarantine, and bounded declarative mappings.
+- Added transactional outbox delivery, retries, circuit breakers, dead letters, manual replay, connector health, external references, STIX import, TAXII pull, and safe static integration reports.
+- Added Integration Hub APIs and UI, SOAR queued connector-delivery actions, RBAC, dashboard/search, backup/retention/diagnostics/demo-reset integration, documentation, and focused security tests.
+
 ## Phase 15 - Unified Vulnerability Management
 
 - Added explicit unified asset inventory and bounded stored-data synchronization.

@@ -12,6 +12,7 @@ from app.modules.access_control.dependencies import authorize_platform_request, 
 from app.modules.access_control.role_service import seed_roles_and_permissions
 from app.modules.access_control.migration import ensure_local_account_schema
 from app.modules.platform_operations.configuration_service import get_operations_config
+from app.modules.integrations.security import IntegrationSecurityError
 
 
 Base.metadata.create_all(bind=engine)
@@ -48,6 +49,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(status_code=422, content={"detail": errors, "request_id": getattr(request.state, "request_id", "unknown")})
 
 
+@app.exception_handler(IntegrationSecurityError)
+async def integration_exception_handler(request: Request, exc: IntegrationSecurityError):
+    conflicts = {"CONNECTOR_OPTIMISTIC_LOCK_CONFLICT", "CONNECTOR_DELIVERY_CONFLICT", "CONNECTOR_NOT_ACTIVE", "CONNECTOR_CIRCUIT_OPEN", "CONNECTOR_REPLAY_DETECTED"}
+    denied = {"CONNECTOR_PERMISSION_DENIED", "CONNECTOR_NETWORK_POLICY_DENIED", "CONNECTOR_SSRF_BLOCKED", "CONNECTOR_DNS_REBINDING_BLOCKED"}
+    status = 409 if exc.code in conflicts else 403 if exc.code in denied else 422
+    return JSONResponse(status_code=status, content={"detail": {"code": exc.code, "message": str(exc)}, "request_id": getattr(request.state, "request_id", "unknown")})
+
+
 @app.on_event("startup")
 def startup_event():
     get_operations_config(create=True)
@@ -79,6 +88,8 @@ def startup_event():
         seed_vulnerability_management(db)
         from app.modules.soar.service import seed_defaults as seed_soar
         seed_soar(db)
+        from app.modules.integrations.service import seed_defaults as seed_integrations
+        seed_integrations(db)
     finally:
         db.close()
     # Environment bootstrap is explicit and no-op unless all bootstrap variables are supplied.
@@ -96,6 +107,8 @@ def startup_event():
         seed_vulnerability_management(db)
         from app.modules.soar.service import seed_defaults as seed_soar
         seed_soar(db)
+        from app.modules.integrations.service import seed_defaults as seed_integrations
+        seed_integrations(db)
     finally:
         db.close()
 
@@ -118,6 +131,7 @@ from app.modules.threat_intelligence.router import router as threat_intel_router
 from app.modules.detection_engineering.router import router as detection_engineering_router
 from app.modules.vulnerability_management.router import router as vulnerability_management_router
 from app.modules.soar.router import router as soar_router
+from app.modules.integrations.router import public_router as integrations_public_router, router as integrations_router
 from app.modules.phishing_defense.router import router as phishing_defense_router
 from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.unified_correlation.router import router as correlation_router
@@ -150,3 +164,5 @@ app.include_router(threat_intel_router, prefix="/api/threat-intel", tags=["Threa
 app.include_router(detection_engineering_router, prefix="/api/detections", tags=["Detection Engineering"], dependencies=protected)
 app.include_router(vulnerability_management_router, prefix="/api/vulnerability-management", tags=["Vulnerability Management"], dependencies=protected)
 app.include_router(soar_router, prefix="/api/soar", tags=["SOAR-Lite"], dependencies=protected)
+app.include_router(integrations_router, prefix="/api/integrations", tags=["Security Integrations"], dependencies=protected)
+app.include_router(integrations_public_router, prefix="/api/integrations", tags=["Signed Inbound Integrations"])

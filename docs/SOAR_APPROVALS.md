@@ -7,4 +7,3 @@ Multi-person requests remain partially approved until the exact minimum is reach
 Analyst-input steps accept at most 20 server-described fields of short text, long text, select, multi-select, boolean, integer, date, or datetime. Password, secret, token, file, HTML, Markdown HTML, JavaScript, and executable schemas are prohibited. Only the assigned user or eligible review role may submit once before expiry. The validated response maps into execution output and resumes once. Cancellation and expiration preserve request history.
 
 Permissions are `soar:view`, `soar:manage`, `soar:execute`, `soar:approve`, `soar:review`, `soar:rollback`, `soar:export`, `soar:sensitive_actions`, and `soar:action_policy_manage`. Administrators have all. Security Analysts view/manage/execute/review/export. Auditors view/export. Executive Viewers receive dashboard aggregates only. Registered Users have no SOAR permission. Custom roles remain supported by the established role editor.
-

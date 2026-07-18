@@ -26,6 +26,10 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
     if "soar:view" in permissions:
         from app.modules.soar.models import SoarAnalystInput, SoarApproval, SoarExecution, SoarRollbackRecord
         soar = {"pending_approvals": db.query(SoarApproval).filter(SoarApproval.status.in_(["pending", "partially_approved"])).count(), "failed_executions": db.query(SoarExecution).filter_by(status="failed").count(), "running_executions": db.query(SoarExecution).filter_by(status="running").count(), "waiting_analyst_inputs": db.query(SoarAnalystInput).filter_by(status="pending").count(), "simulation_count": db.query(SoarExecution).filter_by(mode="simulation").count(), "rollback_failures": db.query(SoarRollbackRecord).filter_by(status="failed").count(), "sensitive_action_requests": db.query(SoarApproval).filter_by(approval_type="sensitive_action").count()}
+    integrations = None
+    if "integrations:view" in permissions or "integrations:aggregate" in permissions:
+        from app.modules.integrations.service import overview as integration_overview
+        integrations = integration_overview(db, aggregate_only="integrations:manage" not in permissions)
     total_targets = db.query(models.Target).count()
     total_scans = db.query(models.Scan).count()
     active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
@@ -187,4 +191,5 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         operations=operations,
         vulnerability_management=vulnerability_management,
         soar=soar,
+        integrations=integrations,
     )

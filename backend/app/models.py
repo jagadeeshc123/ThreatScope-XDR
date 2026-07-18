@@ -266,3 +266,11 @@ from app.modules.soar.models import (  # noqa: E402,F401
     SoarExecutionEvent, SoarApproval, SoarApprovalDecision, SoarAnalystInput,
     SoarExecutionEvidence, SoarRollbackRecord, SoarReport,
 )
+from app.modules.integrations.models import (  # noqa: E402,F401
+    ConnectorInstance, ConnectorCredential, ConnectorNetworkPolicy,
+    ConnectorSubscription, IntegrationOutboxEvent, ConnectorDelivery,
+    ConnectorDeliveryAttempt, ConnectorDeadLetter, ConnectorInboundEndpoint,
+    ConnectorInboundEvent, ConnectorReplayNonce, ConnectorInboundRateCounter, ConnectorFieldMapping,
+    ConnectorHealthCheck, ConnectorSyncCursor, ConnectorExternalReference,
+    ConnectorReport, StixImportRun,
+)

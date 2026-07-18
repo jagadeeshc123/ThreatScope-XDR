@@ -1,5 +1,7 @@
 # ThreatScope XDR
 
+Phase 17 adds a safe-by-default [Security Integration Hub](docs/INTEGRATION_HUB.md) with encrypted write-only credentials, signed inbound quarantine, SSRF-protected delivery, transactional outbox, bounded retries/circuits/dead letters, STIX/TAXII, and queued SOAR connector actions. Set `THREATSCOPE_CONNECTOR_SECRETS_KEY`; no connector is activated automatically.
+
 Phase 16 adds a production-style offline SOAR-Lite module: a fixed server-owned action catalog, approval and separation-of-duties governance, declarative immutable-version playbooks, bounded conditions, dry-run/simulation/live-local execution, persistent delays and analyst input, trigger proposals, case automation, sensitive local session/user controls, append-only history, compensation records, static reports, RBAC, audit, backup/restore, retention, diagnostics, dashboard, and search integration. It executes no arbitrary code or command and performs no real external containment. See [SOAR playbooks](docs/SOAR_PLAYBOOKS.md).
 
 Phase 15 adds unified offline-first asset inventory, vulnerability ingestion and prioritization, remediation plans/tasks, SLA governance, expiring risk acceptance, evidence-backed verification, regression reopening, safe static reports, dashboard/search integration, RBAC, audit, and operational backup/retention support. See [Vulnerability Management](docs/VULNERABILITY_MANAGEMENT.md).

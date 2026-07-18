@@ -1,0 +1,1 @@
+export { ConnectorNetworkPolicyPage } from './IntegrationsPages';

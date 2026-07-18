@@ -3,7 +3,7 @@
 Only keys in ``ACTION_CATALOG`` can reach the dispatcher.  Definitions contain
 data schemas, never callable/module/SQL/URL/command material.
 """
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 
 
 SAFETY_CLASSIFICATIONS = {"read_only", "harmless_local", "controlled_local", "sensitive_local", "simulation_only"}
@@ -45,7 +45,7 @@ class ActionDefinition:
 
 
 ID_SCHEMA = {"type": "object", "properties": {"source_id": {"type": "integer", "minimum": 1}}, "required": ["source_id"], "additionalProperties": False}
-TARGET_REASON_SCHEMA = {"type": "object", "properties": {"target": {"type": "string", "minLength": 1, "maxLength": 500}, "reason": {"type": "string", "minLength": 1, "maxLength": 2000}, "assumptions": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 500}}, "source_id": {"type": "integer", "minimum": 1}, "case_id": {"type": "integer", "minimum": 1}, "user_id": {"type": "integer", "minimum": 1}, "session_id": {"type": "integer", "minimum": 1}, "value": {}, "title": {"type": "string", "maxLength": 300}, "body": {"type": "string", "maxLength": 8000}, "owner_user_id": {"type": "integer", "minimum": 1}, "severity": {"type": "string", "enum": ["informational", "low", "medium", "high", "critical"]}, "status": {"type": "string", "maxLength": 40}}, "additionalProperties": False}
+TARGET_REASON_SCHEMA = {"type": "object", "properties": {"target": {"type": "string", "minLength": 1, "maxLength": 500}, "reason": {"type": "string", "minLength": 1, "maxLength": 2000}, "assumptions": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 500}}, "source_id": {"type": "integer", "minimum": 1}, "case_id": {"type": "integer", "minimum": 1}, "user_id": {"type": "integer", "minimum": 1}, "session_id": {"type": "integer", "minimum": 1}, "connector_id": {"type": "integer", "minimum": 1}, "external_reference": {"type": "string", "maxLength": 200}, "payload_profile": {"type": "string", "enum": ["minimal", "standard", "extended"]}, "value": {}, "title": {"type": "string", "maxLength": 300}, "body": {"type": "string", "maxLength": 8000}, "owner_user_id": {"type": "integer", "minimum": 1}, "severity": {"type": "string", "enum": ["informational", "low", "medium", "high", "critical"]}, "status": {"type": "string", "maxLength": 40}}, "additionalProperties": False}
 OUTPUT_SCHEMA = {"type": "object", "properties": {"status": {"type": "string"}, "record_id": {"type": ["integer", "null"]}, "summary": {"type": "string"}}, "required": ["status", "summary"], "additionalProperties": True}
 
 
@@ -150,6 +150,16 @@ _COMPENSATIONS = [
     ("restore_playbook_enabled_state", "Restore playbook enabled state", "soar", "soar:manage"),
 ]
 
+_CONNECTOR_ACTIONS = [
+    ("queue_connector_notification", "Queue connector notification"),
+    ("queue_external_ticket_create", "Queue external ticket creation"),
+    ("queue_external_ticket_update", "Queue external ticket update"),
+    ("queue_siem_event_publish", "Queue SIEM event publishing"),
+    ("queue_stix_export", "Queue STIX export"),
+    ("test_connector_health", "Queue connector health test"),
+    ("create_connector_delivery_review_task", "Create connector delivery review task"),
+]
+
 
 ACTION_CATALOG: dict[str, ActionDefinition] = {}
 for key, name, category, permission in _READ_ONLY:
@@ -160,6 +170,8 @@ for key, name in _SIMULATION:
     ACTION_CATALOG[key] = _definition(key, name, "simulated_containment", "simulation_only", "soar:execute")
 for key, name, category, permission in _COMPENSATIONS:
     ACTION_CATALOG[key] = _definition(key, name, category, "controlled_local", permission)
+for key, name in _CONNECTOR_ACTIONS:
+    ACTION_CATALOG[key] = replace(_definition(key, name, "security_integrations", "controlled_local", "integrations:execute"), approval_requirement="administrator", administrator_approval_required=True, requester_approver_separation_required=True, automatic_local_eligible=False)
 
 
 def get_action(action_key: str) -> ActionDefinition | None:
