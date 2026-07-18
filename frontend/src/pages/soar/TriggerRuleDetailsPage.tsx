@@ -1,0 +1,1 @@
+export {TriggerRuleDetailsPage} from './SoarPages';

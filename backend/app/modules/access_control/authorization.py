@@ -110,6 +110,20 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
             return {"vulnerabilities:remediate"}, True
         return {"vulnerabilities:triage"}, True
 
+    if path.startswith("/api/soar"):
+        if path.rstrip("/").endswith("/overview") and read:
+            return {"soar:view"}, True
+        if read:
+            if "/reports" in path and path.endswith("/download"): return {"soar:export"}, True
+            return {"soar:view"}, True
+        if "/action-policies" in path: return {"soar:action_policy_manage"}, True
+        if "/approvals" in path: return {"soar:approve"}, True
+        if "/analyst-inputs" in path: return {"soar:review"}, True
+        if "/rollbacks" in path or path.endswith("/request-rollback"): return {"soar:rollback"}, True
+        if "/reports" in path: return {"soar:export"}, True
+        if "/executions" in path or path.endswith("/evaluate"): return {"soar:execute"}, True
+        return {"soar:manage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:

@@ -47,8 +47,29 @@ def reset(db: Session) -> dict:
     from app.modules.detection_engineering.models import DetectionExecution, DetectionRule
     demo_rules = db.query(DetectionRule).filter(DetectionRule.tags_json.like('%"threatscope-demo"%'), DetectionRule.system_owned.is_(False)).all()
     demo_rule_ids = [rule.id for rule in demo_rules]
-    demo_executions = db.query(DetectionExecution).filter(DetectionExecution.rule_id.in_(demo_rule_ids)).all() if demo_rule_ids else []
-    for execution in demo_executions: db.delete(execution)
+    demo_detection_executions = db.query(DetectionExecution).filter(DetectionExecution.rule_id.in_(demo_rule_ids)).all() if demo_rule_ids else []
+    for execution in demo_detection_executions: db.delete(execution)
     for rule in demo_rules: db.delete(rule)
+    from app.modules.soar.models import SoarAnalystInput, SoarApproval, SoarApprovalDecision, SoarExecution, SoarExecutionEvent, SoarExecutionEvidence, SoarPlaybook, SoarPlaybookStep, SoarPlaybookVersion, SoarReport, SoarRollbackRecord, SoarStepExecution, SoarTriggerRule
+    demo_executions = db.query(SoarExecution).filter_by(demo_owned=True).all()
+    demo_execution_ids = [item.id for item in demo_executions]
+    demo_step_ids = [row[0] for row in db.query(SoarStepExecution.id).filter(SoarStepExecution.execution_id.in_(demo_execution_ids)).all()] if demo_execution_ids else []
+    demo_approval_ids = [row[0] for row in db.query(SoarApproval.id).filter(SoarApproval.execution_id.in_(demo_execution_ids)).all()] if demo_execution_ids else []
+    if demo_approval_ids: db.query(SoarApprovalDecision).filter(SoarApprovalDecision.approval_id.in_(demo_approval_ids)).delete(synchronize_session=False)
+    if demo_execution_ids:
+        db.query(SoarRollbackRecord).filter(SoarRollbackRecord.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarAnalystInput).filter(SoarAnalystInput.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarApproval).filter(SoarApproval.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarExecutionEvidence).filter(SoarExecutionEvidence.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarExecutionEvent).filter(SoarExecutionEvent.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarStepExecution).filter(SoarStepExecution.execution_id.in_(demo_execution_ids)).delete(synchronize_session=False)
+        db.query(SoarExecution).filter(SoarExecution.id.in_(demo_execution_ids)).delete(synchronize_session=False)
+    demo_playbooks = db.query(SoarPlaybook).filter_by(demo_owned=True, system_owned=False).all(); demo_playbook_ids = [item.id for item in demo_playbooks]
+    if demo_playbook_ids:
+        db.query(SoarTriggerRule).filter(SoarTriggerRule.playbook_id.in_(demo_playbook_ids)).delete(synchronize_session=False)
+        db.query(SoarPlaybookStep).filter(SoarPlaybookStep.playbook_id.in_(demo_playbook_ids)).delete(synchronize_session=False)
+        db.query(SoarPlaybookVersion).filter(SoarPlaybookVersion.playbook_id.in_(demo_playbook_ids)).delete(synchronize_session=False)
+        db.query(SoarPlaybook).filter(SoarPlaybook.id.in_(demo_playbook_ids)).delete(synchronize_session=False)
+    demo_soar_reports = db.query(SoarReport).filter_by(demo_owned=True).delete(synchronize_session=False)
     add_activity(db, "demo_reset", f"Removed {count} demo-owned target records; analyst records were preserved.", "operational_demo", None); notify(db,"Demo reset succeeded",f"Removed {count} demo-owned records and preserved analyst data.","success","operational_demo",None); db.commit()
-    return {**status(db), "deleted_demo_records": count + len(demo_vm_assets) + len(demo_indicators) + len(demo_sources) + len(demo_rules) + len(demo_executions), "deleted_demo_vulnerability_management_records": len(demo_vm_assets), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "deleted_demo_detection_records": len(demo_rules) + len(demo_executions), "non_demo_records_preserved": True}
+    return {**status(db), "deleted_demo_records": count + len(demo_vm_assets) + len(demo_indicators) + len(demo_sources) + len(demo_rules) + len(demo_detection_executions) + len(demo_executions) + len(demo_playbooks) + demo_soar_reports, "deleted_demo_vulnerability_management_records": len(demo_vm_assets), "deleted_demo_threat_intel_records": len(demo_indicators) + len(demo_sources), "deleted_demo_detection_records": len(demo_rules) + len(demo_detection_executions), "deleted_demo_soar_records": len(demo_executions) + len(demo_playbooks) + demo_soar_reports, "non_demo_records_preserved": True, "protected_soar_templates_preserved": True}

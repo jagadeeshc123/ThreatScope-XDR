@@ -9,6 +9,7 @@ from app.modules.soc_monitor.models import SocActivity
 from app.modules.threat_intelligence.models import ThreatCorrelationRun, ThreatIntelImport
 from app.modules.detection_engineering.models import DetectionExecution, DetectionReport
 from app.modules.vulnerability_management.models import AssetSynchronizationRun, VulnerabilityIngestionRun
+from app.modules.soar.models import SoarExecution, SoarReport
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -28,6 +29,10 @@ DEFAULTS = [
     ("detection_reports", "Old generated detection reports", "detection_reports", 365, 25),
     ("vm_asset_sync_runs", "Old completed asset synchronization runs", "vm_asset_sync_runs", 180, 25),
     ("vm_ingestion_runs", "Old completed vulnerability ingestion runs", "vm_ingestion_runs", 180, 25),
+    ("soar_dry_runs", "Old terminal SOAR dry runs", "soar_dry_runs", 90, 50),
+    ("soar_simulations", "Old terminal SOAR simulations", "soar_simulations", 180, 50),
+    ("soar_live_local_executions", "Old terminal SOAR live-local executions", "soar_live_local_executions", 365, 100),
+    ("soar_reports", "Old generated SOAR reports", "soar_reports", 365, 25),
 ]
 
 
@@ -54,6 +59,11 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "detection_reports": return DetectionReport, [DetectionReport.created_at < cutoff]
     if policy.entity_type == "vm_asset_sync_runs": return AssetSynchronizationRun, [AssetSynchronizationRun.status.in_(["completed", "failed"]), AssetSynchronizationRun.completed_at < cutoff]
     if policy.entity_type == "vm_ingestion_runs": return VulnerabilityIngestionRun, [VulnerabilityIngestionRun.status.in_(["completed", "failed"]), VulnerabilityIngestionRun.completed_at < cutoff]
+    terminal = ["completed", "completed_with_warnings", "failed", "cancelled", "rolled_back", "rollback_failed", "expired"]
+    if policy.entity_type == "soar_dry_runs": return SoarExecution, [SoarExecution.mode == "dry_run", SoarExecution.status.in_(terminal), SoarExecution.completed_at < cutoff, SoarExecution.trigger_source_type != "incident_case"]
+    if policy.entity_type == "soar_simulations": return SoarExecution, [SoarExecution.mode == "simulation", SoarExecution.status.in_(terminal), SoarExecution.completed_at < cutoff, SoarExecution.trigger_source_type != "incident_case"]
+    if policy.entity_type == "soar_live_local_executions": return SoarExecution, [SoarExecution.mode == "live_local", SoarExecution.status.in_(terminal), SoarExecution.completed_at < cutoff, SoarExecution.trigger_source_type != "incident_case"]
+    if policy.entity_type == "soar_reports": return SoarReport, [SoarReport.created_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 

@@ -25,7 +25,8 @@
       "threat_intel:view", "threat_intel:import", "threat_intel:manage", "threat_intel:correlate", "threat_intel:export",
       "detections:view", "detections:manage", "detections:import", "detections:execute", "detections:review", "detections:export",
       "assets:view", "assets:manage", "vulnerabilities:view", "vulnerabilities:triage", "vulnerabilities:remediate", "vulnerabilities:verify", "vulnerabilities:accept_risk", "vulnerabilities:export",
-      "operations:view", "operations:diagnostics", "operations:export", "operations:inventory"
+      "operations:view", "operations:diagnostics", "operations:export", "operations:inventory",
+      "soar:view", "soar:manage", "soar:execute", "soar:review", "soar:export"
     ]
   },
   "auditor": {
@@ -35,7 +36,7 @@
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
       "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read", "threat_intel:view", "threat_intel:export", "detections:view", "detections:export", "assets:view", "vulnerabilities:view", "vulnerabilities:export",
       "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all",
-      "operations:view", "operations:diagnostics", "operations:inventory"
+      "operations:view", "operations:diagnostics", "operations:inventory", "soar:view", "soar:export"
     ]
   },
   "executive_viewer": {

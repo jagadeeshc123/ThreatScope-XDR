@@ -1,0 +1,1 @@
+export {SoarReportDetailsPage} from './SoarPages';

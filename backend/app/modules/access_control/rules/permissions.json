@@ -95,5 +95,14 @@
   ["vulnerabilities:accept_risk", "Request vulnerability risk acceptance", "Vulnerability Management"],
   ["vulnerabilities:approve_risk", "Approve vulnerability risk acceptance", "Vulnerability Management"],
   ["vulnerabilities:export", "Generate vulnerability-management reports", "Vulnerability Management"],
-  ["sla:manage", "Manage vulnerability SLA policies", "Vulnerability Management"]
+  ["sla:manage", "Manage vulnerability SLA policies", "Vulnerability Management"],
+  ["soar:view", "View SOAR playbooks and execution history", "SOAR-Lite"],
+  ["soar:manage", "Manage SOAR playbooks and trigger rules", "SOAR-Lite"],
+  ["soar:execute", "Execute allowlisted SOAR workflows", "SOAR-Lite"],
+  ["soar:approve", "Decide SOAR approvals", "SOAR-Lite"],
+  ["soar:review", "Submit SOAR analyst input", "SOAR-Lite"],
+  ["soar:rollback", "Approve and execute SOAR compensation", "SOAR-Lite"],
+  ["soar:export", "Generate and export SOAR reports", "SOAR-Lite"],
+  ["soar:sensitive_actions", "Approve sensitive local user and session actions", "SOAR-Lite"],
+  ["soar:action_policy_manage", "Manage server-owned SOAR action policies", "SOAR-Lite"]
 ]

@@ -147,6 +147,18 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
     vm_verifications=db.query(models.VerificationRequest).filter(or_(models.VerificationRequest.request_note.ilike(query),models.VerificationRequest.result_summary.ilike(query))).limit(10).all()
     vm_remediation_templates=db.query(models.RemediationTemplate).filter(or_(models.RemediationTemplate.title.ilike(query),models.RemediationTemplate.summary.ilike(query),models.RemediationTemplate.weakness_id.ilike(query))).limit(10).all()
     vm_reports=db.query(models.VulnerabilityReport).filter(models.VulnerabilityReport.title.ilike(query)).limit(10).all()
+    soar_playbooks=soar_triggers=soar_executions=soar_approvals=soar_analyst_inputs=soar_rollbacks=soar_reports=[]
+    soar_actions=[]
+    if "soar:view" in permissions:
+        soar_playbooks=db.query(models.SoarPlaybook).filter(or_(models.SoarPlaybook.name.ilike(query),models.SoarPlaybook.description.ilike(query))).limit(15).all()
+        soar_triggers=db.query(models.SoarTriggerRule).filter(models.SoarTriggerRule.name.ilike(query)).limit(10).all()
+        soar_executions=db.query(models.SoarExecution).filter(or_(models.SoarExecution.execution_uuid.ilike(query),models.SoarExecution.status.ilike(query))).limit(10).all()
+        soar_approvals=db.query(models.SoarApproval).filter(or_(models.SoarApproval.request_reason.ilike(query),models.SoarApproval.status.ilike(query))).limit(10).all()
+        soar_analyst_inputs=db.query(models.SoarAnalystInput).filter(or_(models.SoarAnalystInput.title.ilike(query),models.SoarAnalystInput.instructions.ilike(query))).limit(10).all()
+        soar_rollbacks=db.query(models.SoarRollbackRecord).filter(or_(models.SoarRollbackRecord.reason.ilike(query),models.SoarRollbackRecord.status.ilike(query))).limit(10).all()
+        soar_reports=db.query(models.SoarReport).filter(models.SoarReport.title.ilike(query)).limit(10).all()
+        from app.modules.soar.catalog import ACTION_CATALOG
+        soar_actions=[{"action_key":x.action_key,"display_name":x.display_name,"safety_classification":x.safety_classification,"internal_path":"/soar/actions"} for x in ACTION_CATALOG.values() if q.casefold() in x.display_name.casefold() or q.casefold() in x.action_key.casefold()][:15]
     operations = []
     if "operations:view" in permissions:
         from app.modules.platform_operations.models import BackupRecord, ExportPackage, OperationalJob, ReleaseArtifact, RestoreRecord, RetentionPolicy, RetentionRun
@@ -248,4 +260,12 @@ def search(request: Request, q: str = "", db: Session = Depends(get_db)):
         vm_remediation_templates=[{"id":x.id,"title":x.title,"category":x.category,"system_owned":x.system_owned,"internal_path":"/vulnerability-management/library"} for x in vm_remediation_templates],
         vm_reports=[{"id":x.id,"title":x.title,"report_type":x.report_type,"created_at":x.created_at,"internal_path":f"/vulnerability-management/reports/{x.id}"} for x in vm_reports],
         operations=operations,
+        soar_playbooks=[{"id":x.id,"title":x.name,"status":x.lifecycle_status,"kind":"template" if x.system_owned else "playbook","internal_path":f"/soar/playbooks/{x.id}"} for x in soar_playbooks],
+        soar_triggers=[{"id":x.id,"title":x.name,"status":"enabled" if x.enabled else "disabled","internal_path":f"/soar/triggers/{x.id}"} for x in soar_triggers],
+        soar_executions=[{"id":x.id,"title":x.execution_uuid,"status":x.status,"mode":x.mode,"internal_path":f"/soar/executions/{x.id}"} for x in soar_executions],
+        soar_approvals=[{"id":x.id,"title":x.approval_type,"status":x.status,"internal_path":f"/soar/approvals/{x.id}"} for x in soar_approvals],
+        soar_analyst_inputs=[{"id":x.id,"title":x.title,"status":x.status,"internal_path":"/soar/analyst-inputs"} for x in soar_analyst_inputs],
+        soar_actions=soar_actions,
+        soar_rollbacks=[{"id":x.id,"title":x.rollback_uuid,"status":x.status,"internal_path":f"/soar/rollbacks/{x.id}"} for x in soar_rollbacks],
+        soar_reports=[{"id":x.id,"title":x.title,"status":x.report_type,"internal_path":f"/soar/reports/{x.id}"} for x in soar_reports],
     )

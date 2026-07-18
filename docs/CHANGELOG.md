@@ -37,3 +37,4 @@
 - Added `threat_intel:view`, `threat_intel:import`, `threat_intel:manage`, `threat_intel:correlate`, and `threat_intel:export` with role seeding, CSRF, audit-chain, activity, and notification integration.
 - Added permission-aware frontend routes, dashboard/search integration, defanged non-clickable indicator display, and static offline reports.
 - Updated diagnostics, retention, backup/restore schema validation, documentation, and regression coverage.
+- Added Phase 16 offline SOAR-Lite with a server-owned action catalog, five safety classifications, policy governance, declarative validated playbooks, immutable versions, trigger proposals, dry-run/simulation/live-local execution, multi-person approvals, analyst input, persistent delays, retries, idempotency, case automation, protected sensitive actions, evidence, compensation/rollback records, reports, RBAC, audit, operations, dashboard, search, and full safety boundaries.

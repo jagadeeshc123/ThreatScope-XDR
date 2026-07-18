@@ -1,0 +1,1 @@
+export {ExecutionDetailsPage} from './SoarPages';

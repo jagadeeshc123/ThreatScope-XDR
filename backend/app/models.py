@@ -260,3 +260,9 @@ from app.modules.vulnerability_management.models import (  # noqa: E402,F401
     AssetSynchronizationRun, VulnerabilityIngestionRun,
     VulnerabilityStatusHistory,
 )
+from app.modules.soar.models import (  # noqa: E402,F401
+    SoarActionPolicy, SoarPlaybook, SoarPlaybookVersion, SoarPlaybookStep,
+    SoarTriggerRule, SoarTriggerEvaluationRun, SoarExecution, SoarStepExecution,
+    SoarExecutionEvent, SoarApproval, SoarApprovalDecision, SoarAnalystInput,
+    SoarExecutionEvidence, SoarRollbackRecord, SoarReport,
+)

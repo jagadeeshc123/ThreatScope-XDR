@@ -34,3 +34,4 @@
 - Evaluation currently maps stored ThreatScope fields and does not deploy agents, collect live telemetry, query cloud SIEMs, or download external rule feeds.
 - Risk and quality scores are deterministic heuristics, not machine learning, threat reputation, or efficacy guarantees.
 - There is no command execution, malware execution, active containment, process termination, firewall blocking, or automated alert/case creation.
+- SOAR-Lite has no Phase 17 connectors, outbound webhooks, external ticket delivery, remote agent, real containment, automatic case closure, vulnerability resolution, risk acceptance, worker, or scheduler. External response actions are simulation-only. Revoked sessions and delivered notifications cannot be restored; rollback compensates only explicitly supported local state and may be partial.

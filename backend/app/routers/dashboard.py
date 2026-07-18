@@ -22,6 +22,10 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         readiness, _ = public_readiness(db)
         latest_backup = db.query(BackupRecord).filter(BackupRecord.deleted_at.is_(None), BackupRecord.verification_status == "valid").order_by(BackupRecord.created_at.desc()).first()
         operations = {"readiness_status": readiness["status"], "degraded_check_count": readiness["failed_check_count"], "latest_backup_at": latest_backup.created_at if latest_backup and "operations:backup" in permissions else None, "failed_job_count": db.query(OperationalJob).filter_by(status="failed").count() if "operations:maintenance" in permissions else 0, "pending_restore_count": db.query(RestoreRecord).filter_by(status="pending_restart").count() if "operations:restore" in permissions else 0, "demo_mode": __import__("os").getenv("THREATSCOPE_DEMO_MODE","false").lower() in {"1","true","yes","on"}, "release_version": "1.0.0-rc1"}
+    soar = None
+    if "soar:view" in permissions:
+        from app.modules.soar.models import SoarAnalystInput, SoarApproval, SoarExecution, SoarRollbackRecord
+        soar = {"pending_approvals": db.query(SoarApproval).filter(SoarApproval.status.in_(["pending", "partially_approved"])).count(), "failed_executions": db.query(SoarExecution).filter_by(status="failed").count(), "running_executions": db.query(SoarExecution).filter_by(status="running").count(), "waiting_analyst_inputs": db.query(SoarAnalystInput).filter_by(status="pending").count(), "simulation_count": db.query(SoarExecution).filter_by(mode="simulation").count(), "rollback_failures": db.query(SoarRollbackRecord).filter_by(status="failed").count(), "sensitive_action_requests": db.query(SoarApproval).filter_by(approval_type="sensitive_action").count()}
     total_targets = db.query(models.Target).count()
     total_scans = db.query(models.Scan).count()
     active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
@@ -182,4 +186,5 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         highest_risk_targets=highest_risk_targets,
         operations=operations,
         vulnerability_management=vulnerability_management,
+        soar=soar,
     )

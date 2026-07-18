@@ -18,7 +18,7 @@ from .maintenance_service import add_activity, fail_job, finish_job, new_key, no
 from .models import BackupRecord, OperationalJob, utcnow
 
 _LOCK = threading.Lock()
-EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence", "vm_remediation_plans", "vm_risk_acceptances", "vm_verification_requests"}
+EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence", "vm_remediation_plans", "vm_risk_acceptances", "vm_verification_requests", "soar_action_policies", "soar_playbooks", "soar_playbook_versions", "soar_executions", "soar_step_executions", "soar_execution_events", "soar_approvals", "soar_approval_decisions", "soar_analyst_inputs", "soar_rollback_records"}
 
 
 def sha256_file(path: Path) -> str:

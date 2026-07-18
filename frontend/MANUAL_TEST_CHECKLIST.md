@@ -161,3 +161,23 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Search rules, packs, techniques, matches, executions, suppressions, and reports; verify internal navigation and dashboard detection metrics.
 - [ ] Sign in as Analyst, Auditor, Executive Viewer, Registered User, and anonymously; verify the documented sidebar, route, API, and mutation matrix.
 - [ ] Remove CSRF from a mutation and verify 403. Inspect Network and confirm no external request, rule download, URL fetch, command, or process execution occurs.
+## Phase 16 SOAR-Lite
+
+- [ ] Administrator opens `/soar`; stored metrics render with UTC and no fabricated inaccessible zeroes.
+- [ ] Action Catalog shows all five classifications, policy state, permission, retries, compensation, `SIMULATION ONLY — NO EXTERNAL ACTION IS PERFORMED`, and `ADMINISTRATOR APPROVAL REQUIRED`.
+- [ ] Clone a protected template; confirm the clone starts at version 1 and the template remains unchanged.
+- [ ] Editor adds condition, approval, analyst input, delay, evidence, action, and end steps; keyboard up/down controls preserve order and focus.
+- [ ] Backend validation shows step-key errors for missing/unknown/cyclic/unreachable routes, invalid references, unsafe automatic-local, disabled/simulation/sensitive actions, retries, delay, and size bounds.
+- [ ] Validate, move draft to testing, dry run, and confirm no case/task/notification/assignment/comment/tag/session/user mutation.
+- [ ] Run simulation and confirm the badge/disclaimer, intended target/reason/assumptions, and no external success wording.
+- [ ] Start an approval workflow; unauthorized/self-ineligible decision is denied; authorized approval resumes once; rejection follows failure; multi-person approval remains partial until complete.
+- [ ] Submit a bounded analyst input once; unauthorized, duplicate, expired, secret, and invalid response attempts are denied.
+- [ ] Confirm delay sets waiting state without a hanging request; process-due resumes once; repeated processing is safe.
+- [ ] Exercise retry success/exhaustion, cancellation of waiting/running work, terminal cancellation denial, and stable idempotency for execution/case/task/evidence/notification.
+- [ ] Create/reuse a case, source link, evidence, tag, comment, owner, task, and valid non-closing transition; confirm duplicates and automatic closure are prevented.
+- [ ] Test sensitive session/user request, Administrator approval, separation, last-active-Administrator and unsafe self-disable protections, session revocation, and re-enable; confirm no token/hash appears.
+- [ ] Request/approve/execute compensation; confirm current-state conflict, partial/failed/unsupported history, and no false reversal of simulations/session revocation.
+- [ ] Generate/download report; confirm 41 sections, escaped hostile text, no script, remote asset, active link, secret, or false containment claim.
+- [ ] Global search returns authorized SOAR playbooks/templates/triggers/executions/approvals/inputs/actions/rollbacks/reports; dashboard cards are permission-filtered.
+- [ ] Auditor is read/export only; Registered User/direct URL is denied; Executive sees aggregate dashboard only.
+- [ ] Direct-refresh all documented `/soar` routes on desktop and responsive sizes; test loading, empty, error, keyboard focus, and browser console.

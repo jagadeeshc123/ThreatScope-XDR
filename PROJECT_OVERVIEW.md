@@ -95,3 +95,11 @@ docker compose up --build
 ## Safety
 
 Only scan systems you own or are explicitly authorized to assess. VulnScope uses controlled request rates, bounded crawling, redacted evidence, and non-destructive checks.
+## Phase 16 release inventory
+
+- Module: `backend/app/modules/soar`, API prefix `/api/soar`, frontend prefix `/soar`.
+- Routes: overview/catalog/policies; playbook CRUD/lifecycle/validation/clone; immutable versions/compare/rollback; triggers/evaluation runs; executions/events/steps/resume/cancel/retry/process-due/rollback request; approvals; analyst inputs; rollback records; templates; reports/download.
+- Tables: action policies, playbooks, versions, steps, trigger rules/runs, executions, step attempts, append-only events, approvals/decisions, analyst inputs, evidence, rollback records, and reports.
+- Permissions: nine `soar:*` permissions with Administrator, Security Analyst, Auditor, Executive aggregate, and Registered User mappings.
+- Reports/documents: static 41-section reports and the four dedicated SOAR guides in `docs/`.
+- Boundary: local stored data only; no external connector, webhook, real containment, arbitrary code/command/SQL/URL, background worker, or automatic closure/resolution/acceptance.

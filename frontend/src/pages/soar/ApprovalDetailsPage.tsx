@@ -1,0 +1,1 @@
+export {ApprovalDetailsPage} from './SoarPages';

@@ -210,6 +210,7 @@ class DashboardSummary(BaseModel):
     highest_risk_targets: List[Target]
     operations: Optional[dict] = None
     vulnerability_management: Optional[dict] = None
+    soar: Optional[dict] = None
 
 class NotificationBase(BaseModel):
     title: str
@@ -350,3 +351,11 @@ class SearchResults(BaseModel):
     vm_remediation_templates: List[dict] = []
     vm_reports: List[dict] = []
     operations: List[dict] = []
+    soar_playbooks: List[dict] = []
+    soar_triggers: List[dict] = []
+    soar_executions: List[dict] = []
+    soar_approvals: List[dict] = []
+    soar_analyst_inputs: List[dict] = []
+    soar_actions: List[dict] = []
+    soar_rollbacks: List[dict] = []
+    soar_reports: List[dict] = []

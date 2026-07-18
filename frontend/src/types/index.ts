@@ -138,6 +138,7 @@ export interface DashboardSummary {
   highest_risk_targets: Target[];
   operations: {readiness_status:string;degraded_check_count:number;latest_backup_at:string|null;failed_job_count:number;pending_restore_count:number;demo_mode:boolean;release_version:string}|null;
   vulnerability_management: {active_vulnerabilities:number;critical_high_vulnerabilities:number;overdue_vulnerabilities:number;due_within_seven_days:number;unassigned_vulnerabilities:number;recent_resolutions:number;recent_regressions:number}|null;
+  soar:{pending_approvals:number;failed_executions:number;running_executions:number;waiting_analyst_inputs:number;simulation_count:number;rollback_failures:number;sensitive_action_requests:number}|null;
 }
 
 export interface Notification {
@@ -232,6 +233,14 @@ export interface SearchResults {
   vm_remediation_templates:Array<{id:number;title:string;category:string;system_owned:boolean;internal_path:string}>;
   vm_reports:Array<{id:number;title:string;report_type:string;created_at:string;internal_path:string}>;
   operations:Array<{id:number;kind:string;title:string;status:string;internal_path:string}>;
+  soar_playbooks:Array<{id:number;title:string;status:string;kind:string;internal_path:string}>;
+  soar_triggers:Array<{id:number;title:string;status:string;internal_path:string}>;
+  soar_executions:Array<{id:number;title:string;status:string;mode:string;internal_path:string}>;
+  soar_approvals:Array<{id:number;title:string;status:string;internal_path:string}>;
+  soar_analyst_inputs:Array<{id:number;title:string;status:string;internal_path:string}>;
+  soar_actions:Array<{action_key:string;display_name:string;safety_classification:string;internal_path:string}>;
+  soar_rollbacks:Array<{id:number;title:string;status:string;internal_path:string}>;
+  soar_reports:Array<{id:number;title:string;status:string;internal_path:string}>;
 }
 export interface UnifiedEntity{id:number;entity_type:string;normalized_value:string;value_hash:string;display_value_redacted:string;risk_score:number;severity:string;confidence:string;observation_count:number;source_module_count:number;first_seen_at:string;last_seen_at:string;watchlist_match:boolean;active:boolean;observations?:EntityObservation[];matches?:CorrelationMatch[];cases?:IncidentCase[]}
 export interface EntityObservation{id:number;entity_id:number;source_module:string;source_record_type:string;source_record_id:number;source_internal_route:string|null;title_snapshot:string;evidence_snapshot:string;severity:string;confidence:string;observed_at:string}

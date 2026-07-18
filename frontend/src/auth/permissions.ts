@@ -1,4 +1,5 @@
 export const routePermissions: Array<[string, string]> = [
+  ['/soar/action-policies', 'soar:action_policy_manage'], ['/soar/reports', 'soar:export'], ['/soar', 'soar:view'],
   ['/vulnerability-management/reports', 'vulnerabilities:export'], ['/vulnerability-management', 'vulnerabilities:view'],
   ['/operations/backups', 'operations:backup'], ['/operations/restores', 'operations:restore'],
   ['/operations/exports', 'operations:export'], ['/operations/retention', 'operations:retention'],
