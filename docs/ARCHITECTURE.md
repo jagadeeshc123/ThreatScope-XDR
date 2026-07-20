@@ -12,3 +12,7 @@ The React/TypeScript frontend uses a typed Axios client, cookie credentials, CSR
 
 No background worker, migration framework, cache, queue, cloud service, monitoring server, reverse proxy, deployment automation, or live selective import is part of this release candidate.
 `app/modules/soar` owns Phase 16 catalog definitions, SQLAlchemy records, strict schemas, safe condition and validation engines, deterministic synchronous/resumable execution, approval/input/trigger/compensation services, routes, and static report generation. It reuses central database sessions, authentication, CSRF, permissions, hash-chained audit, notifications, SOC activity, case/vulnerability/user/session models, operations, and the shared frontend client/guards. It contains no connector or executable plug-in mechanism.
+
+## Phase 19 deployment plane
+
+`app.modules.production` is the single production policy layer for profiles, configuration, file secrets, preflight, headers, redacted logging, schema metadata, health, and operations endpoints. It extends the existing access-control and platform-operations modules rather than duplicating them. Production Compose builds a static frontend into a rootless Nginx edge and a separate rootless FastAPI backend. Only the edge joins the public network; both share an internal application network, and the backend owns explicit persistent data/backup/upload/report/runtime volumes. SQLite enables WAL, foreign keys, a five-second busy timeout, quick-check readiness, and exactly one worker.

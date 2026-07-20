@@ -21,7 +21,8 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         from app.modules.platform_operations.models import BackupRecord, OperationalJob, RestoreRecord
         readiness, _ = public_readiness(db)
         latest_backup = db.query(BackupRecord).filter(BackupRecord.deleted_at.is_(None), BackupRecord.verification_status == "valid").order_by(BackupRecord.created_at.desc()).first()
-        operations = {"readiness_status": readiness["status"], "degraded_check_count": readiness["failed_check_count"], "latest_backup_at": latest_backup.created_at if latest_backup and "operations:backup" in permissions else None, "failed_job_count": db.query(OperationalJob).filter_by(status="failed").count() if "operations:maintenance" in permissions else 0, "pending_restore_count": db.query(RestoreRecord).filter_by(status="pending_restart").count() if "operations:restore" in permissions else 0, "demo_mode": __import__("os").getenv("THREATSCOPE_DEMO_MODE","false").lower() in {"1","true","yes","on"}, "release_version": "1.0.0-rc1"}
+        from app.version import version_info
+        operations = {"readiness_status": readiness["status"], "degraded_check_count": readiness.get("failed_check_count", 0), "latest_backup_at": latest_backup.created_at if latest_backup and "operations:backup" in permissions else None, "failed_job_count": db.query(OperationalJob).filter_by(status="failed").count() if "operations:maintenance" in permissions else 0, "pending_restore_count": db.query(RestoreRecord).filter_by(status="pending_restart").count() if "operations:restore" in permissions else 0, "demo_mode": __import__("os").getenv("THREATSCOPE_DEMO_MODE","false").lower() in {"1","true","yes","on"}, "release_version": version_info()["version"]}
     soar = None
     if "soar:view" in permissions:
         from app.modules.soar.models import SoarAnalystInput, SoarApproval, SoarExecution, SoarRollbackRecord

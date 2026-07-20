@@ -1,5 +1,12 @@
 # Changelog
 
+## Phase 19 - Production Deployment and Hardening
+
+- Added development/test/production runtime profiles, strict production validation, file-mounted secrets, startup preflight, and schema sentinel `threatscope-schema-v19`.
+- Added rootless read-only backend and static-edge images, segmented production Compose networks, persistent volumes, runtime limits, OCI metadata, TLS 1.2/1.3 Nginx termination, redirect, headers, cache policy, and safe access logging.
+- Added protected production readiness/build/security APIs and responsive operations UI, structured redaction/request IDs, SQLite WAL/foreign-key/busy-timeout/integrity safeguards, release/inventory tooling, CI gates, smoke helpers, and production runbooks.
+- Production defaults disable registration, docs, debug/reload, demo seeding, and connector egress. No cloud deployment, real credential, certificate, key, containment, tag, or v1.0 release is included.
+
 ## Phase 18 - Advanced Security Analytics
 
 - Added 64 immutable detector templates, 42 server-owned feature definitions, ten deterministic scoring methods, bounded baseline construction, backtesting, confidence/severity separation, and explainable anomaly materialization.

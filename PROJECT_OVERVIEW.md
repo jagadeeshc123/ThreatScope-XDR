@@ -107,3 +107,7 @@ Only scan systems you own or are explicitly authorized to assess. VulnScope uses
 - Permissions: nine `soar:*` permissions with Administrator, Security Analyst, Auditor, Executive aggregate, and Registered User mappings.
 - Reports/documents: static 41-section reports and the four dedicated SOAR guides in `docs/`.
 - Boundary: local stored data only; no external connector, webhook, real containment, arbitrary code/command/SQL/URL, background worker, or automatic closure/resolution/acceptance.
+
+## Phase 19 deployment boundary
+
+Phase 19 adds explicit development/test/production profiles and a production-only deployment plane: strict server configuration, file secrets, startup preflight, schema v19 metadata, JSON/redacted request logging, protected production-readiness APIs/UI, rootless production images, segmented Compose networks, persistent volumes, and a TLS-terminating Nginx static edge. It adds no cloud deployment, orchestrator, managed database, external telemetry, model service, automatic containment, or v1.0 release.

@@ -1,37 +1,21 @@
-import json
 import logging
-from datetime import datetime, timezone
+from app.modules.production.config import get_runtime_config
+from app.modules.production.logging import ProductionJsonFormatter
 
-from .redaction import redact
-
-
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        payload = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "event_name": getattr(record, "event_name", "application_log"),
-            "request_id": getattr(record, "request_id", None),
-            "actor_user_id": getattr(record, "actor_user_id", None),
-            "route_template": getattr(record, "route_template", None),
-            "method": getattr(record, "method", None),
-            "status_code": getattr(record, "status_code", None),
-            "duration_ms": getattr(record, "duration_ms", None),
-            "job_key": getattr(record, "job_key", None),
-            "metadata": redact(getattr(record, "safe_metadata", {})),
-            "message": redact(record.getMessage(), "message"),
-        }
-        return json.dumps(payload, sort_keys=True, default=str)
+JsonFormatter = ProductionJsonFormatter
 
 
 def configure_logging():
+    config = get_runtime_config()
     logger = logging.getLogger("threatscope.operations")
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(JsonFormatter())
-        logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+    handler = logging.StreamHandler()
+    if config.json_logging:
+        handler.setFormatter(ProductionJsonFormatter())
+    else:
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(getattr(logging, config.log_level, logging.INFO))
     logger.propagate = False
     return logger
 

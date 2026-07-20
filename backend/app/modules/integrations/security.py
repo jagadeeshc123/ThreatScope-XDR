@@ -12,6 +12,7 @@ from typing import Callable
 from urllib.parse import urlsplit
 
 from cryptography.fernet import Fernet, InvalidToken
+from app.modules.production.config import get_runtime_config
 
 
 class IntegrationSecurityError(ValueError):
@@ -25,7 +26,7 @@ METADATA_NETWORKS = tuple(ipaddress.ip_network(x) for x in ("169.254.169.254/32"
 
 
 def _fernet() -> Fernet:
-    raw = os.getenv("THREATSCOPE_CONNECTOR_SECRETS_KEY", "").strip()
+    raw = get_runtime_config().secrets["THREATSCOPE_CONNECTOR_SECRETS_KEY"]
     if not raw:
         raise IntegrationSecurityError("CONNECTOR_CREDENTIAL_UNAVAILABLE", "Connector secret encryption key is unavailable")
     try:

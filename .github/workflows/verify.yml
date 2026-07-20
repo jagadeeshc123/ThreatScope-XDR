@@ -6,9 +6,13 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: backend
@@ -27,10 +31,12 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m compileall app tests scripts
       - run: python -m unittest discover -s tests -v
+      - run: python scripts/run_tests_network_disabled.py
       - run: python scripts/verify_vulnscope.py
       - run: python -m pip check
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -47,9 +53,30 @@ jobs:
       - run: npm ls --depth=0
   repository:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - run: test ! -e .env && test ! -e backend/vulnscope.db && test ! -e runtime
       - run: '! git ls-files | grep -E ''(^|/)(node_modules|runtime|backups|exports|releases)/|\.(db|sqlite|pem|key)$'''
       - run: git diff --check
       - run: docker compose config
+  production-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python deploy/scripts/generate_phase19_smoke_material.py
+      - run: docker compose --env-file .runtime/phase19-smoke/smoke.env -f docker-compose.production.yml -f docker-compose.production-smoke.yml config --quiet
+      - run: docker compose --env-file .runtime/phase19-smoke/smoke.env -f docker-compose.production.yml -f docker-compose.production-smoke.yml build
+      - run: docker compose --env-file .runtime/phase19-smoke/smoke.env -p threatscope-phase19-smoke -f docker-compose.production.yml -f docker-compose.production-smoke.yml up -d
+      - run: python deploy/scripts/production_https_smoke.py
+      - run: python deploy/scripts/inspect_production_containers.py
+      - if: always()
+        run: docker compose --env-file .runtime/phase19-smoke/smoke.env -p threatscope-phase19-smoke -f docker-compose.production.yml -f docker-compose.production-smoke.yml down -v
+      - if: always()
+        run: python deploy/scripts/cleanup_phase19_smoke.py

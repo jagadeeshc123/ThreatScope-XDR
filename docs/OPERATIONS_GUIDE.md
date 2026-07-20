@@ -31,3 +31,7 @@ SOAR delays and retry waits are persistent and non-blocking. Call `POST /api/soa
 # Integration Hub operations
 
 Connector activation is explicit and test-gated. Process due deliveries only through the bounded authenticated processing endpoint; deliveries use idempotency keys, bounded exponential retry, circuit breaking, terminal dead letters, and manual replay that creates a new delivery after revalidation. Monitor connector health, open circuits, due deliveries, dead letters, quarantined inbound events, and encryption-key availability in diagnostics and the Integration Hub. Backups include integration tables but not the separately managed encryption key. Retention remains preview-first and preserves active deliveries, replay evidence, and externally referenced records. Demo reset removes only demo-owned connectors and their dependent integration records.
+
+# Production operations
+
+Run startup preflight before every deployment and use `/operations/production-readiness` for permission-aware status. Monitor schema/audit/database/storage/disk/backup checks, generated request IDs, and bounded JSON logs. Keep registration, docs, demo mode, and connector egress disabled unless a reviewed policy explicitly changes them. Validate encrypted backups regularly and conduct isolated restore drills during planned downtime. Use the documented upgrade/rollback and disaster-recovery workflows; never regenerate encryption keys or reset the database during recovery.

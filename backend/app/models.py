@@ -279,3 +279,4 @@ from app.modules.analytics.models import (  # noqa: E402,F401
     AnalyticsBacktest, AnalyticsEvaluation, SecurityAnomaly, AnomalyContribution,
     AnomalyFeedback, AnalyticsSuppression, AnalyticsDriftRecord, AnalyticsReport,
 )
+from app.modules.production.models import ProductionRuntimeMetadata  # noqa: E402,F401

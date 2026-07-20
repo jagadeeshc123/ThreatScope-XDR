@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.modules.access_control.audit_service import append_event
 from app.modules.access_control.models import UserAccount
 from app.modules.platform_operations.maintenance_service import add_activity, notify
+from app.modules.production.config import RuntimeProfile, get_runtime_config
 
 from . import adapters
 from .catalog import AUTHENTICATION_METHODS, CONNECTOR_CATALOG, EVENT_TYPES, SAFE_API_KEY_HEADERS
@@ -351,6 +352,8 @@ def deliver(db, delivery, resolver=None, transport=None, smtp_factory=None):
         config=json.loads(connector.configuration_json);payload=json.loads(delivery.payload_json)
         sync_case,sync_reference=_case_sync_context(db,delivery,payload)
         if connector.connector_type=="local_test_sink": response=adapters.AdapterResponse(200,b'{"status":"stored_redacted_test_delivery"}',0)
+        elif get_runtime_config().profile is RuntimeProfile.PRODUCTION and not get_runtime_config().connector_egress_enabled:
+            raise IntegrationSecurityError("CONNECTOR_EGRESS_DISABLED", "Outbound connector delivery is disabled by production policy")
         elif connector.connector_type=="smtp_email":
             cred=decrypt_secret(db.query(ConnectorCredential).filter_by(connector_id=connector.id,configured=True).one().encrypted_payload);response=adapters.send_smtp(config,cred,payload,smtp_factory)
         else:
@@ -450,7 +453,10 @@ def replay_dead_letter(db, dead, actor_id, reason):
         existing=db.get(ConnectorDelivery,dead.replayed_delivery_id)
         if existing:return existing
     original=db.get(ConnectorDelivery,dead.delivery_id);connector=db.get(ConnectorInstance,dead.connector_id)
-    if not connector or not validate_configuration(db,connector)["activation_eligible"]:
+    if not connector or not connector.enabled or connector.lifecycle_status!="active":
+        if connector:emit_notification(db,"dead_letter_replay_failed",connector,"integration_dead_letter",dead.id,"Dead-letter replay failed safe revalidation; payload details are withheld.",actor_id)
+        raise IntegrationSecurityError("CONNECTOR_REPLAY_NOT_ALLOWED","Connector must be active, tested, credentialed, and valid")
+    if not validate_configuration(db,connector)["activation_eligible"]:
         if connector:emit_notification(db,"dead_letter_replay_failed",connector,"integration_dead_letter",dead.id,"Dead-letter replay failed safe revalidation; payload details are withheld.",actor_id)
         raise IntegrationSecurityError("CONNECTOR_REPLAY_NOT_ALLOWED","Connector must be active, tested, credentialed, and valid")
     replay=queue_delivery(db,connector,json.loads(original.payload_json),original.event_type,original.external_operation,sha256(f"replay:{original.idempotency_key}:{uuid.uuid4()}"),actor_id)

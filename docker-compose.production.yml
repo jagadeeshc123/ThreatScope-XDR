@@ -1,0 +1,187 @@
+name: threatscope-production
+
+services:
+  backend:
+    image: threatscope/backend:${THREATSCOPE_APP_VERSION:?THREATSCOPE_APP_VERSION is required}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.production
+      args:
+        BUILD_VERSION: ${THREATSCOPE_APP_VERSION:?THREATSCOPE_APP_VERSION is required}
+        BUILD_REVISION: ${THREATSCOPE_BUILD_COMMIT:?THREATSCOPE_BUILD_COMMIT is required}
+        BUILD_TIMESTAMP: ${THREATSCOPE_BUILD_TIMESTAMP:?THREATSCOPE_BUILD_TIMESTAMP is required}
+    init: true
+    user: "10001:10001"
+    read_only: true
+    restart: unless-stopped
+    stop_grace_period: 35s
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: "1.0"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,uid=10001,gid=10001,mode=1770
+    volumes:
+      - threatscope_data:/var/lib/threatscope/data
+      - threatscope_backups:/var/lib/threatscope/backups
+      - threatscope_uploads:/var/lib/threatscope/uploads
+      - threatscope_reports:/var/lib/threatscope/reports
+      - threatscope_runtime:/var/lib/threatscope/runtime
+      - threatscope_exports:/var/lib/threatscope/exports
+      - threatscope_releases:/var/lib/threatscope/releases
+      - type: bind
+        source: ${THREATSCOPE_TLS_CERTIFICATE_HOST_FILE:?THREATSCOPE_TLS_CERTIFICATE_HOST_FILE is required}
+        target: /run/tls/tls.crt
+        read_only: true
+      - type: bind
+        source: ${THREATSCOPE_TLS_PRIVATE_KEY_HOST_FILE:?THREATSCOPE_TLS_PRIVATE_KEY_HOST_FILE is required}
+        target: /run/tls/tls.key
+        read_only: true
+    secrets:
+      - session_secret
+      - mfa_encryption_key
+      - connector_secrets_key
+      - backup_encryption_key
+    environment:
+      THREATSCOPE_PROFILE: production
+      THREATSCOPE_ENV: production
+      THREATSCOPE_DEBUG: "false"
+      THREATSCOPE_RELOAD: "false"
+      THREATSCOPE_API_DOCS: "false"
+      THREATSCOPE_AUTH_ENABLED: "true"
+      THREATSCOPE_LOCAL_LOGIN_ENABLED: "true"
+      THREATSCOPE_SELF_REGISTRATION_ENABLED: "false"
+      THREATSCOPE_REGISTRATION_MODE: disabled
+      THREATSCOPE_COOKIE_SECURE: "true"
+      THREATSCOPE_COOKIE_SAMESITE: lax
+      THREATSCOPE_CSRF_ENABLED: "true"
+      THREATSCOPE_ALLOWED_HOSTS: ${THREATSCOPE_ALLOWED_HOSTS:?THREATSCOPE_ALLOWED_HOSTS is required}
+      THREATSCOPE_ALLOWED_ORIGINS: ${THREATSCOPE_ALLOWED_ORIGINS:?THREATSCOPE_ALLOWED_ORIGINS is required}
+      THREATSCOPE_TRUSTED_PROXY_NETWORKS: ${THREATSCOPE_TRUSTED_PROXY_NETWORKS:-172.16.0.0/12}
+      THREATSCOPE_TLS_PROXY_EXPECTED: "true"
+      THREATSCOPE_TLS_CERTIFICATE_FILE: /run/tls/tls.crt
+      THREATSCOPE_TLS_PRIVATE_KEY_FILE: /run/tls/tls.key
+      THREATSCOPE_SESSION_SECRET_FILE: /run/secrets/session_secret
+      THREATSCOPE_MFA_ENCRYPTION_KEY_FILE: /run/secrets/mfa_encryption_key
+      THREATSCOPE_CONNECTOR_SECRETS_KEY_FILE: /run/secrets/connector_secrets_key
+      THREATSCOPE_BACKUP_ENCRYPTION_KEY_FILE: /run/secrets/backup_encryption_key
+      THREATSCOPE_CONNECTOR_EGRESS_ENABLED: "false"
+      THREATSCOPE_DEMO_MODE: "false"
+      THREATSCOPE_JSON_LOGS: "true"
+      THREATSCOPE_LOG_LEVEL: INFO
+      THREATSCOPE_WORKERS: "1"
+      THREATSCOPE_MAX_REQUEST_BYTES: ${THREATSCOPE_MAX_REQUEST_BYTES:-10485760}
+      THREATSCOPE_MAX_UPLOAD_BYTES: ${THREATSCOPE_MAX_UPLOAD_BYTES:-26214400}
+      THREATSCOPE_REQUEST_TIMEOUT_SECONDS: ${THREATSCOPE_REQUEST_TIMEOUT_SECONDS:-30}
+      THREATSCOPE_GRACEFUL_SHUTDOWN_SECONDS: "30"
+      THREATSCOPE_MINIMUM_FREE_BYTES: ${THREATSCOPE_MINIMUM_FREE_BYTES:-268435456}
+      THREATSCOPE_APP_VERSION: ${THREATSCOPE_APP_VERSION}
+      THREATSCOPE_BUILD_COMMIT: ${THREATSCOPE_BUILD_COMMIT}
+      THREATSCOPE_BUILD_TIMESTAMP: ${THREATSCOPE_BUILD_TIMESTAMP}
+      THREATSCOPE_FRONTEND_BUILD_ID: ${THREATSCOPE_FRONTEND_BUILD_ID:-frontend-production}
+      THREATSCOPE_BACKEND_BUILD_ID: ${THREATSCOPE_BACKEND_BUILD_ID:-backend-production}
+      THREATSCOPE_SCHEMA_IDENTIFIER: threatscope-schema-v19
+      DATABASE_URL: sqlite:////var/lib/threatscope/data/vulnscope.db
+      THREATSCOPE_RUNTIME_DIR: /var/lib/threatscope/runtime
+      THREATSCOPE_DATA_DIR: /var/lib/threatscope/data
+      THREATSCOPE_BACKUP_DIR: /var/lib/threatscope/backups
+      THREATSCOPE_UPLOAD_DIR: /var/lib/threatscope/uploads
+      THREATSCOPE_REPORT_DIR: /var/lib/threatscope/reports
+      THREATSCOPE_EXPORT_DIR: /var/lib/threatscope/exports
+      THREATSCOPE_RELEASE_DIR: /var/lib/threatscope/releases
+      THREATSCOPE_REQUIRE_BACKUP_ENCRYPTION: "true"
+    expose:
+      - "8000"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - application
+
+  edge:
+    image: threatscope/edge:${THREATSCOPE_APP_VERSION:?THREATSCOPE_APP_VERSION is required}
+    build:
+      context: .
+      dockerfile: deploy/nginx/Dockerfile
+      args:
+        BUILD_VERSION: ${THREATSCOPE_APP_VERSION:?THREATSCOPE_APP_VERSION is required}
+        BUILD_REVISION: ${THREATSCOPE_BUILD_COMMIT:?THREATSCOPE_BUILD_COMMIT is required}
+        BUILD_TIMESTAMP: ${THREATSCOPE_BUILD_TIMESTAMP:?THREATSCOPE_BUILD_TIMESTAMP is required}
+    init: true
+    user: "101:101"
+    read_only: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: "0.50"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=32m,uid=101,gid=101,mode=1770
+    volumes:
+      - type: bind
+        source: ${THREATSCOPE_TLS_CERTIFICATE_HOST_FILE}
+        target: /run/tls/tls.crt
+        read_only: true
+      - type: bind
+        source: ${THREATSCOPE_TLS_PRIVATE_KEY_HOST_FILE}
+        target: /run/tls/tls.key
+        read_only: true
+    environment:
+      THREATSCOPE_PUBLIC_HOST: ${THREATSCOPE_PUBLIC_HOST:?THREATSCOPE_PUBLIC_HOST is required}
+    ports:
+      - "${THREATSCOPE_HTTP_PORT:-80}:8080"
+      - "${THREATSCOPE_HTTPS_PORT:-443}:8443"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--header=Host: ${THREATSCOPE_PUBLIC_HOST}", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://127.0.0.1:8443/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - edge
+      - application
+
+networks:
+  edge: {}
+  application:
+    internal: true
+
+volumes:
+  threatscope_data: {}
+  threatscope_backups: {}
+  threatscope_uploads: {}
+  threatscope_reports: {}
+  threatscope_runtime: {}
+  threatscope_exports: {}
+  threatscope_releases: {}
+
+secrets:
+  session_secret:
+    file: ${THREATSCOPE_SESSION_SECRET_HOST_FILE:?THREATSCOPE_SESSION_SECRET_HOST_FILE is required}
+  mfa_encryption_key:
+    file: ${THREATSCOPE_MFA_ENCRYPTION_KEY_HOST_FILE:?THREATSCOPE_MFA_ENCRYPTION_KEY_HOST_FILE is required}
+  connector_secrets_key:
+    file: ${THREATSCOPE_CONNECTOR_SECRETS_KEY_HOST_FILE:?THREATSCOPE_CONNECTOR_SECRETS_KEY_HOST_FILE is required}
+  backup_encryption_key:
+    file: ${THREATSCOPE_BACKUP_ENCRYPTION_KEY_HOST_FILE:?THREATSCOPE_BACKUP_ENCRYPTION_KEY_HOST_FILE is required}

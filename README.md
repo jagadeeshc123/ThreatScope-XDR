@@ -48,3 +48,7 @@ ThreatScope XDR includes a permission-aware Threat Intelligence module for norma
 # Phase 14: offline detection engineering
 
 Detection Engineering adds native and bounded Sigma-compatible rules, immutable versions, synthetic positive/negative tests, test-gated activation, protected demonstration packs, a local educational ATT&CK subset, deterministic historical evaluation, suppressions, explicit alert/case promotion, and static reports. It evaluates stored records only and never executes commands or downloads rules. See [docs/DETECTION_ENGINEERING.md](docs/DETECTION_ENGINEERING.md).
+
+## Phase 19 production deployment and hardening
+
+The production profile adds fail-closed configuration, file-mounted secrets, schema v19 readiness, rootless read-only containers, persistent SQLite storage, and one Nginx TLS/static edge with no public backend port. Start with [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) and `.env.production.example`. Production disables public registration, API docs, debug/reload, demo seeding, and connector egress by default. Deployment owners must supply trusted TLS material and host/filesystem encryption; SQLite remains a limited single-node, one-worker option.

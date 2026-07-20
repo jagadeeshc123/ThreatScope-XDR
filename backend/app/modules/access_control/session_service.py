@@ -66,13 +66,14 @@ def set_session_cookie(response: Response, token: str) -> None:
         max_age=config.session_hours * 3600,
         httponly=True,
         secure=config.cookie_secure,
-        samesite="lax",
+        samesite=config.cookie_samesite,
         path="/",
     )
 
 
 def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/", secure=get_config().cookie_secure, httponly=True, samesite="lax")
+    config = get_config()
+    response.delete_cookie(COOKIE_NAME, path="/", secure=config.cookie_secure, httponly=True, samesite=config.cookie_samesite)
 
 
 def lookup_session(db: Session, request: Request, *, refresh: bool = True) -> AuthSession | None:
@@ -123,4 +124,3 @@ def revoke_user_sessions(db: Session, user_id: int, reason: str, except_session_
     count = query.update({AuthSession.revoked_at: now, AuthSession.revoke_reason: reason[:120]}, synchronize_session=False)
     db.commit()
     return count
-

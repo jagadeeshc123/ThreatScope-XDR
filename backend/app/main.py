@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app import models
 from app.database import Base, SessionLocal, engine
@@ -14,13 +15,30 @@ from app.modules.access_control.migration import ensure_local_account_schema
 from app.modules.platform_operations.configuration_service import get_operations_config
 from app.modules.integrations.security import IntegrationSecurityError
 from app.modules.analytics.router import router as analytics_router
+from app.modules.production.config import get_runtime_config
+from app.modules.production.preflight import ensure_schema_metadata, run_preflight
 
+
+runtime_config = get_runtime_config()
+if runtime_config.production:
+    startup_preflight = run_preflight(config=runtime_config, create_directories=True)
+    if not startup_preflight["ready"]:
+        failed = ", ".join(item["name"] for item in startup_preflight["checks"] if item["state"] == "failure")
+        raise RuntimeError(f"Production startup preflight failed: {failed}")
 
 Base.metadata.create_all(bind=engine)
 ensure_local_account_schema(engine)
 
-app = FastAPI(title="ThreatScope XDR API", description="Local security assessment and response platform API")
+app = FastAPI(
+    title="ThreatScope XDR API",
+    description="Local security assessment and response platform API",
+    debug=runtime_config.debug,
+    docs_url="/docs" if runtime_config.api_docs else None,
+    redoc_url="/redoc" if runtime_config.api_docs else None,
+    openapi_url="/openapi.json" if runtime_config.api_docs else None,
+)
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(runtime_config.allowed_hosts))
 
 config = get_config()
 app.add_middleware(
@@ -63,6 +81,7 @@ def startup_event():
     get_operations_config(create=True)
     db = SessionLocal()
     try:
+        ensure_schema_metadata(db)
         settings = db.query(models.AppSettings).first()
         if not settings:
             db.add(models.AppSettings())
@@ -94,8 +113,9 @@ def startup_event():
     finally:
         db.close()
     # Environment bootstrap is explicit and no-op unless all bootstrap variables are supplied.
-    from scripts.create_admin import bootstrap_from_environment
-    bootstrap_from_environment()
+    if not runtime_config.production:
+        from scripts.create_admin import bootstrap_from_environment
+        bootstrap_from_environment()
     # A first-run environment administrator is created after the initial seed transaction.
     # Re-open the session so protected IOC watchlists are also present on that first run.
     db = SessionLocal()
@@ -138,6 +158,7 @@ from app.modules.soc_monitor.router import router as soc_monitor_router
 from app.modules.unified_correlation.router import router as correlation_router
 from app.modules.access_control.router import admin_router, audit_router, router as auth_router
 from app.modules.platform_operations.router import health_router, router as operations_router
+from app.modules.production.router import router as production_router
 
 
 protected = [Depends(authorize_platform_request)]
@@ -146,6 +167,7 @@ app.include_router(admin_router, prefix="/api/admin", tags=["Access Administrati
 app.include_router(audit_router, prefix="/api/security-audit", tags=["Security Audit"])
 app.include_router(health_router, prefix="/api/health", tags=["Health"])
 app.include_router(operations_router, prefix="/api/operations", tags=["Platform Operations"])
+app.include_router(production_router, prefix="/api/operations/production", tags=["Production Operations"])
 app.include_router(targets.router, prefix="/api/targets", tags=["Targets"], dependencies=protected)
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"], dependencies=protected)
 app.include_router(policies.router, prefix="/api/policies", tags=["Policies"], dependencies=protected)

@@ -1,6 +1,8 @@
 import os
 from dataclasses import dataclass
 
+from app.modules.production.config import get_runtime_config
+
 
 def _bool(name: str, default: bool) -> bool:
     raw = os.getenv(name)
@@ -25,6 +27,7 @@ class AccessConfig:
     mfa_encryption_key: str
     allowed_origins: tuple[str, ...]
     cookie_secure: bool
+    cookie_samesite: str
     session_hours: int
     idle_minutes: int
     login_max_attempts: int
@@ -36,10 +39,9 @@ class AccessConfig:
 
 
 def get_config() -> AccessConfig:
-    environment = os.getenv("THREATSCOPE_ENV", "development").strip().lower()
-    origins = tuple(
-        item.strip() for item in os.getenv("THREATSCOPE_ALLOWED_ORIGINS", "http://localhost:5173").split(",") if item.strip()
-    )
+    runtime = get_runtime_config()
+    environment = runtime.profile.value
+    origins = runtime.allowed_origins
     default_mode = "approval_required" if environment == "production" else "auto_activate_limited"
     registration_mode = os.getenv("THREATSCOPE_REGISTRATION_MODE", "").strip().lower() or default_mode
     if registration_mode not in {"disabled", "approval_required", "auto_activate_limited"}:
@@ -47,24 +49,18 @@ def get_config() -> AccessConfig:
     config = AccessConfig(
         enabled=_bool("THREATSCOPE_AUTH_ENABLED", True),
         environment=environment,
-        session_secret=os.getenv("THREATSCOPE_SESSION_SECRET", ""),
-        mfa_encryption_key=os.getenv("THREATSCOPE_MFA_ENCRYPTION_KEY", ""),
+        session_secret=runtime.secrets["THREATSCOPE_SESSION_SECRET"],
+        mfa_encryption_key=runtime.secrets["THREATSCOPE_MFA_ENCRYPTION_KEY"],
         allowed_origins=origins,
-        cookie_secure=_bool("THREATSCOPE_COOKIE_SECURE", environment == "production"),
-        session_hours=_int("THREATSCOPE_SESSION_HOURS", 8, 1, 168),
-        idle_minutes=_int("THREATSCOPE_IDLE_MINUTES", 30, 5, 1440),
+        cookie_secure=runtime.cookie_secure,
+        cookie_samesite=runtime.cookie_samesite,
+        session_hours=runtime.session_hours,
+        idle_minutes=runtime.idle_minutes,
         login_max_attempts=_int("THREATSCOPE_LOGIN_MAX_ATTEMPTS", 5, 2, 20),
         lockout_minutes=_int("THREATSCOPE_LOCKOUT_MINUTES", 15, 1, 1440),
         local_login_enabled=_bool("THREATSCOPE_LOCAL_LOGIN_ENABLED", True),
-        self_registration_enabled=_bool("THREATSCOPE_SELF_REGISTRATION_ENABLED", True),
+        self_registration_enabled=runtime.public_registration,
         registration_mode=registration_mode,
         privacy_notice_version=os.getenv("THREATSCOPE_PRIVACY_NOTICE_VERSION", "").strip()[:64] or "local-privacy-v1",
     )
-    if config.environment == "production":
-        if len(config.session_secret) < 32:
-            raise RuntimeError("THREATSCOPE_SESSION_SECRET must contain at least 32 characters in production")
-        if not config.allowed_origins or "*" in config.allowed_origins:
-            raise RuntimeError("Production requires explicit THREATSCOPE_ALLOWED_ORIGINS")
-        if not config.cookie_secure:
-            raise RuntimeError("Production authentication requires secure cookies")
     return config

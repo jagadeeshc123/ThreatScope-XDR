@@ -1,5 +1,7 @@
 # Environments
 .env
+.env.production
+.env.production.local
 .venv
 env/
 venv/
@@ -30,10 +32,30 @@ wheels/
 *.egg
 vulnscope.db
 *.sqlite3
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
 runtime/
+.runtime/
 backend/runtime/
 backend/*.db-*
 add
+# Production-generated artifacts
+deploy/secrets/*
+!deploy/secrets/README.md
+!deploy/secrets/.gitignore
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+backups/
+uploads/
+reports/generated/
+dependency-inventory/
+release-manifests/
+*.log
 # Frontend/Node
 node_modules/
 dist/

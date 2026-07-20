@@ -23,3 +23,7 @@ Phase 16 adds no dependency, connector, credential, worker, queue, or external s
 # Phase 17 integration schema and encryption key
 
 Back up the database before first Phase 17 startup. Startup creates the `integration_*`, connector, delivery, inbound, STIX, and external-reference tables and advances the backup sentinel to `threatscope-schema-v17`. Set `THREATSCOPE_CONNECTOR_SECRETS_KEY` to a stable Fernet key before storing credentials; preserve that key separately from database backups and restore it with the database. Missing or incorrect keys fail secret-dependent operations closed and never trigger plaintext fallback. Phase 17 adds no package, worker, scheduler, or default external endpoint.
+
+# Phase 19 production installation
+
+Back up and validate the Phase 18 database before production startup. Schema v19 adds only production runtime metadata and updates the sentinel; startup does not drop or truncate data. Configure the ignored `.env.production`, externally stored file secrets, and deployment-owner TLS certificate/key, then validate `docker-compose.production.yml` and run `backend/scripts/production_preflight.py`. The production backend uses one worker and a persistent absolute SQLite path. See `PRODUCTION_DEPLOYMENT.md`; the localhost smoke certificate and `.runtime/phase19-smoke` data are test-only.

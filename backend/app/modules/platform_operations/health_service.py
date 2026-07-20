@@ -65,6 +65,12 @@ def detailed_health(db: Session) -> list[dict]:
 
 
 def public_readiness(db: Session) -> tuple[dict, int]:
+    from app.modules.production.config import get_runtime_config
+    from app.modules.production.health import production_readiness
+    if get_runtime_config().production:
+        result = production_readiness(db)
+        payload = {"ready": result["ready"], "status": result["status"]}
+        return payload, 200 if result["ready"] else 503
     checks = detailed_health(db)
     required = [item for item in checks if item["check_key"] in {"application_started", "database_connection", "authorization_catalog", "backup_directory", "configuration"}]
     failed = sum(item["status"] == "unhealthy" for item in required)

@@ -52,3 +52,13 @@
 - TAXII support is a bounded pull subset, STIX support is import-oriented, and ticket synchronization is explicit rather than silent bidirectional overwrite.
 - Private destinations require exact Administrator approval and remain subject to address validation; this is not a general intranet proxy.
 - Connector actions do not provide endpoint isolation, account disabling, firewall or DNS changes, email deletion, or any other real containment.
+
+# Production deployment
+
+- SQLite is limited to single-node, bounded-concurrency deployments and requires one backend worker; shared-volume horizontal scaling is unsupported.
+- There is no distributed scheduler, orchestrator-specific deployment, managed-database deployment, zero-downtime multi-node workflow, or guaranteed RPO/RTO.
+- Database encryption at rest is not included. Use host/filesystem encryption; backup encryption does not encrypt the live database.
+- Certificate issuance/renewal, automatic cloud deployment, automatic rollback, and external deployment promotion are not integrated.
+- There is no general SIEM log exporter beyond explicitly configured Phase 17 connectors, and connector egress is disabled by default.
+- Production resource defaults require environment-specific capacity review and tuning.
+- Visual browser QA remains manual when browser tooling is unavailable; fallback HTTP/build/API checks do not prove pixel-perfect layout.

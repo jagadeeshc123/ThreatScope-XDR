@@ -1,0 +1,4 @@
+services:
+  backend:
+    environment:
+      THREATSCOPE_LOCAL_PRODUCTION_SMOKE: "true"

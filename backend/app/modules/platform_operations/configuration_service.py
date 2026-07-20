@@ -4,6 +4,7 @@ from pathlib import Path
 from cryptography.fernet import Fernet
 
 from app.modules.access_control.config import get_config as get_access_config
+from app.modules.production.config import get_runtime_config
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -35,13 +36,14 @@ class OperationsConfig:
 
 
 def get_operations_config(create: bool = False) -> OperationsConfig:
-    runtime = Path(os.getenv("THREATSCOPE_RUNTIME_DIR", "./runtime")).expanduser().resolve()
+    production = get_runtime_config()
+    runtime = production.runtime_dir
     result = OperationsConfig(
         runtime_dir=runtime,
-        backup_dir=Path(os.getenv("THREATSCOPE_BACKUP_DIR", str(runtime / "backups"))).expanduser().resolve(),
-        export_dir=Path(os.getenv("THREATSCOPE_EXPORT_DIR", str(runtime / "exports"))).expanduser().resolve(),
-        release_dir=Path(os.getenv("THREATSCOPE_RELEASE_DIR", str(runtime / "releases"))).expanduser().resolve(),
-        backup_encryption_key=os.getenv("THREATSCOPE_BACKUP_ENCRYPTION_KEY", ""),
+        backup_dir=production.backup_dir,
+        export_dir=production.export_dir,
+        release_dir=production.release_dir,
+        backup_encryption_key=production.secrets["THREATSCOPE_BACKUP_ENCRYPTION_KEY"],
         require_backup_encryption=_bool("THREATSCOPE_REQUIRE_BACKUP_ENCRYPTION", False),
         max_backup_bytes=_int("THREATSCOPE_MAX_BACKUP_BYTES", 2_147_483_648, 1_048_576, 10_737_418_240),
         max_import_bytes=_int("THREATSCOPE_MAX_IMPORT_BYTES", 104_857_600, 1_024, 2_147_483_648),

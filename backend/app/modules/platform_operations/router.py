@@ -56,7 +56,11 @@ def _release(item):
 
 
 @health_router.get("/live")
-def live(): return {"status":"alive","service":"threatscope-xdr","timestamp":utc_iso(),"version":version_info()["version"]}
+def live():
+    from app.modules.production.config import get_runtime_config
+    if get_runtime_config().production:
+        return {"status": "alive"}
+    return {"status":"alive","service":"threatscope-xdr","timestamp":utc_iso(),"version":version_info()["version"]}
 
 
 @health_router.get("/ready")

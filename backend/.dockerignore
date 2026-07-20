@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+__pycache__
+*.pyc
+*.pyo
+*.db
+*.sqlite*
+runtime
+tests
+*.pem
+*.key
+*.crt
+.pytest_cache
+.mypy_cache

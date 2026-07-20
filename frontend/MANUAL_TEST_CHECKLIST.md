@@ -205,3 +205,14 @@ Run the backend and frontend, then verify each workflow with browser developer t
 - [ ] Global search returns authorized SOAR playbooks/templates/triggers/executions/approvals/inputs/actions/rollbacks/reports; dashboard cards are permission-filtered.
 - [ ] Auditor is read/export only; Registered User/direct URL is denied; Executive sees aggregate dashboard only.
 - [ ] Direct-refresh all documented `/soar` routes on desktop and responsive sizes; test loading, empty, error, keyboard focus, and browser console.
+
+## Phase 19 production readiness
+
+- [ ] Load production through verified HTTPS; confirm HTTP redirects, no mixed content, no insecure-cookie warning, and no console/API errors.
+- [ ] Confirm `/operations/production-readiness` loading, empty, error, responsive, keyboard, and accessible status states without paths, environment values, or secrets.
+- [ ] Administrator can run active preflight with CSRF; missing/invalid CSRF fails. Auditor is read-only, Security Analyst sees safe readiness, Executive sees aggregate dashboard status, and Registered User/anonymous cannot access details.
+- [ ] Confirm HSTS, CSP, nosniff, referrer, permissions, frame, COOP, CORP, and cache headers through HTTPS; confirm unknown Host and deceptive origins fail.
+- [ ] Confirm login/session/logout rotation and Secure, HttpOnly, SameSite cookie behavior through the proxy.
+- [ ] Direct-refresh every concrete router path through the production HTTPS edge; ensure guarded routes do not become blank-page successes and test loading/error/empty states.
+- [ ] Confirm reports/uploads remain authenticated, source maps and hidden/backup files are unavailable, and no hardcoded localhost backend or secret appears in the production bundle.
+- [ ] If browser automation is unavailable, record exactly `No browser is available` and retain authenticated HTTPS API, production build, route inventory/guard/import, direct-refresh, and manual responsive QA evidence.
