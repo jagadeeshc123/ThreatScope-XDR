@@ -147,6 +147,28 @@ def required_permissions(request: Request) -> tuple[set[str], bool]:
             return {"integrations:execute"}, True
         return {"integrations:manage"}, True
 
+    if path.startswith("/api/analytics"):
+        if read:
+            if path.rstrip("/") in {"/api/analytics/overview", "/api/analytics/metrics"}:
+                return {"analytics:view", "analytics:aggregate"}, False
+            if "/reports" in path:
+                if path.endswith("/export"): return {"analytics:export"}, True
+                return {"analytics:view", "analytics:aggregate", "analytics:export"}, False
+            return {"analytics:view"}, True
+        if "/feedback" in path or "/anomalies/" in path:
+            return {"analytics:review"}, True
+        if "/suppressions" in path:
+            return {"analytics:policy_manage"}, True
+        if "/reports" in path:
+            return {"analytics:export"}, True
+        if "/baselines" in path or "/backtests" in path or "/validate" in path or "/drift" in path:
+            return {"analytics:train"}, True
+        if "/jobs" in path or path.endswith("/process-due"):
+            return {"analytics:execute"}, True
+        if any(path.endswith(suffix) for suffix in ("/activate", "/disable", "/retire", "/rollback")):
+            return {"analytics:policy_manage"}, True
+        return {"analytics:manage"}, True
+
     if path.startswith("/api/correlation"):
         cases = "/cases" in path or "/case" in path or "/incident" in path
         if read:

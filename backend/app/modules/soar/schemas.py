@@ -58,7 +58,7 @@ class VersionRollbackRequest(StrictModel):
 class TriggerCreate(StrictModel):
     playbook_id: int = Field(ge=1)
     name: str = Field(min_length=1, max_length=200)
-    source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis", "manual"]
+    source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis", "security_anomaly", "analytics_drift", "manual"]
     conditions: dict[str, Any]
     proposal_only: bool = True
     automatic_local: bool = False
@@ -84,7 +84,7 @@ class TriggerUpdate(StrictModel):
 
 
 class TriggerEvaluateRequest(StrictModel):
-    source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis"]
+    source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis", "security_anomaly", "analytics_drift"]
     source_entity_id: int = Field(ge=1)
     source_context: dict[str, Any] = Field(default_factory=dict)
 
@@ -92,7 +92,7 @@ class TriggerEvaluateRequest(StrictModel):
 class ExecutionCreate(StrictModel):
     playbook_id: int = Field(ge=1)
     mode: Literal["dry_run", "simulation", "live_local"]
-    trigger_source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis", "manual"] = "manual"
+    trigger_source_type: Literal["soc_alert", "incident_case", "detection_match", "threat_intel_match", "vulnerability", "phishing_analysis", "document_analysis", "security_anomaly", "analytics_drift", "manual"] = "manual"
     trigger_source_id: int | None = Field(default=None, ge=1)
     idempotency_key: str = Field(min_length=8, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$")
     input_context: dict[str, Any] = Field(default_factory=dict)

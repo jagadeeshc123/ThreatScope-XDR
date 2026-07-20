@@ -409,6 +409,25 @@ def _dispatch(db:Session,execution:SoarExecution,step:SoarStepExecution,action:A
         stable=f"SOAR execution {execution.execution_uuid}";item=db.query(Notification).filter_by(title=str(config.get("title") or action.display_name)[:150],entity_type="soar_execution",entity_id=execution.id,recipient_user_id=config.get("owner_user_id") or actor.id).first()
         if not item:item=Notification(title=str(config.get("title") or action.display_name)[:150],message=(str(config.get("body") or config.get("reason") or stable)+f" ({stable})")[:500],type="info",entity_type="soar_execution",entity_id=execution.id,recipient_user_id=config.get("owner_user_id") or actor.id);db.add(item);db.flush();execution.records_created+=1
         record_id=item.id
+    elif key in {"create_anomaly_case_proposal","request_anomaly_review","add_anomaly_tag"}:
+        from app.modules.analytics.models import SecurityAnomaly
+        anomaly=db.get(SecurityAnomaly,int(config.get("source_id") or execution.trigger_source_id or 0))
+        if not anomaly:raise ValueError("Security anomaly target is invalid")
+        if key=="request_anomaly_review":
+            item=db.query(Notification).filter_by(title="Analytics anomaly review requested",entity_type="security_anomaly",entity_id=anomaly.id,recipient_user_id=config.get("owner_user_id") or actor.id).first()
+            if not item:item=Notification(title="Analytics anomaly review requested",message=f"Anomaly {anomaly.anomaly_uuid[:12]} requires explicit analyst review; deviation is not proof of compromise.",type="warning",entity_type="security_anomaly",entity_id=anomaly.id,recipient_user_id=config.get("owner_user_id") or actor.id);db.add(item);db.flush();execution.records_created+=1
+            record_id=item.id
+        else:
+            kind="case_proposal" if key=="create_anomaly_case_proposal" else "approved_tag"
+            snapshot={"anomaly_id":anomaly.id,"kind":kind,"title":str(config.get("title") or action.display_name)[:240],"reason":str(config.get("reason") or "Analyst review required")[:1000],"case_created":False,"containment_performed":False}
+            encoded=dumps(snapshot,16000);digest=hashlib.sha256(encoded.encode()).hexdigest();item=db.query(SoarExecutionEvidence).filter_by(execution_id=execution.id,content_sha256=digest).first()
+            if not item:item=SoarExecutionEvidence(execution_id=execution.id,step_execution_id=step.id,evidence_type=f"analytics_{kind}",source_module="analytics",source_entity_type="security_anomaly",source_entity_id=anomaly.id,summary=f"Bounded analytics {kind.replace('_',' ')} recorded; no automatic case or containment action occurred.",redacted_snapshot_json=encoded,content_sha256=digest);db.add(item);db.flush();execution.records_created+=1
+            record_id=item.id
+    elif key=="generate_analytics_report":
+        from app.modules.analytics.schemas import ReportCreate
+        from app.modules.analytics.service import generate_report
+        end=utcnow();start=end-timedelta(days=30);payload=ReportCreate(title=str(config.get("title") or "SOAR-requested analytics report")[:200],report_type="analytics_summary",period_start=start,period_end=end,scope="platform",filters={},idempotency_key=hashlib.sha256(f"soar-analytics-report:{execution.id}:{step.step_key}".encode()).hexdigest())
+        item=generate_report(db,payload,actor);record_id=item.id;execution.records_created+=1
     elif key in {"capture_evidence_snapshot","add_supported_record_tag"}:
         snapshot=redact({"source_id":config.get("source_id") or execution.trigger_source_id,"source_type":execution.trigger_source_type,"summary":config.get("body") or config.get("reason")});encoded=dumps(snapshot,16000);digest=hashlib.sha256(encoded.encode()).hexdigest();item=db.query(SoarExecutionEvidence).filter_by(execution_id=execution.id,content_sha256=digest).first()
         if not item:item=SoarExecutionEvidence(execution_id=execution.id,step_execution_id=step.id,evidence_type="audit_safe_snapshot",source_module=execution.trigger_source_type,source_entity_type=execution.trigger_source_type,source_entity_id=int(config.get("source_id") or execution.trigger_source_id or execution.id),summary="Redacted evidence snapshot captured by SOAR.",redacted_snapshot_json=encoded,content_sha256=digest);db.add(item);db.flush();execution.records_created+=1
@@ -451,6 +470,7 @@ def _read_context(db:Session,key:str,source_id:int)->dict:
     elif key=="load_user_security_context":model=UserAccount
     elif key=="load_session_metadata":model=AuthSession
     elif key=="load_asset_context":from app.modules.vulnerability_management.models import Asset;model=Asset
+    elif key=="load_anomaly_context":from app.modules.analytics.models import SecurityAnomaly;model=SecurityAnomaly
     elif key=="check_existing_case_link":from app.modules.unified_correlation.models import IncidentEvidence;model=IncidentEvidence
     elif key=="check_existing_remediation_task":from app.modules.vulnerability_management.models import RemediationTask;model=RemediationTask
     elif key=="check_existing_notification":model=Notification

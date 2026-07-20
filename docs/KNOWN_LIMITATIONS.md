@@ -1,5 +1,14 @@
 # Known limitations
 
+# Advanced security analytics
+
+- Analytics methods are deterministic statistical tools, not proof of compromise, malicious intent, future attacks, or guaranteed accuracy.
+- Historical sufficiency, missingness, late data, seasonal coverage, reviewed labels, and third-party source quality constrain confidence and quality metrics.
+- Recall, F1, and accuracy cannot be claimed without a defensible labeled population; operational coverage is not efficacy.
+- SQLite is intended for local/small-scale use, and `process-due` is not a distributed production scheduler. Enterprise real-time streaming is outside Phase 18.
+- No external AI service, automatic retraining, automatic containment, automatic case closure, or user punishment is provided.
+- Browser automation may be unavailable in some verification environments; HTTP route refresh, production build, lint, API smoke, and documented manual checks are the fallback.
+
 - Vulnerability management uses only stored ThreatScope data. It does not query NVD, CVE services, EPSS, exploit databases, package repositories, cloud CMDBs, or external ticketing systems.
 - It does not scan beyond existing safe module workflows, exploit targets, deploy patches, execute commands, install endpoint agents, or change production systems.
 - Source severity, optional manually supplied CVSS, internal priority, and accepted residual risk are distinct measures and are not interchangeable.

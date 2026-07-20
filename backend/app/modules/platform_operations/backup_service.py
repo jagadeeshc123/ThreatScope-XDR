@@ -18,7 +18,7 @@ from .maintenance_service import add_activity, fail_job, finish_job, new_key, no
 from .models import BackupRecord, OperationalJob, utcnow
 
 _LOCK = threading.Lock()
-EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence", "vm_remediation_plans", "vm_risk_acceptances", "vm_verification_requests", "soar_action_policies", "soar_playbooks", "soar_playbook_versions", "soar_executions", "soar_step_executions", "soar_execution_events", "soar_approvals", "soar_approval_decisions", "soar_analyst_inputs", "soar_rollback_records", "integration_connectors", "integration_connector_credentials", "integration_network_policies", "integration_subscriptions", "integration_outbox_events", "integration_deliveries", "integration_delivery_attempts", "integration_dead_letters", "integration_inbound_endpoints", "integration_inbound_events", "integration_replay_nonces", "integration_inbound_rate_counters", "integration_field_mappings", "integration_health_checks", "integration_sync_cursors", "integration_external_references", "integration_reports", "integration_stix_import_runs"}
+EXPECTED_TABLES = {"user_accounts", "access_roles", "access_permissions", "security_audit_events", "threat_indicators", "threat_intel_imports", "indicator_matches", "detection_rules", "detection_rule_versions", "detection_matches", "vm_assets", "vm_vulnerabilities", "vm_vulnerability_occurrences", "vm_vulnerability_evidence", "vm_remediation_plans", "vm_risk_acceptances", "vm_verification_requests", "soar_action_policies", "soar_playbooks", "soar_playbook_versions", "soar_executions", "soar_step_executions", "soar_execution_events", "soar_approvals", "soar_approval_decisions", "soar_analyst_inputs", "soar_rollback_records", "integration_connectors", "integration_connector_credentials", "integration_network_policies", "integration_subscriptions", "integration_outbox_events", "integration_deliveries", "integration_delivery_attempts", "integration_dead_letters", "integration_inbound_endpoints", "integration_inbound_events", "integration_replay_nonces", "integration_inbound_rate_counters", "integration_field_mappings", "integration_health_checks", "integration_sync_cursors", "integration_external_references", "integration_reports", "integration_stix_import_runs", "analytics_detectors", "analytics_detector_versions", "analytics_baselines", "analytics_jobs", "analytics_backtests", "analytics_evaluations", "security_anomalies", "anomaly_contributions", "anomaly_feedback", "analytics_suppressions", "analytics_drift_records", "analytics_reports"}
 
 
 def sha256_file(path: Path) -> str:
@@ -56,6 +56,18 @@ def _safe_counts(path: Path) -> dict[str, int]:
         for name in sorted(names - SENSITIVE_TABLES)[:200]:
             if name.replace("_", "").isalnum():
                 result[name] = int(conn.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0])
+        for configuration_json, feature_versions_json, implementation_version, expected_hash in conn.execute("SELECT configuration_snapshot_json, feature_definition_versions_json, implementation_version, configuration_hash FROM analytics_detector_versions"):
+            configuration = json.loads(configuration_json); feature_versions = json.loads(feature_versions_json)
+            encoded = json.dumps({"configuration": configuration, "feature_versions": feature_versions, "implementation_version": implementation_version}, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+            if hashlib.sha256(encoded.encode("utf-8")).hexdigest() != expected_hash:
+                raise ValueError("Backup contains an invalid analytics detector configuration hash")
+        hex_chars = set("0123456789abcdef")
+        for (data_hash,) in conn.execute("SELECT data_hash FROM analytics_baselines"):
+            if not isinstance(data_hash, str) or len(data_hash) != 64 or set(data_hash.casefold()) - hex_chars:
+                raise ValueError("Backup contains an invalid analytics baseline hash")
+        for html_content, expected_hash in conn.execute("SELECT html_content, content_sha256 FROM analytics_reports"):
+            if hashlib.sha256(html_content.encode("utf-8")).hexdigest() != expected_hash:
+                raise ValueError("Backup contains an invalid analytics report hash")
         if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
             raise ValueError("SQLite integrity check failed")
     finally:

@@ -1,5 +1,9 @@
 # Security model
 
+## Advanced analytics boundary
+
+Analytics accepts only strict schemas referencing immutable server-owned feature, detector, method, window, seasonality, peer-group, reason-code, and drift catalogs. It performs no dynamic evaluation, arbitrary SQL, import, command, network call, external model load, or unsafe serialization. Central authentication, exact RBAC, mutation CSRF, optimistic locks, idempotency, rate limits, audit chaining, redaction, and executive aggregate-only rules are backend-enforced. Analytics produces review evidence, not automatic containment or adjudication.
+
 ## Phase 15 vulnerability-management boundary
 
 Vulnerability management reads only local stored ThreatScope records. Asset synchronization never resolves DNS or probes a network. Ingestion eligibility prevents ordinary SOC events, IOC matches, and detection matches from automatically becoming vulnerabilities. Imported evidence is hostile: server responses truncate and redact it, reports escape and defang it, UI views render it as inert text, and report frames are sandboxed. Resolution is server-authoritative and requires passed verification evidence. All mutations are authenticated, CSRF protected, permission checked, bounded, and audit chained. No Phase 15 path invokes a shell, subprocess, remote command, external URL, patch mechanism, or ticketing service.

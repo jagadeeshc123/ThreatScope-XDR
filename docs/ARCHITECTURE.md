@@ -1,5 +1,9 @@
 # Architecture
 
+## Phase 18 analytics plane
+
+`app.modules.analytics` is a cohesive derivation layer over existing SQLAlchemy source modules. Immutable catalogs feed bounded extraction; versioned configurations reference aggregate baselines; deterministic scoring may materialize deduplicated explainable anomalies; review, suppressions, drift, reports, and jobs remain transactional. The layer has no network or command-execution capability and never owns or mutates source evidence. It reuses central RBAC, CSRF, audit chaining, activity, notifications, cases, SOAR safe actions, connector outbox, search, dashboard, backup/restore, retention, diagnostics, and demo reset.
+
 Phase 17 adds server-owned connectors, encrypted credentials, network policies, canonical events/outbox, subscriptions/mappings, bounded deliveries/attempts/dead letters, inbound quarantine/nonces, health, cursors, external references, STIX runs, and reports. External work occurs only through process-due after commit.
 
 The React/TypeScript frontend uses a typed Axios client, cookie credentials, CSRF interception, lazy routes, and permission-aware navigation. FastAPI provides public minimal health and authenticated module routers. SQLAlchemy uses SQLite and the established `create_all` model-registration pattern.

@@ -25,6 +25,8 @@ ENTITY_PERMISSIONS = {
     "vm_remediation_plan": "vulnerabilities:view", "vm_remediation_task": "vulnerabilities:view",
     "vm_sla": "vulnerabilities:view", "vm_risk_acceptance": "vulnerabilities:view",
     "vm_verification": "vulnerabilities:view", "vm_report": "vulnerabilities:export",
+    "security_anomaly": "analytics:view", "analytics_detector": "analytics:view",
+    "analytics_drift": "analytics:view", "analytics_suppression": "analytics:policy_manage", "analytics_report": "analytics:aggregate",
 }
 
 def _visible(db, request, item):

@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Notification
@@ -11,6 +12,7 @@ from app.modules.detection_engineering.models import DetectionExecution, Detecti
 from app.modules.vulnerability_management.models import AssetSynchronizationRun, VulnerabilityIngestionRun
 from app.modules.soar.models import SoarExecution, SoarReport
 from app.modules.integrations.models import ConnectorDelivery, ConnectorDeliveryAttempt, ConnectorHealthCheck, ConnectorInboundEvent, ConnectorReplayNonce, ConnectorReport, ConnectorInboundRateCounter
+from app.modules.analytics.models import AnalyticsBacktest, AnalyticsBaseline, AnalyticsDetector, AnalyticsDriftRecord, AnalyticsJob, AnalyticsReport, AnalyticsSuppression, AnomalyContribution, AnomalyFeedback, SecurityAnomaly
 
 from .maintenance_service import add_activity, new_key, notify
 from .models import ExportPackage, OperationalJob, RetentionPolicy, RetentionRun, BackupRecord, utcnow
@@ -41,6 +43,16 @@ DEFAULTS = [
     ("integration_replay_nonces", "Expired inbound replay nonces", "integration_replay_nonces", 1, 0),
     ("integration_inbound_rate_counters", "Expired inbound rate counters", "integration_inbound_rate_counters", 1, 0),
     ("integration_reports", "Old integration reports", "integration_reports", 365, 25),
+    ("analytics_completed_jobs", "Old completed analytics jobs", "analytics_completed_jobs", 90, 50),
+    ("analytics_failed_jobs", "Old failed analytics jobs", "analytics_failed_jobs", 180, 50),
+    ("analytics_baseline_history", "Inactive unreferenced analytics baseline history", "analytics_baseline_history", 365, 25),
+    ("analytics_backtests", "Old analytics backtests", "analytics_backtests", 180, 25),
+    ("analytics_anomaly_contributions", "Derived contributions for old dismissed unlinked anomalies", "analytics_anomaly_contributions", 365, 0),
+    ("analytics_feedback_revisions", "Feedback revisions for old dismissed unlinked anomalies", "analytics_feedback_revisions", 365, 0),
+    ("analytics_dismissed_anomalies", "Old dismissed unlinked analytics anomalies", "analytics_dismissed_anomalies", 365, 50),
+    ("analytics_expired_suppressions", "Expired analytics suppressions", "analytics_expired_suppressions", 90, 10),
+    ("analytics_drift_records", "Old acknowledged analytics drift records", "analytics_drift_records", 365, 25),
+    ("analytics_reports", "Old generated analytics reports", "analytics_reports", 365, 25),
 ]
 
 
@@ -79,6 +91,18 @@ def _model_and_filters(policy: RetentionPolicy):
     if policy.entity_type == "integration_replay_nonces": return ConnectorReplayNonce, [ConnectorReplayNonce.expires_at < now]
     if policy.entity_type == "integration_inbound_rate_counters": return ConnectorInboundRateCounter, [ConnectorInboundRateCounter.expires_at < now]
     if policy.entity_type == "integration_reports": return ConnectorReport, [ConnectorReport.created_at < cutoff]
+    unreferenced_job = AnalyticsJob.id.not_in(select(AnalyticsBacktest.job_id).where(AnalyticsBacktest.job_id.is_not(None)))
+    if policy.entity_type == "analytics_completed_jobs": return AnalyticsJob, [AnalyticsJob.status == "succeeded", AnalyticsJob.completed_at < cutoff, unreferenced_job]
+    if policy.entity_type == "analytics_failed_jobs": return AnalyticsJob, [AnalyticsJob.status == "failed", AnalyticsJob.completed_at < cutoff, unreferenced_job]
+    old_dismissed = select(SecurityAnomaly.id).where(SecurityAnomaly.status.in_(["dismissed", "resolved"]), SecurityAnomaly.linked_case_id.is_(None), SecurityAnomaly.updated_at < cutoff)
+    if policy.entity_type == "analytics_baseline_history": return AnalyticsBaseline, [AnalyticsBaseline.created_at < cutoff, AnalyticsBaseline.detector_version_id.not_in(select(AnalyticsDetector.active_version_id).where(AnalyticsDetector.active_version_id.is_not(None))), AnalyticsBaseline.id.not_in(select(SecurityAnomaly.baseline_id).where(SecurityAnomaly.baseline_id.is_not(None))), AnalyticsBaseline.id.not_in(select(AnalyticsDriftRecord.baseline_id))]
+    if policy.entity_type == "analytics_backtests": return AnalyticsBacktest, [AnalyticsBacktest.status.in_(["succeeded", "failed", "cancelled"]), AnalyticsBacktest.created_at < cutoff]
+    if policy.entity_type == "analytics_anomaly_contributions": return AnomalyContribution, [AnomalyContribution.anomaly_id.in_(old_dismissed)]
+    if policy.entity_type == "analytics_feedback_revisions": return AnomalyFeedback, [AnomalyFeedback.anomaly_id.in_(old_dismissed)]
+    if policy.entity_type == "analytics_dismissed_anomalies": return SecurityAnomaly, [SecurityAnomaly.id.in_(old_dismissed)]
+    if policy.entity_type == "analytics_expired_suppressions": return AnalyticsSuppression, [AnalyticsSuppression.ends_at < now, AnalyticsSuppression.created_at < cutoff]
+    if policy.entity_type == "analytics_drift_records": return AnalyticsDriftRecord, [AnalyticsDriftRecord.status == "acknowledged", AnalyticsDriftRecord.detected_at < cutoff]
+    if policy.entity_type == "analytics_reports": return AnalyticsReport, [AnalyticsReport.created_at < cutoff]
     raise ValueError("Unsupported retention entity")
 
 
@@ -101,6 +125,10 @@ def apply_preview(db: Session, preview_run: RetentionRun, user_id: int) -> Reten
     run = RetentionRun(run_key=new_key("retention-apply"), policy_id=policy.id, mode="apply", candidate_count=len(expected), status="running", requested_by_user_id=user_id, summary_json=json.dumps({"candidate_ids": expected}, sort_keys=True))
     db.add(run); db.flush()
     try:
+        if model is SecurityAnomaly and expected:
+            db.query(AnomalyFeedback).filter(AnomalyFeedback.anomaly_id.in_(expected)).update({AnomalyFeedback.previous_feedback_id: None}, synchronize_session=False)
+            db.query(AnomalyContribution).filter(AnomalyContribution.anomaly_id.in_(expected)).delete(synchronize_session=False)
+            db.query(AnomalyFeedback).filter(AnomalyFeedback.anomaly_id.in_(expected)).delete(synchronize_session=False)
         deleted = db.query(model).filter(model.id.in_(expected)).delete(synchronize_session=False) if expected else 0
         run.deleted_count = deleted; run.preserved_count = preview_run.preserved_count; run.status = "succeeded"; run.completed_at = utcnow(); policy.last_applied_at = utcnow(); preview_run.status = "consumed"
         add_activity(db, "retention_applied", f"Retention run {run.run_key} removed {deleted} previewed records.", "operational_retention", run.id); notify(db,"Retention apply succeeded",f"Retention run {run.run_key} applied the exact preview set.","success","operational_retention",run.id); db.commit(); db.refresh(run); return run

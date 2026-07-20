@@ -1,5 +1,7 @@
 # Installation
 
+Phase 18 uses the existing Python and Node dependencies and requires no external AI key, model download, network service, worker, or new chart library. Normal startup creates analytics schema v18 through existing SQLAlchemy metadata. For anything beyond local/small-scale use, replace SQLite and the operator-invoked `process-due` workflow with reviewed production infrastructure; Phase 18 does not install a distributed scheduler.
+
 Phase 15 adds no dependency and makes no external vulnerability-feed request. Existing SQLAlchemy `create_all` startup creates the `vm_*` tables; current SQLite databases remain compatible because Phase 15 uses new tables rather than rewriting source-module schemas. Restart the backend after upgrade so default SLA policies, remediation templates, and RBAC assignments are seeded idempotently.
 
 Prerequisites are Git, Python 3.11, Node 20, and optionally Docker Compose. Clone the repository, copy `.env.example` to an untracked `.env`, and generate the session and Fernet keys locally using the commands documented in that example. Never commit `.env`.

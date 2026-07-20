@@ -47,6 +47,8 @@ EVENT_TYPES = (
     "vulnerability.created", "vulnerability.escalated", "vulnerability.sla_breached", "vulnerability.verified",
     "soar.execution.proposed", "soar.execution.waiting_approval", "soar.execution.completed", "soar.execution.failed",
     "soar.rollback.failed", "connector.unhealthy", "connector.recovered",
+    "anomaly.created", "anomaly.confirmed", "anomaly.dismissed", "anomaly.linked_to_case",
+    "detector.activated", "detector.degraded", "detector.rolled_back", "drift.detected", "analytics.report.generated",
 )
 
 

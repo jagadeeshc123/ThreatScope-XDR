@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 18 - Advanced Security Analytics
+
+- Added 64 immutable detector templates, 42 server-owned feature definitions, ten deterministic scoring methods, bounded baseline construction, backtesting, confidence/severity separation, and explainable anomaly materialization.
+- Added immutable versions, validation/quality gates, explicit lifecycle and rollback, analyst feedback revisions, declarative suppressions, drift with no automatic retraining, case/SOAR/outbox integration, and 40-section static reports.
+- Added schema v18, RBAC/CSRF/audit/activity/notifications, search/dashboard, backup/retention/diagnostics/demo-reset, 25 frontend routes, documentation, and focused security/regression coverage.
+
 ## Phase 17 - Security Integrations and Connectors
 
 - Added a server-owned connector catalog, encrypted write-only credentials, explicit network policies, SSRF/DNS-rebinding defenses, signed inbound quarantine, and bounded declarative mappings.

@@ -114,5 +114,13 @@
   ["integrations:export", "Generate and export integration reports", "Security Integrations"],
   ["integrations:credentials_manage", "Manage write-only connector credentials", "Security Integrations"],
   ["integrations:network_policy_manage", "Manage connector egress network policies", "Security Integrations"],
-  ["integrations:inbound_promote", "Promote quarantined inbound integration events", "Security Integrations"]
+  ["integrations:inbound_promote", "Promote quarantined inbound integration events", "Security Integrations"],
+  ["analytics:view", "View entity-level analytics and explanations", "Security Analytics"],
+  ["analytics:aggregate", "View aggregate analytics dashboards and reports", "Security Analytics"],
+  ["analytics:manage", "Create detectors and immutable detector versions", "Security Analytics"],
+  ["analytics:train", "Build baselines, validate detectors, backtest, and evaluate drift", "Security Analytics"],
+  ["analytics:execute", "Execute approved analytics jobs and active detectors", "Security Analytics"],
+  ["analytics:review", "Review anomalies, record feedback, and link cases", "Security Analytics"],
+  ["analytics:export", "Generate and export safe analytics reports", "Security Analytics"],
+  ["analytics:policy_manage", "Manage detector activation, rollback, and suppression policy", "Security Analytics"]
 ]

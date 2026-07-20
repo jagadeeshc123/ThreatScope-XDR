@@ -27,7 +27,8 @@
       "assets:view", "assets:manage", "vulnerabilities:view", "vulnerabilities:triage", "vulnerabilities:remediate", "vulnerabilities:verify", "vulnerabilities:accept_risk", "vulnerabilities:export",
       "operations:view", "operations:diagnostics", "operations:export", "operations:inventory",
       "soar:view", "soar:manage", "soar:execute", "soar:review", "soar:export",
-      "integrations:view", "integrations:test", "integrations:execute", "integrations:inbound_promote", "integrations:export"
+      "integrations:view", "integrations:test", "integrations:execute", "integrations:inbound_promote", "integrations:export",
+      "analytics:view", "analytics:aggregate", "analytics:execute", "analytics:review", "analytics:export"
     ]
   },
   "auditor": {
@@ -37,7 +38,7 @@
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
       "web:read", "api:read", "soc:read", "document:read", "phishing:read", "correlation:read", "cases:read", "governance:read", "threat_intel:view", "threat_intel:export", "detections:view", "detections:export", "assets:view", "vulnerabilities:view", "vulnerabilities:export",
       "governance:generate_reports", "audit:read", "audit:verify", "reports:read_all",
-      "operations:view", "operations:diagnostics", "operations:inventory", "soar:view", "soar:export", "integrations:view", "integrations:export"
+      "operations:view", "operations:diagnostics", "operations:inventory", "soar:view", "soar:export", "integrations:view", "integrations:export", "analytics:view", "analytics:aggregate", "analytics:export"
     ]
   },
   "executive_viewer": {
@@ -45,7 +46,7 @@
     "description": "High-level dashboards, incident summaries, and governance reporting.",
     "permissions": [
       "dashboard:view", "search:use", "notifications:read", "activity:read", "profile:manage",
-      "correlation:read", "cases:read", "governance:read", "cases:generate_reports", "governance:generate_reports", "vulnerabilities:aggregate", "integrations:aggregate"
+      "correlation:read", "cases:read", "governance:read", "cases:generate_reports", "governance:generate_reports", "vulnerabilities:aggregate", "integrations:aggregate", "analytics:aggregate"
     ]
   }
 }

@@ -30,6 +30,10 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
     if "integrations:view" in permissions or "integrations:aggregate" in permissions:
         from app.modules.integrations.service import overview as integration_overview
         integrations = integration_overview(db, aggregate_only="integrations:manage" not in permissions)
+    analytics = None
+    if "analytics:view" in permissions or "analytics:aggregate" in permissions:
+        from app.modules.analytics.service import overview as analytics_overview
+        analytics = analytics_overview(db)
     total_targets = db.query(models.Target).count()
     total_scans = db.query(models.Scan).count()
     active_scans = db.query(models.Scan).filter(models.Scan.status.in_(["queued", "running"])).count()
@@ -192,4 +196,5 @@ def get_dashboard_summary(request: Request, db: Session = Depends(get_db)):
         vulnerability_management=vulnerability_management,
         soar=soar,
         integrations=integrations,
+        analytics=analytics,
     )

@@ -1,5 +1,9 @@
 # Operations guide
 
+## Analytics operations
+
+Review `/analytics` for failed jobs, insufficient baselines, degraded detectors, drift, and review backlog. Run the authenticated bounded `/api/analytics/process-due` endpoint only as an operator with `analytics:execute`; it is idempotent, limited to 100 records, recovers stale work as failed, and never automatically retries or retrains. Include analytics tables in normal backup/restore verification and preview retention before applying it. See `ANALYTICS_OPERATIONS.md` and `ANALYTICS_TROUBLESHOOTING.md`.
+
 ## Vulnerability-management operations
 
 Run asset synchronization and finding ingestion from the Vulnerability Management overview. Both jobs process at most 5,000 stored records per request and record bounded run history. Repeated runs are safe and idempotent. Administrators may explicitly recalculate no more than 500 active SLA records per request; historical due dates otherwise remain fixed. Backup and restore sentinels include the Phase 15 inventory, vulnerability, occurrence, evidence, remediation, acceptance, and verification tables. Diagnostics list the module and safely count accessible tables. Retention policies may preview and remove old completed synchronization/ingestion runs only; active/resolved vulnerabilities and evidence are not retention targets.

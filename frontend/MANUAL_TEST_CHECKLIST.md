@@ -1,5 +1,19 @@
 # VulnScope Frontend Manual Test Checklist
 
+## Phase 18 Advanced Security Analytics
+
+- [ ] Sign in as Analyst and direct-refresh all 25 `/analytics` routes; verify loading, empty, safe error, mobile/desktop layout, keyboard focus, no horizontal page overflow, and no console errors.
+- [ ] Verify Administrator can create a detector only from server-owned templates/features/methods, validate/backtest/activate it, create a new immutable version, disable/retire it, and explicitly roll back.
+- [ ] Verify Auditor is read/export only, Executive Viewer sees aggregate overview/executive reports only, Registered User/direct API access is denied, and hidden mutation URLs remain backend-denied.
+- [ ] Open an anomaly and explanation; confirm score, confidence, severity, expected/observed, reasons, limitations, occurrence/suppression/feedback/case context, and wording that anomaly is not proof of compromise.
+- [ ] Exercise assignment, acknowledge, investigate, confirm, dismiss, feedback, case proposal, link-case, and optimistic-lock conflict individually; confirm bulk confirmation is absent.
+- [ ] Create and expire a bounded suppression; verify evidence remains, hit count is visible, broad non-admin scope fails, and CSRF removal returns 403.
+- [ ] Evaluate/acknowledge drift and confirm detector degradation may be proposed but no automatic retraining or activation occurs.
+- [ ] Process/cancel jobs twice with the same idempotency key and verify no duplicate, no network request, no command execution, bounded batch, and stale recovery.
+- [ ] Generate/view/download the 40-section static report; verify escaped hostile text, sandboxed iframe, content hash, and no script, link, remote asset, secret, raw source record, or containment claim.
+- [ ] Verify dashboard, global search, notifications, activity, audit integrity, connector outbox events, SOAR safe proposals/simulations, backup/restore inventory, retention, diagnostics, and demo reset.
+- [ ] If browser automation is unavailable, record it and run production build/lint, authenticated API smoke, concrete-ID route-refresh checks through port 5173, HTTP health checks, and manual responsive inspection.
+
 ## Phase 17 - Security Integration Hub
 
 - [ ] Admin creates, validates, tests, activates, disables, retests, and archives Local Test Sink.

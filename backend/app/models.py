@@ -274,3 +274,8 @@ from app.modules.integrations.models import (  # noqa: E402,F401
     ConnectorHealthCheck, ConnectorSyncCursor, ConnectorExternalReference,
     ConnectorReport, StixImportRun,
 )
+from app.modules.analytics.models import (  # noqa: E402,F401
+    AnalyticsDetector, AnalyticsDetectorVersion, AnalyticsBaseline, AnalyticsJob,
+    AnalyticsBacktest, AnalyticsEvaluation, SecurityAnomaly, AnomalyContribution,
+    AnomalyFeedback, AnalyticsSuppression, AnalyticsDriftRecord, AnalyticsReport,
+)

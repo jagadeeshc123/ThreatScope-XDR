@@ -13,6 +13,7 @@ from app.modules.access_control.role_service import seed_roles_and_permissions
 from app.modules.access_control.migration import ensure_local_account_schema
 from app.modules.platform_operations.configuration_service import get_operations_config
 from app.modules.integrations.security import IntegrationSecurityError
+from app.modules.analytics.router import router as analytics_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -166,3 +167,4 @@ app.include_router(vulnerability_management_router, prefix="/api/vulnerability-m
 app.include_router(soar_router, prefix="/api/soar", tags=["SOAR-Lite"], dependencies=protected)
 app.include_router(integrations_router, prefix="/api/integrations", tags=["Security Integrations"], dependencies=protected)
 app.include_router(integrations_public_router, prefix="/api/integrations", tags=["Signed Inbound Integrations"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["Advanced Security Analytics"], dependencies=protected)

@@ -212,6 +212,7 @@ class DashboardSummary(BaseModel):
     vulnerability_management: Optional[dict] = None
     soar: Optional[dict] = None
     integrations: Optional[dict] = None
+    analytics: Optional[dict] = None
 
 class NotificationBase(BaseModel):
     title: str
@@ -361,3 +362,4 @@ class SearchResults(BaseModel):
     soar_rollbacks: List[dict] = []
     soar_reports: List[dict] = []
     integrations: List[dict] = []
+    analytics: List[dict] = []

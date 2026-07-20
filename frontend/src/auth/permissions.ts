@@ -1,4 +1,7 @@
 export const routePermissions: Array<[string, string]> = [
+  ['/analytics/detectors/new', 'analytics:manage'], ['/analytics/suppressions/new', 'analytics:policy_manage'],
+  ['/analytics/review-queue', 'analytics:review'], ['/analytics/feedback', 'analytics:review'],
+  ['/analytics/reports', 'analytics:aggregate'], ['/analytics', 'analytics:aggregate'],
   ['/integrations/connectors/new', 'integrations:manage'], ['/integrations/connectors/', 'integrations:view'],
   ['/integrations/reports', 'integrations:export'], ['/integrations', 'integrations:view'],
   ['/soar/action-policies', 'soar:action_policy_manage'], ['/soar/reports', 'soar:export'], ['/soar', 'soar:view'],
@@ -25,6 +28,7 @@ export const routePermissions: Array<[string, string]> = [
 ];
 
 export function permissionForPath(path: string): string | undefined {
+  if (/^\/analytics\/detectors\/\d+\/edit$/.test(path)) return 'analytics:manage';
   if (/^\/detections\/rules\/\d+\/edit$/.test(path)) return 'detections:manage';
   if (/^\/integrations\/connectors\/\d+\/credentials$/.test(path)) return 'integrations:credentials_manage';
   if (/^\/integrations\/connectors\/\d+\/network-policy$/.test(path)) return 'integrations:network_policy_manage';
