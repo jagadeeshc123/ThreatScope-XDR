@@ -14,7 +14,7 @@ class ProductionSecurityHeaderTests(unittest.TestCase):
             cookie_secure=True, cookie_samesite="lax", session_hours=8, idle_minutes=30, csrf_enabled=True, database_url="sqlite:////data/db.sqlite",
             log_level="INFO", json_logging=True, max_request_bytes=1_000_000, max_upload_bytes=2_000_000, request_timeout_seconds=30, graceful_shutdown_seconds=30,
             worker_count=1, public_registration=False, registration_acknowledged=False, demo_seed=False, api_docs=False, connector_egress_enabled=False,
-            tls_proxy_expected=True, schema_identifier="threatscope-schema-v19", application_version="1.0.0-rc2", source_revision="abc", build_timestamp="now",
+            tls_proxy_expected=True, schema_identifier="threatscope-schema-v19", application_version="1.0.0", source_revision="abc", build_timestamp="now",
             frontend_build_id="front", backend_build_id="back", minimum_free_bytes=1, tls_certificate_file="/tls.crt", tls_private_key_file="/tls.key", secrets={}, secret_statuses=(),
         )
         from pathlib import Path

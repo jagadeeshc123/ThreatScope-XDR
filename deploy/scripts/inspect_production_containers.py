@@ -1,4 +1,4 @@
-"""Fail when running Phase 19 containers diverge from the hardening contract."""
+"""Fail when running Phase 20 containers diverge from the hardening contract."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ def _run(command: list[str]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--project", default="threatscope-phase19-smoke")
+    parser.add_argument("--project", default="threatscope-phase20-smoke")
     args = parser.parse_args()
     identifiers = _run(["docker", "ps", "--filter", f"label=com.docker.compose.project={args.project}", "-q"]).split()
     if len(identifiers) != 2:

@@ -110,39 +110,50 @@ export function Notifications() {
         ) : (
           <div className="divide-y divide-border">
             {notifications.map(n => (
-              <div key={n.id} role="button" tabIndex={0} onClick={() => void openNotification(n)} onKeyDown={event => { if (event.key === 'Enter') void openNotification(n); }} className={`p-4 flex cursor-pointer gap-4 items-start transition-colors ${!n.is_read ? 'bg-primary/5' : 'hover:bg-muted/50'}`}>
-                <div className="shrink-0 mt-1">
-                  {getIcon(n.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <h4 className={`text-base font-medium ${!n.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {n.title}
-                    </h4>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                      {new Date(n.created_at).toLocaleString()}
+              <div key={n.id} className={`flex items-start gap-2 p-2 transition-colors ${!n.is_read ? 'bg-primary/5' : 'hover:bg-muted/50'}`}>
+                <button
+                  type="button"
+                  onClick={() => void openNotification(n)}
+                  className="flex min-w-0 flex-1 items-start gap-4 rounded-md p-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Open notification: ${n.title}`}
+                >
+                  <span className="mt-1 shrink-0" aria-hidden="true">
+                    {getIcon(n.type)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between">
+                      <span className={`text-base font-medium ${!n.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {n.title}
+                      </span>
+                      <time className="ml-4 whitespace-nowrap text-xs text-muted-foreground" dateTime={n.created_at}>
+                        {new Date(n.created_at).toLocaleString()}
+                      </time>
                     </span>
-                  </div>
-                  <p className={`text-sm mt-1 ${!n.is_read ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>
-                    {n.message}
-                  </p>
-                </div>
-                <div className="shrink-0 flex space-x-2">
+                    <span className={`mt-1 block text-sm ${!n.is_read ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>
+                      {n.message}
+                    </span>
+                  </span>
+                </button>
+                <div className="flex shrink-0 space-x-2 pt-2">
                   {!n.is_read && (
-                    <button 
-                      onClick={event => { event.stopPropagation(); void markAsRead(n.id); }}
+                    <button
+                      type="button"
+                      onClick={() => void markAsRead(n.id)}
                       title="Mark as read"
-                      className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+                      aria-label={`Mark ${n.title} as read`}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="h-4 w-4" aria-hidden="true" />
                     </button>
                   )}
-                  <button 
-                    onClick={event => { event.stopPropagation(); void deleteNotification(n.id); }}
+                  <button
+                    type="button"
+                    onClick={() => void deleteNotification(n.id)}
                     title="Delete"
-                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                    aria-label={`Delete notification: ${n.title}`}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>

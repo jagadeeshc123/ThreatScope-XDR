@@ -29,14 +29,14 @@ def _write(path: Path, value: bytes, mode: int) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create ephemeral localhost-only Phase 19 smoke material.")
-    parser.add_argument("--output", default=".runtime/phase19-smoke")
+    parser = argparse.ArgumentParser(description="Create ephemeral localhost-only Phase 20 smoke material.")
+    parser.add_argument("--output", default=".runtime/phase20-smoke")
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[2]
     output = (repository / args.output).resolve()
     expected_parent = (repository / ".runtime").resolve()
-    if expected_parent not in output.parents or output.name != "phase19-smoke":
-        raise SystemExit("Smoke output must resolve to .runtime/phase19-smoke")
+    if expected_parent not in output.parents or output.name != "phase20-smoke":
+        raise SystemExit("Smoke output must resolve to .runtime/phase20-smoke")
     output.mkdir(parents=True, exist_ok=True)
     secrets_dir = output / "secrets"
     tls_dir = output / "tls"
@@ -47,7 +47,7 @@ def main() -> int:
         _write(secrets_dir / name, Fernet.generate_key(), 0o600)
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ThreatScope Phase 19 Local Smoke")])
+    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ThreatScope Phase 20 Local Smoke")])
     now = datetime.now(timezone.utc)
     certificate = (
         x509.CertificateBuilder()
@@ -68,7 +68,7 @@ def main() -> int:
     created = now.isoformat().replace("+00:00", "Z")
     path = lambda item: item.resolve().as_posix()
     values = {
-        "THREATSCOPE_APP_VERSION": "1.0.0-rc2",
+        "THREATSCOPE_APP_VERSION": "1.0.0",
         "THREATSCOPE_BUILD_COMMIT": revision,
         "THREATSCOPE_BUILD_TIMESTAMP": created,
         "THREATSCOPE_FRONTEND_BUILD_ID": f"frontend-{revision[:12]}",
@@ -87,7 +87,7 @@ def main() -> int:
         "THREATSCOPE_BACKUP_ENCRYPTION_KEY_HOST_FILE": path(secrets_dir / "backup_encryption_key"),
     }
     (output / "smoke.env").write_text("".join(f"{key}={value}\n" for key, value in values.items()), encoding="utf-8")
-    print("Phase 19 localhost smoke material created beneath the ignored runtime directory.")
+    print("Phase 20 localhost smoke material created beneath the ignored runtime directory.")
     return 0
 
 

@@ -9,7 +9,7 @@ RUN npm run build && ! find dist -type f -name '*.map' -print -quit | grep -q .
 
 FROM nginx:1.28.0-alpine3.21 AS runtime
 
-ARG BUILD_VERSION=1.0.0-rc2
+ARG BUILD_VERSION=1.0.0
 ARG BUILD_REVISION=unknown
 ARG BUILD_TIMESTAMP=unknown
 LABEL org.opencontainers.image.title="ThreatScope XDR Edge" \

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 from app import schemas, models
 from app.database import get_db
@@ -35,15 +36,60 @@ def _visible(db, request, item):
     required = ENTITY_PERMISSIONS.get(item.entity_type)
     return required is None or required in effective_permissions(db, request.state.current_user)
 
+
+def _visibility_filter(db: Session, request: Request):
+    permissions = effective_permissions(db, request.state.current_user)
+    known_types = tuple(ENTITY_PERMISSIONS)
+    allowed_types = tuple(
+        entity_type
+        for entity_type, permission in ENTITY_PERMISSIONS.items()
+        if permission in permissions
+    )
+    recipient_filter = or_(
+        models.Notification.recipient_user_id.is_(None),
+        models.Notification.recipient_user_id == request.state.current_user.id,
+    )
+    entity_filter = or_(
+        models.Notification.entity_type.is_(None),
+        models.Notification.entity_type.notin_(known_types),
+        models.Notification.entity_type.in_(allowed_types),
+    )
+    return and_(recipient_filter, entity_filter)
+
 @router.get("/", response_model=List[schemas.Notification])
-def get_notifications(request: Request, skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    items = db.query(models.Notification).order_by(models.Notification.created_at.desc()).all()
-    return [item for item in items if _visible(db, request, item)][skip:skip + limit]
+def get_notifications(
+    request: Request,
+    skip: int = Query(0, ge=0, le=1_000_000),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(models.Notification)
+        .filter(_visibility_filter(db, request))
+        .order_by(models.Notification.created_at.desc(), models.Notification.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 @router.get("/unread-count")
 def get_unread_count(request: Request, db: Session = Depends(get_db)):
-    count = sum(1 for item in db.query(models.Notification).filter(models.Notification.is_read == False).all() if _visible(db, request, item))
+    count = (
+        db.query(models.Notification)
+        .filter(models.Notification.is_read.is_(False), _visibility_filter(db, request))
+        .count()
+    )
     return {"unread_count": count}
+
+@router.patch("/mark-all-read")
+def mark_all_read(request: Request, db: Session = Depends(get_db)):
+    updated = (
+        db.query(models.Notification)
+        .filter(models.Notification.is_read.is_(False), _visibility_filter(db, request))
+        .update({models.Notification.is_read: True}, synchronize_session=False)
+    )
+    db.commit()
+    return {"status": "ok", "updated": updated}
 
 @router.patch("/{notification_id}/read", response_model=schemas.Notification)
 def mark_as_read(notification_id: int, request: Request, db: Session = Depends(get_db)):
@@ -54,13 +100,6 @@ def mark_as_read(notification_id: int, request: Request, db: Session = Depends(g
     db.commit()
     db.refresh(notif)
     return notif
-
-@router.patch("/mark-all-read")
-def mark_all_read(request: Request, db: Session = Depends(get_db)):
-    for item in db.query(models.Notification).filter(models.Notification.is_read == False).all():
-        if _visible(db, request, item): item.is_read = True
-    db.commit()
-    return {"status": "ok"}
 
 @router.delete("/{notification_id}")
 def delete_notification(notification_id: int, request: Request, db: Session = Depends(get_db)):

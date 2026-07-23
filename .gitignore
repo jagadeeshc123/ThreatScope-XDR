@@ -55,6 +55,8 @@ uploads/
 reports/generated/
 dependency-inventory/
 release-manifests/
+*.sha256
+SHA256SUMS
 *.log
 # Frontend/Node
 node_modules/

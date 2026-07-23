@@ -1,6 +1,6 @@
 """Run a destructive, localhost-only production acceptance drill against the smoke stack.
 
-The generated project and volumes must be dedicated to Phase 19. Credentials are random,
+The generated project and volumes must be dedicated to Phase 20. Credentials are random,
 kept in process memory, never printed, and destroyed with the smoke volumes afterward.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pathlib import Path
 import httpx
 
 
-PROJECT = "threatscope-phase19-smoke"
+PROJECT = "threatscope-phase20-smoke"
 COMPOSE_FILES = ("docker-compose.production.yml", "docker-compose.production-smoke.yml")
 
 
@@ -87,8 +87,8 @@ def _wait_https(base: str, certificate: str, seconds: int = 75) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the Phase 19 HTTPS production acceptance drill")
-    parser.add_argument("--env-file", default=".runtime/phase19-smoke/smoke.env")
+    parser = argparse.ArgumentParser(description="Run the Phase 20 HTTPS production acceptance drill")
+    parser.add_argument("--env-file", default=".runtime/phase20-smoke/smoke.env")
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[2]
     env_file = (repository / args.env_file).resolve()
@@ -99,7 +99,7 @@ def main() -> int:
     base = f"https://localhost:{https_port}"
     _wait_https(base, cert)
 
-    admin_username = "phase19_owner"
+    admin_username = "phase20_owner"
     admin_password = "TsX!9a" + secrets.token_urlsafe(24)
     bootstrap_code = (
         "import json,sys; from app import models; from app.database import Base,SessionLocal,engine; "
@@ -109,7 +109,7 @@ def main() -> int:
         "data=json.loads(sys.stdin.read()); Base.metadata.create_all(bind=engine); db=SessionLocal(); "
         "seed_roles_and_permissions(db); "
         "assert db.query(UserAccount).count()==0, 'smoke database must start empty'; "
-        "create_user(db,username=data['username'],display_name='Phase 19 Owner',email=None,password=data['password'],"
+        "create_user(db,username=data['username'],display_name='Phase 20 Owner',email=None,password=data['password'],"
         "role_keys=['administrator'],must_change_password=False,is_system_admin=True); db.close()"
     )
     bootstrap = _compose(
@@ -175,14 +175,14 @@ def main() -> int:
     if not preflight.get("ready") or preflight.get("failure_count"):
         raise RuntimeError("active production preflight is not ready")
 
-    target = _require(admin.post("/api/targets/", headers={"X-CSRF-Token": csrf}, json={"name": "Phase 19 Persistence", "base_url": "https://example.test", "environment": "synthetic", "authorization_confirmed": True}), 200, "create synthetic target").json()
+    target = _require(admin.post("/api/targets/", headers={"X-CSRF-Token": csrf}, json={"name": "Phase 20 Persistence", "base_url": "https://example.test", "environment": "synthetic", "authorization_confirmed": True}), 200, "create synthetic target").json()
     target_id = target["id"]
 
     role_passwords: dict[str, tuple[str, str]] = {}
     for index, role in enumerate(("security_analyst", "auditor", "executive_viewer", "registered_user"), start=1):
         password = "TsX!8b" + secrets.token_urlsafe(22)
-        username = f"phase19_{role}"
-        created = _require(admin.post("/api/admin/users", headers={"X-CSRF-Token": csrf}, json={"username": username, "display_name": f"Phase 19 Role {index}", "temporary_password": password, "role_keys": [role], "is_system_admin": False}), 200, f"create {role}").json()
+        username = f"phase20_{role}"
+        created = _require(admin.post("/api/admin/users", headers={"X-CSRF-Token": csrf}, json={"username": username, "display_name": f"Phase 20 Role {index}", "temporary_password": password, "role_keys": [role], "is_system_admin": False}), 200, f"create {role}").json()
         user_id = created["user"]["id"]
         _require(admin.patch(f"/api/admin/users/{user_id}", headers={"X-CSRF-Token": csrf}, json={"must_change_password": False}), 200, f"activate {role}")
         role_passwords[role] = (username, password)
@@ -210,7 +210,7 @@ def main() -> int:
     _wait_https(base, cert)
     _require(admin.get("/api/auth/me"), 200, "persisted session after restart")
     persisted = _require(admin.get(f"/api/targets/{target_id}"), 200, "persisted target after restart").json()
-    if persisted["name"] != "Phase 19 Persistence":
+    if persisted["name"] != "Phase 20 Persistence":
         raise RuntimeError("persistent target changed during restart")
 
     csrf = _require(admin.get("/api/auth/csrf"), 200, "rotated CSRF").json()["csrf_token"]
@@ -219,7 +219,7 @@ def main() -> int:
     verified = _require(admin.post(f"/api/operations/backups/{backup_id}/verify", headers={"X-CSRF-Token": csrf}), 200, "backup verification").json()
     if not verified.get("valid"):
         raise RuntimeError("backup verification failed")
-    _require(admin.patch(f"/api/targets/{target_id}", headers={"X-CSRF-Token": csrf}, json={"name": "Phase 19 Mutated"}), 200, "mutate target before restore")
+    _require(admin.patch(f"/api/targets/{target_id}", headers={"X-CSRF-Token": csrf}, json={"name": "Phase 20 Mutated"}), 200, "mutate target before restore")
     restore = _require(admin.post("/api/operations/restores/validate", headers={"X-CSRF-Token": csrf}, json={"backup_id": backup_id}), 200, "restore validation").json()
     restore_id = restore["id"]
     _require(admin.post(f"/api/operations/restores/{restore_id}/execute", headers={"X-CSRF-Token": csrf}, json={"confirmation_phrase": "RESTORE THREATSCOPE DATA", "current_password": admin_password}), 200, "restore staging")
@@ -243,7 +243,7 @@ def main() -> int:
     _wait_https(base, cert)
     restored_admin, restored_csrf, _ = _login(base, cert, admin_username, admin_password)
     restored_target = _require(restored_admin.get(f"/api/targets/{target_id}"), 200, "restored target").json()
-    if restored_target["name"] != "Phase 19 Persistence":
+    if restored_target["name"] != "Phase 20 Persistence":
         raise RuntimeError("restored target does not match the verified backup")
     integrity = _require(restored_admin.post("/api/security-audit/verify-integrity", headers={"X-CSRF-Token": restored_csrf}), 200, "restored audit integrity").json()
     if not integrity.get("valid_chain"):

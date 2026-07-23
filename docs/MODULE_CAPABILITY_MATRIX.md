@@ -1,0 +1,26 @@
+# Module capability matrix
+
+All modules use the central local database, permission checks, CSRF for authenticated mutations, and mutation audit handling. Backup/restore includes persistent module tables unless a row says the input is intentionally transient. Notifications/search/dashboard apply only where the module exposes them.
+
+| Module | Purpose and primary data | Principal workflows | Key permissions | Reports/notifications/audit | Important limitations |
+| --- | --- | --- | --- | --- | --- |
+| Web Exposure | Authorized targets, scans, crawl facts, findings | Register scope, run bounded safe scans, review remediation | `web:*` | HTML reports; scan/finding notifications; audited mutations | Not an exploit scanner; SSRF/scope policy applies |
+| API Security | API definitions, endpoints, findings, JWT metadata | Import, assess, inventory, analyze structure | `api:*` | Static reports and operational events | No arbitrary API exploitation |
+| Authorization Review | Roles, identities, matrix entries, business flows | Model expected access and record manual validation | `api:manage_authorization`, `api:manage_business_flows` | Included in API reports/audit | Review evidence is not proof of IDOR exploitation |
+| SOC Monitor | Imported/synthetic events, rules, alerts, blocklist | Import, simulate locally, detect, triage | `soc:*` | SOC reports/alerts/audit | No live SIEM collection or automatic blocking |
+| Document Threat Analysis | PDF metadata, derived indicators/findings | Bounded static PDF analysis | `document:*` | Static report and analysis notifications | Original content is not executed; verdict is not definitive |
+| Phishing Defense | Redacted email/URL features, findings, watchlist | Analyze pasted/EML/URL input, disposition | `phishing:*` | Static reports/notifications/audit | Offline heuristics/demo model; links are not opened |
+| Correlation | Normalized entities, observations, matches | Synchronize stored data, deduplicate, correlate | `correlation:*` | Match activity/audit and reports | Deterministic stored-data correlation only |
+| Cases | Cases, evidence snapshots, notes, actions | Explicit create, triage, investigate, report | `cases:*` | Case reports/notifications/audit | No automatic closure or containment |
+| Governance and Compliance | Risks, controls, mappings, treatments, exceptions, evidence | Organize reviews and decisions | `governance:*` | Executive/static reports and audit | No compliance certification or legal conclusion |
+| Secure Access | Users, roles, sessions, MFA, audit chain | Login, register per policy, MFA, role/session admin | `users:*`, `roles:*`, `sessions:*`, `audit:*`, `system:manage` | Security audit and admin notifications | Local identity; no email verification or external IdP |
+| Platform Operations | Jobs, backups, restore staging, retention, diagnostics, inventories | Inspect, backup/verify, stage restore, preview/apply retention | `operations:*` | Operational notifications/audit; backup includes all persistent data | One-node SQLite; restore requires offline step |
+| Threat Intelligence | Sources, indicators, watchlists, campaigns, sightings/matches | Import bounded local data, correlate, review/escalate | `threat_intel:*` | Static reports/notifications/audit | No reputation lookup or automatic feed polling |
+| Detection Engineering | Rules/versions/tests/packs, executions, matches | Validate bounded Sigma/native rules, test, activate, evaluate | `detections:*` | Static reports/alerts/audit | Stored-event evaluation; no agent or rule download |
+| Vulnerability Management | Assets, vulnerabilities, occurrences, plans, SLA, acceptances, verification | Ingest eligible stored findings, prioritize, remediate, verify | `assets:*`, `vulnerabilities:*` | Static reports/notifications/audit | No external CVE/EPSS/package lookup or patch deployment |
+| SOAR-Lite | Playbooks/versions, triggers, executions, approvals, inputs, compensation | Validate, approve, simulate or apply bounded local actions | `soar:*` | Static reports/notifications/append-only events | No arbitrary code, external containment, auto-close, or punishment |
+| Integration Hub | Connectors, write-only credentials, policies, outbox, deliveries, inbound quarantine | Configure, explicitly test/deliver/pull, review failures | `integrations:*` | Integration reports/health/notifications/audit | Egress off by default; configured/queued is not delivered |
+| Advanced Analytics | Features, detectors/versions, baselines, anomalies, feedback, drift | Build deterministic baselines, score, explain, review | `analytics:*` | Static reports/notifications/audit | Local statistics, no external model/retraining; anomaly is a signal |
+| Production Readiness | Build/schema posture, preflight/readiness/security summaries | Validate production configuration and runtime controls | `operations:production_*`, `operations:view` | Audited active preflight; safe build info | Readiness is local evidence, not certification or SLA |
+
+Persistent rows participate in application-consistent database backup/restore and documented retention. Uploaded document/email bytes are analyzed under size/type rules and are not public static assets; static report rows are retained according to module/operations policy.

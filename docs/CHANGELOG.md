@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 — Final candidate (unreleased)
+
+- Finalized one canonical application version while retaining the independent `threatscope-schema-v19` database sentinel; no persistent schema change is introduced.
+- Corrected permission-aware notification query bounds and bulk-read routing, bounded global search input, added a safe frontend not-found route, and restored native keyboard semantics for notification navigation.
+- Reduced the measured production main JavaScript chunk through route-level lazy loading without changing authorization or data behavior; source maps remain disabled.
+- Added consolidated user/administrator/developer guides, capability/permission matrices, threat model, data handling, API index, security/contribution policies, release notes/checklist, deterministic checksum workflow, and final audit evidence.
+- Updated isolated production smoke naming and CI inputs for the v1 candidate. No commit, tag, push, deployment, publication, external telemetry/model, containment, automatic case closure, or user punishment is performed.
+
 ## Phase 19 - Production Deployment and Hardening
 
 - Added development/test/production runtime profiles, strict production validation, file-mounted secrets, startup preflight, and schema sentinel `threatscope-schema-v19`.

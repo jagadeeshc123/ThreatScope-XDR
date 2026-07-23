@@ -37,7 +37,7 @@ def production_environment(root: Path) -> dict[str, str]:
         "THREATSCOPE_SELF_REGISTRATION_ENABLED": "false",
         "THREATSCOPE_REGISTRATION_MODE": "disabled",
         "THREATSCOPE_BUILD_COMMIT": "b150ffd35c25397857f7c25ca69ea346dc63fe99",
-        "THREATSCOPE_APP_VERSION": "1.0.0-rc2",
+        "THREATSCOPE_APP_VERSION": "1.0.0",
         "THREATSCOPE_RUNTIME_DIR": str((root / "runtime").resolve()),
         "THREATSCOPE_DATA_DIR": str((root / "data").resolve()),
         "THREATSCOPE_BACKUP_DIR": str((root / "backups").resolve()),

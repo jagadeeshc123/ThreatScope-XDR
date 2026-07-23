@@ -1,0 +1,11 @@
+# Data handling
+
+ThreatScope stores local account identifiers/profile data, password hashes, encrypted MFA secrets, opaque session records, permissions, audit events, assessment inputs/derived evidence, cases/governance records, connector configuration/encrypted credentials, analytics features/derived signals, static reports, operational metadata, and backup/restore records. It adds no external telemetry or model service.
+
+The live relational store is single-node SQLite in the configured persistent data location. Runtime uploads, generated reports/exports/releases, logs, secret files, TLS material, and smoke files use separate configured/ignored runtime locations. Documentation intentionally avoids machine-specific paths. Uploaded PDF/EML bytes are bounded, processed without execution or shell invocation, and are not directly served from the frontend static root; modules document whether originals are retained or only derived records remain.
+
+Passwords are one-way hashed. MFA and connector secrets are encrypted using operator-supplied keys; connector credentials are write-only through APIs. Session identifiers and CSRF tokens are not put in URLs, audit metadata, or normal logs. Audit/notification/search/report summaries must omit raw secrets, session data, raw uploads, and local paths. Production structured logs apply redaction but operators must still protect log access.
+
+Retention is explicit and previewable; ordering protects referenced records. Module deletion does not imply deletion from earlier backups. Backup creation is application-consistent, can be encrypted, includes persistent module/audit/schema data, and must be verified. Restore is validated/staged and completed offline; operators verify schema, encrypted fields, audit chain, session policy, and readiness. Backup copies, disaster-recovery retention, and secure media destruction remain operator responsibilities.
+
+The application does not provide live-database encryption at rest, secure deletion guarantees for SQLite/filesystem media, a managed key service, privacy-law compliance, automatic cloud backup, or guaranteed RPO/RTO. Use host/filesystem encryption, least-privilege filesystem permissions, protected secret stores, access-controlled backup destinations, and an organization-approved retention/privacy policy.

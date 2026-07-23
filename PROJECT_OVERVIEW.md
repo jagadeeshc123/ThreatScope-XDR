@@ -111,3 +111,9 @@ Only scan systems you own or are explicitly authorized to assess. VulnScope uses
 ## Phase 19 deployment boundary
 
 Phase 19 adds explicit development/test/production profiles and a production-only deployment plane: strict server configuration, file secrets, startup preflight, schema v19 metadata, JSON/redacted request logging, protected production-readiness APIs/UI, rootless production images, segmented Compose networks, persistent volumes, and a TLS-terminating Nginx static edge. It adds no cloud deployment, orchestrator, managed database, external telemetry, model service, automatic containment, or v1.0 release.
+
+## v1.0.0 release state and maintenance policy
+
+Phase 20 finalizes the application release as 1.0.0 without changing the persistent `threatscope-schema-v19` model. The platform remains a React SPA over a FastAPI/SQLAlchemy single-worker SQLite service, with development and hardened Compose profiles. Browser/API requests cross the HTTPS/session/CSRF/RBAC boundary; parsers and scanners operate on bounded authorized input; reports and audit records remain local; connector egress crosses an explicit disabled-by-default destination-policy boundary; analytics derives local review signals without external models; SOAR remains simulation or bounded local workflow.
+
+After v1.0.0 the feature roadmap is closed. Future work is maintenance-only: confirmed defects, security fixes, dependency/compatibility updates, documentation corrections, and carefully reviewed operational improvements. There is no Phase 21.

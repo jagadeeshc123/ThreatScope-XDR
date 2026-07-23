@@ -3,40 +3,70 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 
-import { Dashboard } from './pages/Dashboard';
-import { Targets } from './pages/Targets';
-import { Scans } from './pages/Scans';
-import { NewScan } from './pages/NewScan';
-import { Reports } from './pages/Reports';
-import { SearchResultsPage } from './pages/SearchResults';
-import { Policies } from './pages/Policies';
-import { Profile } from './pages/Profile';
-import { Notifications } from './pages/Notifications';
-import { Settings } from './pages/Settings';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './auth/AuthProvider';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { SessionExpiryGuard } from './auth/SessionExpiryGuard';
-import { LoginPage } from './pages/access/LoginPage';
-import { MfaChallengePage } from './pages/access/MfaChallengePage';
-import { ChangePasswordPage } from './pages/access/ChangePasswordPage';
-import { ProfileSecurityPage } from './pages/access/ProfileSecurityPage';
-import { ActiveSessionsPage } from './pages/access/ActiveSessionsPage';
-import { UserManagementPage } from './pages/access/UserManagementPage';
-import { UserDetailsPage } from './pages/access/UserDetailsPage';
-import { RoleManagementPage } from './pages/access/RoleManagementPage';
-import { RoleDetailsPage } from './pages/access/RoleDetailsPage';
-import { SecurityAuditPage } from './pages/access/SecurityAuditPage';
-import { SecurityAuditDetailsPage } from './pages/access/SecurityAuditDetailsPage';
-import { AuditIntegrityPage } from './pages/access/AuditIntegrityPage';
-import { ForbiddenPage } from './pages/access/ForbiddenPage';
-import { PublicLandingPage, KnownLimitationsPage } from './pages/access/PublicLandingPage';
-import { SignUpPage } from './pages/access/SignUpPage';
-import { AccountPendingPage } from './pages/access/AccountPendingPage';
-import { AccountRejectedPage } from './pages/access/AccountRejectedPage';
-import { RegistrationManagementPage } from './pages/access/RegistrationManagementPage';
-import { RegistrationDetailsPage } from './pages/access/RegistrationDetailsPage';
-import { IntegrationsOverviewPage, ConnectorCatalogPage, ConnectorsPage, ConnectorCreatePage, ConnectorDetailsPage, ConnectorEditPage, ConnectorTestPage, ConnectorCredentialsPage, ConnectorNetworkPolicyPage, SubscriptionsPage, SubscriptionDetailsPage, MappingsPage, MappingEditorPage, OutboxPage, DeliveriesPage, DeliveryDetailsPage, DeadLettersPage, DeadLetterDetailsPage, InboundEndpointsPage, InboundEndpointDetailsPage, InboundEventsPage, InboundEventDetailsPage, HealthChecksPage, ExternalReferencesPage, IntegrationReportsPage, IntegrationReportDetailsPage } from './pages/integrations/IntegrationsPages';
+
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Targets = lazy(() => import('./pages/Targets').then(m => ({ default: m.Targets })));
+const Scans = lazy(() => import('./pages/Scans').then(m => ({ default: m.Scans })));
+const NewScan = lazy(() => import('./pages/NewScan').then(m => ({ default: m.NewScan })));
+const Reports = lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
+const SearchResultsPage = lazy(() => import('./pages/SearchResults').then(m => ({ default: m.SearchResultsPage })));
+const Policies = lazy(() => import('./pages/Policies').then(m => ({ default: m.Policies })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const LoginPage = lazy(() => import('./pages/access/LoginPage').then(m => ({ default: m.LoginPage })));
+const MfaChallengePage = lazy(() => import('./pages/access/MfaChallengePage').then(m => ({ default: m.MfaChallengePage })));
+const ChangePasswordPage = lazy(() => import('./pages/access/ChangePasswordPage').then(m => ({ default: m.ChangePasswordPage })));
+const ProfileSecurityPage = lazy(() => import('./pages/access/ProfileSecurityPage').then(m => ({ default: m.ProfileSecurityPage })));
+const ActiveSessionsPage = lazy(() => import('./pages/access/ActiveSessionsPage').then(m => ({ default: m.ActiveSessionsPage })));
+const UserManagementPage = lazy(() => import('./pages/access/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
+const UserDetailsPage = lazy(() => import('./pages/access/UserDetailsPage').then(m => ({ default: m.UserDetailsPage })));
+const RoleManagementPage = lazy(() => import('./pages/access/RoleManagementPage').then(m => ({ default: m.RoleManagementPage })));
+const RoleDetailsPage = lazy(() => import('./pages/access/RoleDetailsPage').then(m => ({ default: m.RoleDetailsPage })));
+const SecurityAuditPage = lazy(() => import('./pages/access/SecurityAuditPage').then(m => ({ default: m.SecurityAuditPage })));
+const SecurityAuditDetailsPage = lazy(() => import('./pages/access/SecurityAuditDetailsPage').then(m => ({ default: m.SecurityAuditDetailsPage })));
+const AuditIntegrityPage = lazy(() => import('./pages/access/AuditIntegrityPage').then(m => ({ default: m.AuditIntegrityPage })));
+const ForbiddenPage = lazy(() => import('./pages/access/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
+const PublicLandingPage = lazy(() => import('./pages/access/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })));
+const KnownLimitationsPage = lazy(() => import('./pages/access/PublicLandingPage').then(m => ({ default: m.KnownLimitationsPage })));
+const SignUpPage = lazy(() => import('./pages/access/SignUpPage').then(m => ({ default: m.SignUpPage })));
+const AccountPendingPage = lazy(() => import('./pages/access/AccountPendingPage').then(m => ({ default: m.AccountPendingPage })));
+const AccountRejectedPage = lazy(() => import('./pages/access/AccountRejectedPage').then(m => ({ default: m.AccountRejectedPage })));
+const RegistrationManagementPage = lazy(() => import('./pages/access/RegistrationManagementPage').then(m => ({ default: m.RegistrationManagementPage })));
+const RegistrationDetailsPage = lazy(() => import('./pages/access/RegistrationDetailsPage').then(m => ({ default: m.RegistrationDetailsPage })));
+
+const integrationPage = <K extends keyof typeof import('./pages/integrations/IntegrationsPages')>(name: K) =>
+  lazy(() => import('./pages/integrations/IntegrationsPages').then(module => ({ default: module[name] })));
+const IntegrationsOverviewPage = integrationPage('IntegrationsOverviewPage');
+const ConnectorCatalogPage = integrationPage('ConnectorCatalogPage');
+const ConnectorsPage = integrationPage('ConnectorsPage');
+const ConnectorCreatePage = integrationPage('ConnectorCreatePage');
+const ConnectorDetailsPage = integrationPage('ConnectorDetailsPage');
+const ConnectorEditPage = integrationPage('ConnectorEditPage');
+const ConnectorTestPage = integrationPage('ConnectorTestPage');
+const ConnectorCredentialsPage = integrationPage('ConnectorCredentialsPage');
+const ConnectorNetworkPolicyPage = integrationPage('ConnectorNetworkPolicyPage');
+const SubscriptionsPage = integrationPage('SubscriptionsPage');
+const SubscriptionDetailsPage = integrationPage('SubscriptionDetailsPage');
+const MappingsPage = integrationPage('MappingsPage');
+const MappingEditorPage = integrationPage('MappingEditorPage');
+const OutboxPage = integrationPage('OutboxPage');
+const DeliveriesPage = integrationPage('DeliveriesPage');
+const DeliveryDetailsPage = integrationPage('DeliveryDetailsPage');
+const DeadLettersPage = integrationPage('DeadLettersPage');
+const DeadLetterDetailsPage = integrationPage('DeadLetterDetailsPage');
+const InboundEndpointsPage = integrationPage('InboundEndpointsPage');
+const InboundEndpointDetailsPage = integrationPage('InboundEndpointDetailsPage');
+const InboundEventsPage = integrationPage('InboundEventsPage');
+const InboundEventDetailsPage = integrationPage('InboundEventDetailsPage');
+const HealthChecksPage = integrationPage('HealthChecksPage');
+const ExternalReferencesPage = integrationPage('ExternalReferencesPage');
+const IntegrationReportsPage = integrationPage('IntegrationReportsPage');
+const IntegrationReportDetailsPage = integrationPage('IntegrationReportDetailsPage');
 
 const ApiSecurityOverview = lazy(() => import('./pages/api-security/ApiSecurityOverview').then(module => ({ default: module.ApiSecurityOverview })));
 const NewApiAssessment = lazy(() => import('./pages/api-security/NewApiAssessment').then(module => ({ default: module.NewApiAssessment })));
@@ -117,7 +147,20 @@ function Layout() {
 }
 
 function LoadingRoute() {
-  return <div className="p-6 text-sm text-muted-foreground">Loading module...</div>;
+  return <div className="p-6 text-sm text-muted-foreground" role="status" aria-live="polite">Loading module...</div>;
+}
+
+function NotFoundPage() {
+  return (
+    <main className="grid min-h-screen place-items-center bg-background p-6 text-foreground">
+      <section className="max-w-lg text-center" aria-labelledby="not-found-title">
+        <p className="text-sm font-semibold uppercase tracking-widest text-primary">404</p>
+        <h1 id="not-found-title" className="mt-3 text-3xl font-bold">Page not found</h1>
+        <p className="mt-3 text-muted-foreground">The requested ThreatScope XDR route does not exist or is no longer available.</p>
+        <a href="/" className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Return home</a>
+      </section>
+    </main>
+  );
 }
 
 function App() {
@@ -125,6 +168,7 @@ function App() {
     <AuthProvider>
     <Router>
       <SessionExpiryGuard>
+      <Suspense fallback={<LoadingRoute />}>
       <Routes>
         <Route path="/" element={<PublicLandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -255,7 +299,9 @@ function App() {
           <Route path="/security-audit/:eventId" element={<SecurityAuditDetailsPage />} />
         </Route>
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       <Toaster theme="dark" position="bottom-right" />
       </SessionExpiryGuard>
     </Router>

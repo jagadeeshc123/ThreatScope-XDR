@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app import schemas, models
@@ -10,7 +10,7 @@ from app.modules.threat_intelligence.normalization import defang
 router = APIRouter()
 
 @router.get("/", response_model=schemas.SearchResults)
-def search(request: Request, q: str = "", db: Session = Depends(get_db)):
+def search(request: Request, q: str = Query("", max_length=200), db: Session = Depends(get_db)):
     permissions = effective_permissions(db, request.state.current_user)
     if not q or len(q) < 2:
         return schemas.SearchResults(targets=[], scans=[], findings=[], reports=[], api_assessments=[], api_endpoints=[], api_findings=[], jwt_analyses=[], api_reports=[], api_roles=[], authorization_reviews=[], api_business_flows=[], api_business_flow_risks=[], soc_events=[], soc_alerts=[], soc_rules=[], soc_reports=[], soc_blocklist_entries=[], document_analyses=[], document_findings=[], document_indicators=[], document_reports=[], phishing_analyses=[], phishing_findings=[], phishing_indicators=[], phishing_watchlist_entries=[], phishing_reports=[], unified_entities=[], correlation_matches=[], incident_cases=[], incident_evidence=[], incident_reports=[], governance_risks=[], governance_frameworks=[], governance_controls=[], governance_mappings=[], governance_treatments=[], governance_exceptions=[], governance_evidence_packages=[], governance_reviews=[], governance_reports=[])

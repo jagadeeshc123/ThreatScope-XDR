@@ -10,6 +10,16 @@ frontend/node_modules
 frontend/dist
 backend/tests
 backend/runtime
+deploy/secrets
+backups
+uploads
+reports/generated
+dependency-inventory
+release-manifests
+*.sha256
+__pycache__
+.pytest_cache
+.mypy_cache
 *.db
 *.sqlite*
 *.pem

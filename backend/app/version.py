@@ -16,14 +16,14 @@ def version_info() -> dict[str, str]:
     try:
         file_version = _version_file().read_text(encoding="utf-8").strip()
     except OSError:
-        file_version = "1.0.0-rc1"
+        file_version = "1.0.0"
     return {
         "application_name": APPLICATION_NAME,
         "version": os.getenv("THREATSCOPE_APP_VERSION", file_version)[:40],
         "commit_hash": os.getenv("THREATSCOPE_BUILD_COMMIT", "development")[:64],
         "build_timestamp": os.getenv("THREATSCOPE_BUILD_TIMESTAMP", "local-development")[:64],
         "schema_identifier": SCHEMA_IDENTIFIER,
-        "frontend_version": "0.0.0",
+        "frontend_version": "1.0.0",
         "supported_export_manifest_version": EXPORT_MANIFEST_VERSION,
         "supported_backup_manifest_version": BACKUP_MANIFEST_VERSION,
     }

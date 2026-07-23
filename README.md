@@ -1,54 +1,86 @@
 # ThreatScope XDR
 
-Phase 18 adds [Advanced Security Analytics](docs/ANALYTICS_OVERVIEW.md): deterministic offline feature extraction, versioned detectors, leakage-resistant baselines/backtests, explainable anomalies, reviewed-label governance, suppressions, drift, static reports, RBAC, audit, and operational integration. Anomalies are not proof of compromise; no external AI service, automatic retraining, containment, case closure, or user punishment is used.
+ThreatScope XDR 1.0.0 is a self-hosted, offline-first security assessment and operations workspace. It combines authorized web/API assessment, SOC and document/phishing analysis, correlation and cases, governance, local identity, threat intelligence, detection engineering, vulnerability workflows, SOAR-Lite simulations, controlled connectors, analytics, and platform operations. It is not a hosted SaaS, compliance certification, penetration-test certification, or guarantee that findings were exploited.
 
-Phase 17 adds a safe-by-default [Security Integration Hub](docs/INTEGRATION_HUB.md) with encrypted write-only credentials, signed inbound quarantine, SSRF-protected delivery, transactional outbox, bounded retries/circuits/dead letters, STIX/TAXII, and queued SOAR connector actions. Set `THREATSCOPE_CONNECTOR_SECRETS_KEY`; no connector is activated automatically.
+Use the platform only with explicit authorization. Findings and anomalies are review signals. SOAR actions do not provide real external containment, connector configuration is not proof of delivery, and the local analytics layer makes no external AI/model call.
 
-Phase 16 adds a production-style offline SOAR-Lite module: a fixed server-owned action catalog, approval and separation-of-duties governance, declarative immutable-version playbooks, bounded conditions, dry-run/simulation/live-local execution, persistent delays and analyst input, trigger proposals, case automation, sensitive local session/user controls, append-only history, compensation records, static reports, RBAC, audit, backup/restore, retention, diagnostics, dashboard, and search integration. It executes no arbitrary code or command and performs no real external containment. See [SOAR playbooks](docs/SOAR_PLAYBOOKS.md).
+Release metadata: application `1.0.0`; database schema `threatscope-schema-v19`. Schema v19 remains unchanged because Phase 20 adds no persistent model.
 
-Phase 15 adds unified offline-first asset inventory, vulnerability ingestion and prioritization, remediation plans/tasks, SLA governance, expiring risk acceptance, evidence-backed verification, regression reopening, safe static reports, dashboard/search integration, RBAC, audit, and operational backup/retention support. See [Vulnerability Management](docs/VULNERABILITY_MANAGEMENT.md).
+## Major modules
 
-ThreatScope XDR is a self-contained local security assessment, SOC simulation, incident-correlation, governance, and reporting platform. Release candidate `1.0.0-rc1` adds authenticated operational health, diagnostics, consistent SQLite backup, staged restore, safe export validation, retention preview/apply, synthetic demo management, local inventory, and bounded release packaging.
+- Web Exposure, API Security, and Authorization Review
+- SOC Monitor, Document Threat Analysis, and Phishing Defense
+- Unified Correlation, Cases, Governance, and Compliance
+- Local accounts, MFA, sessions, RBAC, CSRF, and security audit
+- Threat Intelligence, Detection Engineering, and Vulnerability Management
+- SOAR-Lite, Integration Hub, and Advanced Security Analytics
+- Platform Operations, backup/restore, diagnostics, release inventory, and production readiness
 
-Start with [Installation](docs/INSTALLATION.md), then read the [Operations Guide](docs/OPERATIONS_GUIDE.md) and [Security Model](docs/SECURITY_MODEL.md). No cloud service, external telemetry, deployment, or automatic update is included.
+See the [module capability matrix](docs/MODULE_CAPABILITY_MATRIX.md) for exact boundaries.
 
-Quick local verification:
+## Development quick start
+
+Prerequisites are Python 3.11+, Node 20+, and npm. No account or password is built in.
 
 ```text
 cd backend
 python -m pip install -r requirements.txt
-python scripts/create_admin.py
+python scripts/manage_accounts.py create-admin
 uvicorn app.main:app --reload
 ```
 
-In another terminal run `cd frontend`, `npm ci`, and `npm run dev`. Docker users may configure `.env` from `.env.example` and run `docker compose up --build -d`.
+In another terminal:
 
-This is a locally verified release candidate, not a production certification or compliance claim.
-
-## Local accounts and owner setup
-
-ThreatScope XDR supports local registration and sign-in with either a username or an email address. Gmail and non-Gmail addresses are ordinary identifiers; users create a separate ThreatScope password, and the platform does not connect to a mailbox or request email-account credentials.
-
-Create an owner administrator even when test accounts already exist:
-
-```powershell
-cd backend
-python scripts/manage_accounts.py create-admin
+```text
+cd frontend
+npm ci
+npm run dev
 ```
 
-No account or password is built in. See `docs/LOCAL_ACCOUNT_SETUP.md` for registration modes, approval, and safe CLI commands.
+Docker development users can copy the documented non-secret settings from `.env.example` into an ignored `.env`, then run `docker compose up --build -d`. The local test target is the only preconfigured scan target; do not substitute an unauthorized public system.
 
-## Authenticator-app MFA
+## Production entry point
 
-TOTP enrollment uses the existing encrypted MFA store and standard six-digit, 30-second authenticator codes. Configure a private `THREATSCOPE_MFA_ENCRYPTION_KEY` as described in `.env.example` before enrollment. The frontend renders the backend-generated `otpauth` URI locally with the small `qrcode.react` dependency; setup material is never sent to an external QR service or persisted in browser storage.
-# Phase 13: offline threat intelligence
+Production is a single-node, one-worker SQLite deployment behind an Nginx HTTPS edge. Start with [Production Deployment](docs/PRODUCTION_DEPLOYMENT.md), [.env.production.example](.env.production.example), [Secrets Management](docs/SECRETS_MANAGEMENT.md), and [TLS Reverse Proxy](docs/TLS_REVERSE_PROXY.md). Operators supply unique file-mounted secrets, trusted TLS material, host/filesystem encryption, backups, and environment-specific resource limits. Production disables registration, API docs, debug/reload, demo seeding, and connector egress by default.
 
-ThreatScope XDR includes a permission-aware Threat Intelligence module for normalized IOC inventory, bounded CSV/JSON/STIX/text imports, protected watchlists, campaigns, analyst relationships, stored-data-only cross-module sightings, deterministic match risk, explicit incident-case escalation, and static HTML reports. It performs no external IOC lookup or automated blocking. See [docs/THREAT_INTELLIGENCE.md](docs/THREAT_INTELLIGENCE.md).
+## Architecture and security principles
 
-# Phase 14: offline detection engineering
+The React frontend calls a FastAPI/SQLAlchemy backend. Server-owned permissions are authoritative; hiding a link is never authorization. Authenticated mutations require a secure session, permission, CSRF token, and audit handling. Sessions are opaque and cookie-bound. Outbound-capable workflows use explicit action, scheme/host/address policy, redirect rejection, TLS verification, response limits, and timeouts. Reports are static escaped HTML without scripts or remote assets. Uploaded analysis inputs are bounded and are not directly served from a public static directory.
 
-Detection Engineering adds native and bounded Sigma-compatible rules, immutable versions, synthetic positive/negative tests, test-gated activation, protected demonstration packs, a local educational ATT&CK subset, deterministic historical evaluation, suppressions, explicit alert/case promotion, and static reports. It evaluates stored records only and never executes commands or downloads rules. See [docs/DETECTION_ENGINEERING.md](docs/DETECTION_ENGINEERING.md).
+SQLite, filesystem artifacts, and configured connectors remain inside the deployment trust boundary. No external telemetry, hosted model, model download, automatic deployment, or automatic certificate issuance is included.
 
-## Phase 19 production deployment and hardening
+## Verification
 
-The production profile adds fail-closed configuration, file-mounted secrets, schema v19 readiness, rootless read-only containers, persistent SQLite storage, and one Nginx TLS/static edge with no public backend port. Start with [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) and `.env.production.example`. Production disables public registration, API docs, debug/reload, demo seeding, and connector egress by default. Deployment owners must supply trusted TLS material and host/filesystem encryption; SQLite remains a limited single-node, one-worker option.
+```text
+cd backend
+python -m compileall app tests scripts
+python -m unittest discover -s tests -v
+python scripts/run_tests_network_disabled.py
+python scripts/verify_vulnscope.py
+python -m pip check
+
+cd ../frontend
+npm ci
+npm run build
+npm run lint
+npm ls --depth=0
+
+cd ..
+docker compose config
+```
+
+Production builds intentionally omit source maps. The CI workflow is verification-only and has read-only repository permissions; it does not deploy or publish a release.
+
+## Documentation index
+
+- Setup and architecture: [Installation](docs/INSTALLATION.md), [Architecture](docs/ARCHITECTURE.md), [Project overview](PROJECT_OVERVIEW.md)
+- Audience guides: [User Guide](docs/USER_GUIDE.md), [Administrator Guide](docs/ADMINISTRATOR_GUIDE.md), [Developer Guide](docs/DEVELOPER_GUIDE.md), [Demo Guide](docs/DEMO_GUIDE.md)
+- Production: [Deployment](docs/PRODUCTION_DEPLOYMENT.md), [Configuration](docs/PRODUCTION_CONFIGURATION.md), [Secrets](docs/SECRETS_MANAGEMENT.md), [TLS](docs/TLS_REVERSE_PROXY.md), [Headers](docs/SECURITY_HEADERS.md), [Container hardening](docs/CONTAINER_HARDENING.md)
+- Security: [Security Model](docs/SECURITY_MODEL.md), [Threat Model](docs/THREAT_MODEL.md), [Permissions Matrix](docs/PERMISSIONS_MATRIX.md), [CSRF Mutation Inventory](docs/CSRF_MUTATION_INVENTORY.md), [Data Handling](docs/DATA_HANDLING.md), [Security reporting](SECURITY.md)
+- Operations: [Operations Guide](docs/OPERATIONS_GUIDE.md), [Backup and Restore](docs/BACKUP_AND_RESTORE.md), [Disaster Recovery](docs/DISASTER_RECOVERY.md), [Upgrade and Rollback](docs/UPGRADE_AND_ROLLBACK.md), [Troubleshooting](docs/TROUBLESHOOTING.md)
+- Reference: [API Reference](docs/API_REFERENCE.md), [Module Capability Matrix](docs/MODULE_CAPABILITY_MATRIX.md), [Known Limitations](docs/KNOWN_LIMITATIONS.md), [Contributing](CONTRIBUTING.md)
+- Release: [Release Notes](docs/RELEASE_NOTES_V1.0.0.md), [Changelog](docs/CHANGELOG.md), [Final Audit](docs/FINAL_AUDIT_REPORT.md), [v1 Release Checklist](docs/V1_RELEASE_CHECKLIST.md), [Release Process](docs/RELEASE_PROCESS.md)
+
+## Support and maintenance
+
+After v1.0.0 the planned feature roadmap is frozen. Maintenance is limited to confirmed defects, security fixes, dependency/compatibility maintenance, documentation corrections, and carefully reviewed operational improvements. Use the repository's private security-advisory mechanism for sensitive reports; do not include usable secrets or test systems you do not own or have permission to assess.
